@@ -108,6 +108,7 @@ function speakKorean(text, rate = 1.05, onEnd = null) {
   // 너무 긴 텍스트는 첫 100자만
   utt.text = text.length > 120 ? text.slice(0, 120) + '.' : text
   if (onEnd) utt.onend = onEnd
+  utt.onerror = (e) => console.error('[speakKorean] TTS error:', e.error)
   window.speechSynthesis.speak(utt)
 }
 
@@ -605,6 +606,61 @@ export default function App() {
     fetchAccountList()
   }
 
+  // ── Living Accounts: 채팅방 첫 입장 시 AI 프로액티브 인사말 ──
+  const fetchRoomGreeting = useCallback(async (accountId) => {
+    const greetingId = 'greeting_' + Date.now()
+    setRoomMessages((prev) => ({
+      ...prev,
+      [accountId]: [...(prev[accountId] || []), { id: greetingId, role: 'assistant', type: 'text', text: '', streaming: true }],
+    }))
+
+    try {
+      const res = await fetch(`${API_BASE}/api/room-greeting`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, accountId }),
+      })
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop()
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          try {
+            const data = JSON.parse(line.slice(6))
+            if (data.type === 'text') {
+              setRoomMessages((prev) => ({
+                ...prev,
+                [accountId]: (prev[accountId] || []).map((m) =>
+                  m.id === greetingId ? { ...m, text: m.text + data.delta } : m
+                ),
+              }))
+            } else if (data.type === 'done') {
+              setRoomMessages((prev) => ({
+                ...prev,
+                [accountId]: (prev[accountId] || []).map((m) =>
+                  m.id === greetingId ? { ...m, streaming: false } : m
+                ),
+              }))
+            }
+          } catch {}
+        }
+      }
+    } catch {
+      setRoomMessages((prev) => ({
+        ...prev,
+        [accountId]: (prev[accountId] || []).filter((m) => m.id !== greetingId),
+      }))
+    }
+  }, [sessionId])
+
   // ── 계좌 목록 로드 ──
   const fetchAccountList = useCallback(() => {
     setIsAccountsLoading(true)
@@ -648,6 +704,11 @@ export default function App() {
           }
         })
         .catch(() => {})
+    }
+
+    // Living Accounts: 첫 입장 시만 AI 프로액티브 인사말 생성
+    if (!roomMessages[accountId] || roomMessages[accountId].length === 0) {
+      fetchRoomGreeting(accountId)
     }
   }
 
