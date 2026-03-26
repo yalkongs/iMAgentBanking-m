@@ -44,12 +44,12 @@ function broadcastWsEvent(event) {
 
 // ── 백그라운드 입출금 시뮬레이터 ──
 const BG_TRANSACTIONS = [
-  { counterpart: '국민건강보험공단', amount: -139230, category: '자동이체', memo: '건강보험료 자동이체' },
-  { counterpart: '한국전력', amount: -52400, category: '자동이체', memo: '전기요금' },
-  { counterpart: '(주)카카오뱅크', amount: 3000000, category: '이체', memo: '전세자금 입금' },
-  { counterpart: '쿠팡', amount: -87900, category: '이체', memo: '쿠팡 결제' },
-  { counterpart: '박재원', amount: 150000, category: '송금', memo: '' },
-  { counterpart: 'LG유플러스', amount: -55000, category: '자동이체', memo: '통신요금' },
+  { accountId: 'acc001', counterpart: '국민건강보험공단', amount: -139230, category: '자동이체', memo: '건강보험료 자동이체' },
+  { accountId: 'acc001', counterpart: '한국전력', amount: -52400, category: '자동이체', memo: '전기요금' },
+  { accountId: 'acc001', counterpart: '(주)카카오뱅크', amount: 3000000, category: '이체', memo: '전세자금 입금' },
+  { accountId: 'acc001', counterpart: '쿠팡', amount: -87900, category: '이체', memo: '쿠팡 결제' },
+  { accountId: 'acc001', counterpart: '박재원', amount: 150000, category: '송금', memo: '' },
+  { accountId: 'acc001', counterpart: 'LG유플러스', amount: -55000, category: '자동이체', memo: '통신요금' },
 ]
 
 let bgTxIndex = 0
@@ -636,6 +636,36 @@ app.post('/api/confirm-transfer', async (req, res) => {
     sendWsEvent(sessionId, { type: 'TRANSFER_FAILED', error: result.error })
     res.status(400).json({ success: false, error: result.error })
   }
+})
+
+// ──────────────────────────────────────────────
+// GET /api/accounts — 계좌 목록 + 마지막 거래 preview
+// ──────────────────────────────────────────────
+app.get('/api/accounts', (req, res) => {
+  const sessionId = req.query.sessionId || 'default'
+  const session = getSession(sessionId)
+  const ctx = getSessionCtx(session)
+
+  const result = ctx.accounts.map((acc) => {
+    const lastTx = ctx.transactions
+      .filter((t) => t.accountId === acc.id)
+      .sort((a, b) => b.date.localeCompare(a.date))[0] || null
+
+    return {
+      ...acc,
+      balanceFormatted: acc.balance.toLocaleString('ko-KR') + '원',
+      lastTransaction: lastTx
+        ? {
+            counterpart: lastTx.counterpart,
+            amount: lastTx.amount,
+            amountFormatted: (lastTx.amount > 0 ? '+' : '') + lastTx.amount.toLocaleString('ko-KR') + '원',
+            date: lastTx.date,
+            isIncome: lastTx.amount > 0,
+          }
+        : null,
+    }
+  })
+  res.json({ accounts: result })
 })
 
 // ──────────────────────────────────────────────

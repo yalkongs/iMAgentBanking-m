@@ -49,6 +49,24 @@
 
 ---
 
+## TODO-5: Living Accounts — 계좌가 먼저 말을 거는 프로액티브 디자인 (Phase 2)
+
+**What:** 각 계좌 채팅방에서 AI가 먼저 메시지를 보내는 프로액티브 UX. 예: 주계좌가 "이번달 카페 지출이 목표를 넘었어요", 적금이 "오늘 자동이체 완료! 6개월째 개근이에요" 등.
+**Why:** 현재 사용자가 항상 먼저 물어야 함. 메신저 은유를 완성하려면 계좌가 먼저 말을 걸어야 함 — 10x 비전의 핵심.
+**Pros:** 데모 임팩트 극대화. "AI 뱅킹"의 차별점을 가장 직관적으로 전달.
+**Cons:** 각 계좌 타입별 개성 정의 필요, System Prompt 복잡도 증가.
+**Context:**
+- zb-m CEO 리뷰 2026-03-26 결정.
+- 구현 방향: 채팅방 진입 시 계좌 타입에 따라 AI가 proactive 첫 메시지 생성 (SSE 스트리밍)
+- 계좌 개성 예시: checking(실용적), installment_savings(격려), term_deposit(신중), savings(안전), cma(분석적)
+- 기반: 기존 TRANSACTION_ALERT AI 코멘트 패턴 확장
+- 10x 비전 전체: ~/.gstack/projects/yalkongs-iMAgentBanking/ceo-plans/2026-03-26-zb-m-messenger.md
+**Effort:** M (human: ~3일 / CC+gstack: ~45min)
+**Priority:** P2
+**Depends on:** zb-m 기본 메신저 UI 완성 후
+
+---
+
 ## TODO-4: Railway 워밍업 cron 재확인 (Feature A 완료 후)
 
 **What:** Feature A+B 배포 후 Railway 워밍업 cron이 새 엔드포인트와 함께 정상 동작하는지 확인. 기존 TODO-2의 후속.

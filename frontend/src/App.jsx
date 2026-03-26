@@ -3,6 +3,8 @@ import Message from './components/Message.jsx'
 import AnimatedBackground from './components/AnimatedBackground.jsx'
 import DrawerBanner from './components/DrawerBanner.jsx'
 import VoiceOverlay from './components/VoiceOverlay.jsx'
+import AccountListScreen from './components/AccountListScreen.jsx'
+import AccountRoom from './components/AccountRoom.jsx'
 import { useWebSocket } from './hooks/useWebSocket.js'
 import { useVoiceInput } from './hooks/useVoiceInput.js'
 
@@ -163,6 +165,15 @@ export default function App() {
   const [healthScore, setHealthScore] = useState(null)
   const [healthOpen, setHealthOpen] = useState(false)
 
+  // ── 메신저 UI 상태 ──
+  const [screen, setScreen] = useState('home')           // 'home' | 'room'
+  const [activeAccountId, setActiveAccountId] = useState(null)
+  const [accountList, setAccountList] = useState([])
+  const [isAccountsLoading, setIsAccountsLoading] = useState(true)
+  const [roomTransactions, setRoomTransactions] = useState({})
+  const [roomMessages, setRoomMessages] = useState({})   // { [accountId]: Message[] }
+  const [unreadCounts, setUnreadCounts] = useState({})   // { [accountId]: number }
+
   const messagesEndRef = useRef(null)
   const messagesContainerRef = useRef(null)
   const textareaRef = useRef(null)
@@ -170,6 +181,14 @@ export default function App() {
   const prevMsgCountRef = useRef(0)
   // GUI 드릴-다운에서 발생한 메시지를 scope별로 제거하기 위한 ref
   const currentGuiScopeRef = useRef(null)
+
+  // 메신저 라우팅 refs (sendMessage 클로저에서 사용)
+  const screenRef = useRef('home')
+  const activeAccountIdRef = useRef(null)
+
+  // screenRef, activeAccountIdRef 동기화 (sendMessage 클로저용)
+  useEffect(() => { screenRef.current = screen }, [screen])
+  useEffect(() => { activeAccountIdRef.current = activeAccountId }, [activeAccountId])
 
   // 컨텍스트 숏컷 계산
   const currentShortcuts = CONTEXTUAL_SHORTCUTS[lastCardType] || CONTEXTUAL_SHORTCUTS.default
@@ -278,54 +297,65 @@ export default function App() {
       // voiceMode일 때 녹음 일시 정지 → useVoiceConfirm이 처리
       if (voiceModeRef.current) stopRecording()
       const msgId = 'transfer_' + Date.now()
-      setMessages((prev) => [
-        ...prev,
-        { id: msgId, type: 'transfer_pending', data: event.data },
-      ])
+      appendToActiveStore({ id: msgId, type: 'transfer_pending', data: event.data })
     } else if (event.type === 'TRANSFER_COMPLETE') {
       const r = event.data
-      setMessages((prev) => [
-        ...prev,
-        { id: 'tr_done_' + Date.now(), type: 'transfer_receipt', data: r },
-      ])
+      appendToActiveStore({ id: 'tr_done_' + Date.now(), type: 'transfer_receipt', data: r })
       setLastCardType('transfer_receipt')
     } else if (event.type === 'TRANSFER_CANCELLED') {
-      setMessages((prev) => [
-        ...prev,
-        { id: 'tr_cancel_' + Date.now(), type: 'transfer_result', success: false, text: '이체가 취소되었습니다.' },
-      ])
+      appendToActiveStore({ id: 'tr_cancel_' + Date.now(), type: 'transfer_result', success: false, text: '이체가 취소되었습니다.' })
     } else if (event.type === 'TRANSFER_FAILED') {
-      setMessages((prev) => [
-        ...prev,
-        { id: 'tr_fail_' + Date.now(), type: 'transfer_result', success: false, text: `이체 실패: ${event.error}` },
-      ])
+      appendToActiveStore({ id: 'tr_fail_' + Date.now(), type: 'transfer_result', success: false, text: `이체 실패: ${event.error}` })
     } else if (event.type === 'TRANSACTION_ALERT') {
       const data = event.data
-      txNotifTimersRef.current.forEach(clearTimeout)
-      txNotifTimersRef.current = []
-      setTxNotif(data)
-      const t1 = setTimeout(() => setTxNotifVisible(true), 30)
-      const t2 = setTimeout(() => setTxNotifVisible(false), 5000)
-      const t3 = setTimeout(() => setTxNotif(null), 5350)
-      txNotifTimersRef.current = [t1, t2, t3]
+      const inMatchingRoom =
+        screenRef.current === 'room' &&
+        activeAccountIdRef.current === data.accountId
+      if (inMatchingRoom) {
+        // 현재 계좌 채팅방에 있으면 방 메시지로 추가
+        const aid = activeAccountIdRef.current
+        setRoomMessages((prev) => ({
+          ...prev,
+          [aid]: [...(prev[aid] || []), { id: 'alert_' + Date.now(), type: 'transaction_alert', data }],
+        }))
+      } else {
+        // 다른 화면이면 상단 토스트
+        txNotifTimersRef.current.forEach(clearTimeout)
+        txNotifTimersRef.current = []
+        setTxNotif(data)
+        const t1 = setTimeout(() => setTxNotifVisible(true), 30)
+        const t2 = setTimeout(() => setTxNotifVisible(false), 5000)
+        const t3 = setTimeout(() => setTxNotif(null), 5350)
+        txNotifTimersRef.current = [t1, t2, t3]
+        // 미읽 카운트 증가
+        if (data.accountId) {
+          setUnreadCounts((prev) => ({ ...prev, [data.accountId]: (prev[data.accountId] || 0) + 1 }))
+        }
+      }
     } else if (event.type === 'TRANSACTION_ALERT_COMMENT') {
       const { alertId, comment } = event.data
       setTxNotif((prev) =>
         prev && prev.alertId === alertId ? { ...prev, aiComment: comment } : prev
       )
+      // 방 안에 있는 alert 메시지에도 코멘트 업데이트
+      const aid = activeAccountIdRef.current
+      if (aid) {
+        setRoomMessages((prev) => {
+          const msgs = prev[aid] || []
+          const updated = msgs.map((m) =>
+            m.type === 'transaction_alert' && m.data?.alertId === alertId
+              ? { ...m, data: { ...m.data, aiComment: comment } }
+              : m
+          )
+          return { ...prev, [aid]: updated }
+        })
+      }
     } else if (event.type === 'FINANCIAL_MOMENT') {
-      // 금융 모먼트 카드 (급여, 카드대금, 과소비)
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: 'moment_' + Date.now(),
-          type: 'financial_moment',
-          data: event.data,
-          noAutoScroll: false,
-        },
-      ])
+      // 금융 모먼트 카드 (급여, 카드대금, 과소비) — 방에 있으면 방으로
+      appendToActiveStore({ id: 'moment_' + Date.now(), type: 'financial_moment', data: event.data, noAutoScroll: false })
     }
-  }, []))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appendToActiveStore]))
 
   // Model C: 현재 GUI 위치/상태를 추적하는 ref (sendMessage 클로저에서 읽음)
   const currentGuiContextRef = useRef(null)
@@ -341,6 +371,33 @@ export default function App() {
     }).catch(() => {})
   }, [sessionId])
 
+  // ── 메신저 메시지 라우터 (refs 기반 — SSE 클로저 안전) ──
+  const appendToActiveStore = useCallback((msg) => {
+    const aid = activeAccountIdRef.current
+    const s = screenRef.current
+    if (s === 'room' && aid) {
+      setRoomMessages((prev) => ({
+        ...prev,
+        [aid]: [...(prev[aid] || []), msg],
+      }))
+    } else {
+      setMessages((prev) => [...prev, msg])
+    }
+  }, [])
+
+  const updateInActiveStore = useCallback((id, updater) => {
+    const aid = activeAccountIdRef.current
+    const s = screenRef.current
+    if (s === 'room' && aid) {
+      setRoomMessages((prev) => ({
+        ...prev,
+        [aid]: (prev[aid] || []).map((m) => m.id === id ? updater(m) : m),
+      }))
+    } else {
+      setMessages((prev) => prev.map((m) => m.id === id ? updater(m) : m))
+    }
+  }, [])
+
   // 메시지 전송 (guiContext: undefined = ref 값 사용, null = 명시적 없음, object = override)
   const sendMessage = useCallback(async (text, guiScope = null, guiContext = undefined) => {
     const msg = text.trim()
@@ -353,17 +410,11 @@ export default function App() {
     setIsLoading(true)
     setLeavingEmpty(true)
 
-    setMessages((prev) => [
-      ...prev,
-      { id: 'user_' + Date.now(), role: 'user', type: 'text', text: msg, guiScope },
-    ])
+    appendToActiveStore({ id: 'user_' + Date.now(), role: 'user', type: 'text', text: msg, guiScope })
 
     const assistantId = 'assistant_' + Date.now()
     streamingIdRef.current = assistantId
-    setMessages((prev) => [
-      ...prev,
-      { id: assistantId, role: 'assistant', type: 'text', text: '', streaming: true, guiScope },
-    ])
+    appendToActiveStore({ id: assistantId, role: 'assistant', type: 'text', text: '', streaming: true, guiScope })
 
     let finalText = ''
 
@@ -398,18 +449,9 @@ export default function App() {
 
             if (data.type === 'text') {
               finalText += data.delta
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantId
-                    ? { ...m, text: m.text + data.delta }
-                    : m
-                )
-              )
+              updateInActiveStore(assistantId, (m) => ({ ...m, text: m.text + data.delta }))
             } else if (data.type === 'ui_card') {
-              setMessages((prev) => [
-                ...prev,
-                { id: 'card_' + Date.now() + Math.random(), type: 'ui_card', cardType: data.cardType, data: data.data, guiScope: currentGuiScopeRef.current },
-              ])
+              appendToActiveStore({ id: 'card_' + Date.now() + Math.random(), type: 'ui_card', cardType: data.cardType, data: data.data, guiScope: currentGuiScopeRef.current })
               setLastCardType(data.cardType)
               // voiceMode Path 2: ui_card 수신 시 요약 TTS
               if (voiceModeRef.current) {
@@ -427,11 +469,7 @@ export default function App() {
                 }
               }
             } else if (data.type === 'done') {
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantId ? { ...m, streaming: false } : m
-                )
-              )
+              updateInActiveStore(assistantId, (m) => ({ ...m, streaming: false }))
               // voiceMode Path 1 억제: ui_card TTS(Path 2)와 충돌 방지
               if (voiceModeRef.current) {
                 // voiceMode에서는 Path 2(ui_card TTS)만 사용
@@ -440,30 +478,22 @@ export default function App() {
                 speakKorean(finalText)
               }
             } else if (data.type === 'error') {
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantId
-                    ? { ...m, text: '오류가 발생했습니다. 다시 시도해주세요.', streaming: false, isError: true, failedMsg: msg }
-                    : m
-                )
-              )
+              updateInActiveStore(assistantId, (m) => ({
+                ...m, text: '오류가 발생했습니다. 다시 시도해주세요.', streaming: false, isError: true, failedMsg: msg,
+              }))
             }
           } catch {}
         }
       }
     } catch {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === streamingIdRef.current
-            ? { ...m, text: '연결 오류. 서버를 확인해주세요.', streaming: false, isError: true, failedMsg: msg }
-            : m
-        )
-      )
+      updateInActiveStore(streamingIdRef.current, (m) => ({
+        ...m, text: '연결 오류. 서버를 확인해주세요.', streaming: false, isError: true, failedMsg: msg,
+      }))
     } finally {
       setIsLoading(false)
       currentGuiScopeRef.current = null
     }
-  }, [isLoading, sessionId, ttsEnabled])
+  }, [isLoading, sessionId, ttsEnabled, appendToActiveStore, updateInActiveStore])
 
   // Model C: 카드별 quickAction — overrideContext가 있으면 guiContext ref도 갱신
   const handleQuickAction = useCallback((text, overrideContext) => {
@@ -558,10 +588,11 @@ export default function App() {
       body: JSON.stringify({ sessionId }),
     })
     setMessages([])
+    setRoomMessages({})
+    setRoomTransactions({})
+    setUnreadCounts({})
     setAlert(null)
-    setDemoMode(false)
     setLastCardType(null)
-    demoQueueRef.current = []
     setInsightsLoading(true)
     setInsightsError(false)
     setProactiveInsights([])
@@ -570,6 +601,61 @@ export default function App() {
       .then((d) => { if (Array.isArray(d.insights)) setProactiveInsights(d.insights) })
       .catch(() => setInsightsError(true))
       .finally(() => setInsightsLoading(false))
+    fetchAccountList()
+  }
+
+  // ── 계좌 목록 로드 ──
+  const fetchAccountList = useCallback(() => {
+    setIsAccountsLoading(true)
+    fetch(`${API_BASE}/api/accounts?sessionId=${sessionId}`)
+      .then((r) => r.json())
+      .then((d) => { if (Array.isArray(d.accounts)) setAccountList(d.accounts) })
+      .catch(() => {})
+      .finally(() => setIsAccountsLoading(false))
+  }, [sessionId])
+
+  // 앱 시작 시 계좌 목록 로드
+  useEffect(() => { fetchAccountList() }, [fetchAccountList])
+
+  // ── 방 입장 / 퇴장 ──
+  function enterRoom(accountId) {
+    const acc = accountList.find((a) => a.id === accountId)
+    if (!acc) return
+
+    // guiContext 자동 주입
+    const totalBalance = accountList.reduce((s, a) => s + a.balance, 0)
+    currentGuiContextRef.current = {
+      view: 'account_room',
+      accountId: acc.id,
+      accountName: acc.name,
+      accountType: acc.type,
+      balance: acc.balance,
+      totalBalance,
+    }
+
+    setActiveAccountId(accountId)
+    setScreen('room')
+    setUnreadCounts((prev) => ({ ...prev, [accountId]: 0 }))
+
+    // 거래 내역 로드 (캐시 없을 때만)
+    if (!roomTransactions[accountId]) {
+      fetch(`${API_BASE}/api/account/${accountId}?sessionId=${sessionId}`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.recentTransactions) {
+            setRoomTransactions((prev) => ({ ...prev, [accountId]: d.recentTransactions }))
+          }
+        })
+        .catch(() => {})
+    }
+  }
+
+  function exitRoom() {
+    currentGuiContextRef.current = null
+    setActiveAccountId(null)
+    setScreen('home')
+    // 방 퇴장 시 계좌 목록 갱신 (잔액 변동 반영)
+    fetchAccountList()
   }
 
   // 대화 초기화 (세션만)
@@ -580,12 +666,15 @@ export default function App() {
       body: JSON.stringify({ sessionId }),
     })
     setMessages([])
+    setRoomMessages({})
+    setRoomTransactions({})
+    setUnreadCounts({})
     setAlert(null)
-    setDemoMode(false)
     setLeavingEmpty(false)
     setLastCardType(null)
-    demoQueueRef.current = []
+    setIsAccountsLoading(true)
     if (window.speechSynthesis) window.speechSynthesis.cancel()
+    fetchAccountList()
   }
 
   const { isRecording, toggleRecording, stopRecording, error: voiceError } = useVoiceInput(
@@ -609,196 +698,63 @@ export default function App() {
     }
   }
 
-  const isEmpty = messages.length === 0
-  const healthInfo = healthScore !== null ? getHealthGrade(healthScore) : null
-
   return (
     <div className="app">
       <AnimatedBackground />
-      {/* 헤더 */}
-      <header className="header">
-        <div className="header-top">
-          <div className="header-title">
-            <img src="/imbank-mark.png" alt="iM Bank" className="header-logo" />
-            <div>
-              <div className="header-name">iM Agent</div>
-              <div className="header-subtitle">AI 금융 어시스턴트</div>
-            </div>
-          </div>
-          <div className="header-actions">
-            {/* 헬스 인덱스 */}
-            {healthInfo && (
-              <button
-                className={`health-index ${healthInfo.cls}`}
-                onClick={() => setHealthOpen((o) => !o)}
-                title="금융 건강도"
-                aria-label="금융 건강도"
-              >
-                <span className="health-score">{healthScore}</span>
-                <span className="health-label">건강도</span>
-              </button>
-            )}
-            {/* TTS 토글 */}
-            <button
-              className={`btn-tts ${ttsEnabled ? 'active' : ''}`}
-              onClick={() => {
-                const next = !ttsEnabled
-                setTtsEnabled(next)
-                if (!next && window.speechSynthesis) window.speechSynthesis.cancel()
-              }}
-              title={ttsEnabled ? 'TTS 끄기' : 'TTS 켜기'}
-              aria-label={ttsEnabled ? 'TTS 끄기' : 'TTS 켜기'}
-            >
-              {ttsEnabled ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-                </svg>
-              ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" opacity="0.5">
-                  <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
-                </svg>
-              )}
-            </button>
-            <button className="btn-icon" onClick={handleReset} title="대화 초기화" aria-label="대화 초기화">
-              ↺
-            </button>
-            <div className="menu-wrapper">
-              <button
-                className="btn-icon"
-                onClick={() => setMenuOpen((o) => !o)}
-                title="메뉴"
-                aria-label="메뉴"
-                aria-expanded={menuOpen}
-              >
-                ⋯
-              </button>
-              {menuOpen && (
-                <div className="dropdown-menu">
-                  <button className="dropdown-item" onClick={startDemo}>
-                    ▷ 자동실행
-                  </button>
-                  <button className="dropdown-item" onClick={startVoiceDemo}>
-                    ◎ 음성 데모
-                  </button>
-                  <button className="dropdown-item" onClick={handleResetMock}>
-                    ⟳ 리셋
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-        {/* 입출금 알림 오버레이 */}
-        {txNotif && (
-          <div className={`tx-notif-wrap${txNotifVisible ? ' visible' : ''}`}>
-            <div className={`tx-notif-inner ${txNotif.isIncome ? 'income' : 'expense'}`}>
-              <span className={`tx-notif-badge ${txNotif.isIncome ? 'income' : 'expense'}`}>
-                {txNotif.isIncome ? '입금' : '출금'}
-              </span>
-              <span className="tx-notif-counterpart">{txNotif.counterpart}</span>
-              <span className={`tx-notif-amount ${txNotif.isIncome ? 'income' : 'expense'}`}>
-                {txNotif.amountFormatted}
-              </span>
-              {txNotif.aiComment && (
-                <span className="tx-notif-comment">{txNotif.aiComment}</span>
-              )}
-            </div>
-          </div>
-        )}
-        {/* 금융 팁 배너 */}
-        <DrawerBanner />
-      </header>
 
-      {/* 메시지 영역 */}
-      <div className="messages" ref={messagesContainerRef} role="log" aria-live="polite" aria-label="대화 내역">
-        <div className="messages-inner">
-
-        {isEmpty ? (
-          <div className={`empty-state${leavingEmpty ? ' leaving' : ''}`}>
-            <div className="empty-icon">
-              <img src="/imbank-mark.png" alt="iM Bank" style={{ width: 48, height: 48, objectFit: 'contain' }} />
-            </div>
-            <div className="empty-title">무엇을 도와드릴까요?</div>
-            <div className="empty-desc">
-              아래 항목을 탭하거나 직접 입력하세요.
-            </div>
-
-            <div className="quick-categories">
-              {QUICK_CATEGORIES.map((cat) => (
-                <div key={cat.label} className="quick-category">
-                  <div className="quick-category-label">{cat.label}</div>
-                  <div className="quick-category-items">
-                    {cat.items.map((p) => (
-                      <button key={p} className="quick-btn" onClick={() => sendMessage(p)}>
-                        {p}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {insightsError && (
-              <div className="insights-error">AI 인사이트를 불러올 수 없습니다.</div>
-            )}
-            {!insightsLoading && !insightsError && proactiveInsights.map((insight, i) => (
-              <div key={i} className="message assistant" style={{ alignSelf: 'flex-start', width: '100%' }}>
-                <div className="message-avatar">
-                  <img src="/imbank-mark.png" alt="iM" />
-                </div>
-                <div className="message-bubble">{insight}</div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <>
-            {messages.map((msg) => (
-              <Message
-                key={msg.id}
-                msg={msg}
-                sessionId={sessionId}
-                onQuickAction={handleQuickAction}
-                onTransferDone={() => {}}
-                onClearScope={removeGuiScope}
-                onGuiContextChange={(ctx) => { currentGuiContextRef.current = ctx }}
-                voiceMode={voiceMode}
-              />
-            ))}
-            {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
-              <div className="typing-indicator">
-                <div className="message-avatar" style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--accent-dim)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden', padding: 4 }}>
-                  <img src="/imbank-mark.png" alt="iM Bank" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                </div>
-                <div className="typing-dots">
-                  <span /><span /><span />
-                </div>
-              </div>
-            )}
-          </>
-        )}
-        <div ref={messagesEndRef} />
-        </div>
-      </div>
-
-      {voiceError && (
-        <div style={{ padding: '6px 16px', fontSize: 12, color: 'var(--error)', background: 'var(--error-dim)' }}>
-          {voiceError}
-        </div>
+      {screen === 'room' ? (
+        <AccountRoom
+          account={accountList.find((a) => a.id === activeAccountId)}
+          transactions={roomTransactions[activeAccountId] || []}
+          messages={roomMessages[activeAccountId] || []}
+          isLoading={isLoading}
+          isLoadingTxs={roomTransactions[activeAccountId] === undefined}
+          sessionId={sessionId}
+          voiceMode={voiceMode}
+          onBack={exitRoom}
+          onSendMessage={(text) => sendMessage(text)}
+          onTransferDone={() => {}}
+          onMarkRead={() => setUnreadCounts((prev) => ({ ...prev, [activeAccountId]: 0 }))}
+        />
+      ) : (
+        <AccountListScreen
+          accounts={accountList}
+          unreadCounts={unreadCounts}
+          isLoading={isAccountsLoading}
+          ttsEnabled={ttsEnabled}
+          onEnterRoom={enterRoom}
+          onTtsToggle={() => setTtsEnabled((t) => !t)}
+          onReset={handleResetMock}
+        />
       )}
 
-      {/* 컨텍스트 퀵 숏컷 */}
-      {!isEmpty && (
-        <div className="quick-shortcuts">
-          {currentShortcuts.map((s) => (
-            <button
-              key={s.label}
-              className="qs-btn"
-              onClick={() => sendMessage(s.msg)}
-              disabled={isLoading || demoMode}
-            >
-              {s.label}
-            </button>
-          ))}
+      {/* 입출금 알림 오버레이 */}
+      {txNotif && (
+        <div
+          className={`tx-notif-wrap${txNotifVisible ? ' visible' : ''}`}
+          onClick={() => {
+            if (txNotif.accountId) {
+              txNotifTimersRef.current.forEach(clearTimeout)
+              txNotifTimersRef.current = []
+              setTxNotifVisible(false)
+              setTxNotif(null)
+              enterRoom(txNotif.accountId)
+            }
+          }}
+          style={{ cursor: txNotif.accountId ? 'pointer' : 'default' }}
+        >
+          <div className={`tx-notif-inner ${txNotif.isIncome ? 'income' : 'expense'}`}>
+            <span className={`tx-notif-badge ${txNotif.isIncome ? 'income' : 'expense'}`}>
+              {txNotif.isIncome ? '입금' : '출금'}
+            </span>
+            <span className="tx-notif-counterpart">{txNotif.counterpart}</span>
+            <span className={`tx-notif-amount ${txNotif.isIncome ? 'income' : 'expense'}`}>
+              {txNotif.amountFormatted}
+            </span>
+            {txNotif.aiComment && (
+              <span className="tx-notif-comment">{txNotif.aiComment}</span>
+            )}
+          </div>
         </div>
       )}
 
@@ -816,61 +772,7 @@ export default function App() {
           onMicTap={toggleRecording}
         />
       )}
-
-      {/* 입력 영역 */}
-      <div className="input-area">
-        <div className={`input-wrapper${isRecording ? ' is-recording' : ''}`}>
-          <textarea
-            ref={textareaRef}
-            className="input-text"
-            rows={1}
-            value={input}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder={isRecording ? '말씀하세요...' : '메시지를 입력하세요'}
-            disabled={isLoading || isRecording || demoMode}
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck={false}
-            inputMode="text"
-          />
-          <div className="input-actions">
-            <button
-              className={`btn-mic ${isRecording ? 'recording' : ''}`}
-              onClick={toggleRecording}
-              title={isRecording ? '녹음 중지' : '음성 입력'}
-              aria-label={isRecording ? '녹음 중지' : '음성 입력'}
-              disabled={demoMode}
-            >
-              {isRecording ? (
-                <svg className="mic-wave" width="18" height="18" viewBox="0 0 20 18" fill="currentColor">
-                  <rect className="wave-bar" x="0"  y="5"  width="3" height="8"  rx="1.5"/>
-                  <rect className="wave-bar" x="4.5" y="2" width="3" height="14" rx="1.5"/>
-                  <rect className="wave-bar" x="9"  y="4"  width="3" height="10" rx="1.5"/>
-                  <rect className="wave-bar" x="13.5" y="1" width="3" height="16" rx="1.5"/>
-                  <rect className="wave-bar" x="18" y="5"  width="2" height="8"  rx="1"/>
-                </svg>
-              ) : (
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                  <line x1="12" y1="19" x2="12" y2="23"/>
-                  <line x1="8"  y1="23" x2="16" y2="23"/>
-                </svg>
-              )}
-            </button>
-            <button
-              className="btn-send"
-              onClick={() => sendMessage(input)}
-              disabled={!input.trim() || isLoading || demoMode}
-              title="전송"
-              aria-label="전송"
-            >
-              ↑
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
+
