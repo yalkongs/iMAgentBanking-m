@@ -291,6 +291,34 @@ export default function App() {
       .catch(() => {})
   }, [])
 
+  // ── 메신저 메시지 라우터 (refs 기반 — SSE 클로저 안전) ──
+  // useWebSocket dependency array보다 먼저 선언해야 TDZ 방지
+  const appendToActiveStore = useCallback((msg) => {
+    const aid = activeAccountIdRef.current
+    const s = screenRef.current
+    if (s === 'room' && aid) {
+      setRoomMessages((prev) => ({
+        ...prev,
+        [aid]: [...(prev[aid] || []), msg],
+      }))
+    } else {
+      setMessages((prev) => [...prev, msg])
+    }
+  }, [])
+
+  const updateInActiveStore = useCallback((id, updater) => {
+    const aid = activeAccountIdRef.current
+    const s = screenRef.current
+    if (s === 'room' && aid) {
+      setRoomMessages((prev) => ({
+        ...prev,
+        [aid]: (prev[aid] || []).map((m) => m.id === id ? updater(m) : m),
+      }))
+    } else {
+      setMessages((prev) => prev.map((m) => m.id === id ? updater(m) : m))
+    }
+  }, [])
+
   // WebSocket — 이벤트 처리
   useWebSocket(sessionId, useCallback((event) => {
     if (event.type === 'PENDING_TRANSFER') {
@@ -370,33 +398,6 @@ export default function App() {
       body: JSON.stringify({ sessionId, guiScope: scopeId }),
     }).catch(() => {})
   }, [sessionId])
-
-  // ── 메신저 메시지 라우터 (refs 기반 — SSE 클로저 안전) ──
-  const appendToActiveStore = useCallback((msg) => {
-    const aid = activeAccountIdRef.current
-    const s = screenRef.current
-    if (s === 'room' && aid) {
-      setRoomMessages((prev) => ({
-        ...prev,
-        [aid]: [...(prev[aid] || []), msg],
-      }))
-    } else {
-      setMessages((prev) => [...prev, msg])
-    }
-  }, [])
-
-  const updateInActiveStore = useCallback((id, updater) => {
-    const aid = activeAccountIdRef.current
-    const s = screenRef.current
-    if (s === 'room' && aid) {
-      setRoomMessages((prev) => ({
-        ...prev,
-        [aid]: (prev[aid] || []).map((m) => m.id === id ? updater(m) : m),
-      }))
-    } else {
-      setMessages((prev) => prev.map((m) => m.id === id ? updater(m) : m))
-    }
-  }, [])
 
   // 메시지 전송 (guiContext: undefined = ref 값 사용, null = 명시적 없음, object = override)
   const sendMessage = useCallback(async (text, guiScope = null, guiContext = undefined) => {
