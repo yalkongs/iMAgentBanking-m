@@ -3,48 +3,52 @@ import { useState, useRef, useEffect } from 'react'
 const ICONS = {
   checking: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-      <line x1="1" y1="10" x2="23" y2="10"/>
+      <path d="M8 5L3 10l5 5"/><line x1="3" y1="10" x2="21" y2="10"/>
+      <path d="M16 19l5-5-5-5"/><line x1="21" y1="14" x2="3" y2="14"/>
     </svg>
   ),
   installment_savings: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="11" r="6"/>
-      <path d="M12 17v2M9 20h6"/>
-      <path d="M15 11a3 3 0 0 0-6 0"/>
-      <line x1="16" y1="9" x2="18" y2="9"/>
+      <ellipse cx="12" cy="17" rx="7" ry="3"/>
+      <path d="M5 17v-3M19 17v-3"/>
+      <ellipse cx="12" cy="14" rx="7" ry="3"/>
+      <path d="M12 11V5"/><path d="M9 8l3-3 3 3"/>
     </svg>
   ),
   term_deposit: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-      <polyline points="17 6 23 6 23 12"/>
+      <rect x="5" y="11" width="14" height="10" rx="2"/>
+      <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+      <circle cx="12" cy="16" r="1.5" fill="white"/>
     </svg>
   ),
   savings: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      <path d="M23 12a11.05 11.05 0 0 0-22 0z"/>
+      <path d="M12 12v7a2 2 0 0 0 4 0"/>
     </svg>
   ),
   cma: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"/>
-      <path d="M12 2v10l6 3"/>
+      <line x1="3" y1="20" x2="21" y2="20"/>
+      <rect x="4" y="14" width="4" height="6" rx="1" fill="white" fillOpacity="0.3"/>
+      <rect x="10" y="8" width="4" height="12" rx="1" fill="white" fillOpacity="0.3"/>
+      <rect x="16" y="4" width="4" height="16" rx="1" fill="white" fillOpacity="0.3"/>
     </svg>
   ),
   debit_card: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-      <line x1="1" y1="10" x2="23" y2="10"/>
-      <line x1="5" y1="15" x2="9" y2="15"/>
-      <line x1="12" y1="15" x2="15" y2="15"/>
+      <rect x="2" y="5" width="20" height="14" rx="2"/>
+      <rect x="6" y="9" width="4" height="4" rx="1"/>
+      <line x1="2" y1="11" x2="6" y2="11"/>
+      <line x1="14" y1="15" x2="19" y2="15"/>
     </svg>
   ),
   credit_card: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-      <line x1="1" y1="10" x2="23" y2="10"/>
-      <circle cx="18" cy="15" r="2"/>
+      <rect x="2" y="5" width="20" height="14" rx="2"/>
+      <line x1="2" y1="10" x2="22" y2="10"/>
+      <path d="M15 15l.8 2 1.7-2.5-2.5.8.8-1.7-.8 1.7-2.5-.8 1.7 2.5.8-2z" fill="white" stroke="none"/>
     </svg>
   ),
 }
@@ -239,7 +243,7 @@ export default function AccountListScreen({
                       <span className="account-list-name">{acc.name}</span>
                       <span className="account-list-balance">
                         {acc.isPromo ? (
-                          <span className="balance-promo-badge">미발급</span>
+                          <span className="balance-promo-badge">발급 가능</span>
                         ) : acc.type === 'debit_card' ? (
                           <BalanceDisplay value={acc.balance} animate={shouldAnimate} prefix="이번달 " suffix="원 사용" />
                         ) : (
@@ -250,7 +254,7 @@ export default function AccountListScreen({
                     <div className="account-list-item-bottom">
                       <span className="account-list-preview">
                         {isPromo
-                          ? 'iM뱅크 신용카드 혜택 알아보기'
+                          ? '혜택을 가져가세요 →'
                           : last
                           ? `${last.counterpart} ${last.amountFormatted}`
                           : cfg.label}
@@ -261,9 +265,9 @@ export default function AccountListScreen({
                     </div>
                   </div>
 
-                  {unread > 0 && (
-                    <div className="unread-badge">{unread}</div>
-                  )}
+                  <div className="unread-badge-slot">
+                    {unread > 0 && <div className="unread-badge">{unread}</div>}
+                  </div>
                 </button>
               )
             })}

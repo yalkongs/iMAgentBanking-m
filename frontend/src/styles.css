@@ -3617,6 +3617,15 @@ input:focus-visible, textarea:focus-visible {
   margin-left: 8px;
 }
 
+/* unread-badge-slot: 항상 같은 폭 예약 → balance 우측 정렬 통일 */
+.unread-badge-slot {
+  width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
 .unread-badge {
   min-width: 20px;
   height: 20px;
@@ -4513,12 +4522,12 @@ input:focus-visible, textarea:focus-visible {
 .balance-promo-badge {
   display: inline-block;
   padding: 2px 8px;
-  background: rgba(107, 114, 128, 0.15);
-  border: 1px solid rgba(107, 114, 128, 0.3);
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
   border-radius: 99px;
   font-size: 11px;
-  color: var(--text-muted);
-  font-weight: 500;
+  color: #10B981;
+  font-weight: 600;
 }
 
 /* ──────────────────────────────────────────────
@@ -4608,4 +4617,218 @@ input:focus-visible, textarea:focus-visible {
 
 .txlist-promo-cta:active {
   opacity: 0.8;
+}
+
+/* ──────────────────────────────────────────────
+   txlist-promo 개선 (warm hooking)
+   ────────────────────────────────────────────── */
+.txlist-promo {
+  padding: 40px 24px;
+}
+
+.txlist-promo-card-visual {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: var(--bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  color: var(--text-secondary);
+}
+
+.txlist-promo-headline {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 6px;
+  letter-spacing: -0.5px;
+}
+
+.txlist-promo-tagline {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.txlist-promo-benefits {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 28px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.txlist-promo-benefit {
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding-left: 12px;
+  position: relative;
+}
+
+.txlist-promo-benefit::before {
+  content: '·';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* ──────────────────────────────────────────────
+   promo-banner 개선
+   ────────────────────────────────────────────── */
+.promo-banner {
+  margin: 12px 12px 4px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(107,114,128,0.08) 0%, rgba(107,114,128,0.04) 100%);
+  border: 1px solid rgba(107,114,128,0.18);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.promo-banner-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #10B981;
+  background: rgba(16, 185, 129, 0.12);
+  border-radius: 99px;
+  padding: 2px 8px;
+  width: fit-content;
+  letter-spacing: 0.3px;
+  margin-bottom: 2px;
+}
+
+.promo-banner-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.promo-banner-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ──────────────────────────────────────────────
+   SavingsLifeCard — 예금/적금 살아있는 진행 카드
+   ────────────────────────────────────────────── */
+@keyframes savings-breathe {
+  0%, 100% { transform: scale(0.88); opacity: 0.07; }
+  50%       { transform: scale(1.06); opacity: 0.18; }
+}
+
+@keyframes savings-interest-tick {
+  0%, 90% { opacity: 1; }
+  95%      { opacity: 0.3; }
+  100%     { opacity: 1; }
+}
+
+.savings-life-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 12px 12px 8px;
+  padding: 16px;
+  background: color-mix(in srgb, var(--slc, #10B981) 6%, var(--bg-secondary));
+  border: 1px solid color-mix(in srgb, var(--slc, #10B981) 20%, transparent);
+  border-radius: 18px;
+}
+
+.savings-life-egg-wrap {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  flex-shrink: 0;
+}
+
+.savings-life-glow {
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--slc, #10B981) 0%, transparent 70%);
+  transform-origin: center;
+  animation: savings-breathe 3.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.savings-life-svg {
+  position: relative;
+  z-index: 1;
+}
+
+.savings-life-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.savings-life-type {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--slc, #10B981);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 8px;
+}
+
+.savings-life-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.savings-life-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.savings-life-val {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.savings-life-interest {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--slc, #10B981);
+  animation: savings-interest-tick 8s ease-in-out infinite;
+}
+
+.savings-life-progress {
+  height: 4px;
+  background: rgba(128, 128, 128, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 8px 0 4px;
+}
+
+.savings-life-fill {
+  height: 100%;
+  background: var(--slc, #10B981);
+  border-radius: 2px;
+  transition: width 1.2s ease;
+}
+
+.savings-life-dates {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.savings-life-pct {
+  font-weight: 700;
+  color: var(--slc, #10B981);
 }

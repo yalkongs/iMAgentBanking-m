@@ -664,15 +664,37 @@ app.get('/api/accounts', (req, res) => {
       balanceFormatted = `이번달 ${displayBalance.toLocaleString('ko-KR')}원 사용`
     } else if (acc.isPromo) {
       displayBalance = 0
-      balanceFormatted = '미발급'
+      balanceFormatted = '발급 가능'
     } else {
       balanceFormatted = acc.balance.toLocaleString('ko-KR') + '원'
+    }
+
+    // 예금/적금: 만기 진행률 + 누적이자 계산
+    let maturityInfo = null
+    if (acc.openDate && acc.maturityDate) {
+      const start = new Date(acc.openDate).getTime()
+      const end = new Date(acc.maturityDate).getTime()
+      const nowMs = now.getTime()
+      const totalMs = end - start
+      const elapsedMs = Math.max(0, Math.min(nowMs - start, totalMs))
+      const progressRatio = Math.max(0, Math.min(1, elapsedMs / totalMs))
+      const daysRemaining = Math.max(0, Math.ceil((end - nowMs) / 86400000))
+      const elapsedDays = Math.ceil(elapsedMs / 86400000)
+      let accruedInterest = 0
+      if (acc.type === 'term_deposit') {
+        accruedInterest = Math.round(acc.balance * (acc.interestRate / 100) * (elapsedDays / 365))
+      } else if (acc.type === 'installment_savings') {
+        // 적금 단리 근사: 평균 예치 잔액 기준
+        accruedInterest = Math.round(acc.balance * (acc.interestRate / 100) * (elapsedDays / 365) * 0.55)
+      }
+      maturityInfo = { progressRatio, daysRemaining, accruedInterest }
     }
 
     return {
       ...acc,
       balance: displayBalance,
       balanceFormatted,
+      ...(maturityInfo || {}),
       lastTransaction: lastTx
         ? {
             counterpart: lastTx.counterpart,
