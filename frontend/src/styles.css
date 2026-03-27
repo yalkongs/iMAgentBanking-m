@@ -4493,3 +4493,119 @@ input:focus-visible, textarea:focus-visible {
   white-space: nowrap;
   flex-shrink: 0;
 }
+
+/* ──────────────────────────────────────────────
+   잔액 카운트업 애니메이션
+   ────────────────────────────────────────────── */
+.balance-counter {
+  display: inline-block;
+}
+
+@keyframes balance-blur-in {
+  0%   { filter: blur(4px); opacity: 0.3; }
+  100% { filter: none;       opacity: 1; }
+}
+
+.balance-counter.counting {
+  animation: balance-blur-in 0.75s ease-out forwards;
+}
+
+.balance-promo-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(107, 114, 128, 0.15);
+  border: 1px solid rgba(107, 114, 128, 0.3);
+  border-radius: 99px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* ──────────────────────────────────────────────
+   프로모 계좌 목록 아이템
+   ────────────────────────────────────────────── */
+.account-list-item--promo {
+  opacity: 0.75;
+}
+
+.account-list-item--promo:active {
+  opacity: 0.6;
+}
+
+/* ──────────────────────────────────────────────
+   신용카드 프로모 채팅방 배너
+   ────────────────────────────────────────────── */
+.promo-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(107, 114, 128, 0.08);
+  border: 1px solid rgba(107, 114, 128, 0.2);
+  border-radius: 12px;
+  margin: 0 0 8px;
+}
+
+.promo-banner-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(107, 114, 128, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.promo-banner-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+
+.promo-banner-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ──────────────────────────────────────────────
+   거래내역 탭 — 프로모 상태
+   ────────────────────────────────────────────── */
+.txlist-promo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+  flex: 1;
+  text-align: center;
+}
+
+.txlist-promo-icon {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.txlist-promo-text {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.txlist-promo-cta {
+  padding: 10px 24px;
+  background: var(--accent);
+  color: #000;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s;
+}
+
+.txlist-promo-cta:active {
+  opacity: 0.8;
+}

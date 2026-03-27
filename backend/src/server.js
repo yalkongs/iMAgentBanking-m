@@ -646,19 +646,38 @@ app.get('/api/accounts', (req, res) => {
   const session = getSession(sessionId)
   const ctx = getSessionCtx(session)
 
+  const now = new Date()
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+
   const result = ctx.accounts.map((acc) => {
     const lastTx = ctx.transactions
       .filter((t) => t.accountId === acc.id)
       .sort((a, b) => b.date.localeCompare(a.date))[0] || null
 
+    // debit_card: balance = 이번달 사용 금액 (절댓값)
+    let displayBalance = acc.balance
+    let balanceFormatted
+    if (acc.type === 'debit_card') {
+      displayBalance = Math.abs(ctx.transactions
+        .filter((t) => t.accountId === acc.id && t.date >= thisMonthStart && t.amount < 0)
+        .reduce((sum, t) => sum + t.amount, 0))
+      balanceFormatted = `이번달 ${displayBalance.toLocaleString('ko-KR')}원 사용`
+    } else if (acc.isPromo) {
+      displayBalance = 0
+      balanceFormatted = '미발급'
+    } else {
+      balanceFormatted = acc.balance.toLocaleString('ko-KR') + '원'
+    }
+
     return {
       ...acc,
-      balanceFormatted: acc.balance.toLocaleString('ko-KR') + '원',
+      balance: displayBalance,
+      balanceFormatted,
       lastTransaction: lastTx
         ? {
             counterpart: lastTx.counterpart,
             amount: lastTx.amount,
-            amountFormatted: (lastTx.amount > 0 ? '+' : '') + lastTx.amount.toLocaleString('ko-KR') + '원',
+            amountFormatted: (lastTx.amount > 0 ? '+' : '') + Math.abs(lastTx.amount).toLocaleString('ko-KR') + '원',
             date: lastTx.date,
             isIncome: lastTx.amount > 0,
           }
@@ -749,6 +768,8 @@ const ROOM_GREETING_PROMPTS = {
   term_deposit:        '정기예금 계좌 담당 AI로서 예금 만기/금리 관련해 신중하게 말을 걸어라. 1-2문장. 이모지 금지. 격식체.',
   savings:             '비상금 계좌 담당 AI로서 비상금 현황과 관련해 안심시키며 말을 걸어라. 1-2문장. 이모지 금지. 격식체.',
   cma:                 'CMA 계좌 담당 AI로서 수익률/운용 현황과 관련해 분석적으로 말을 걸어라. 1-2문장. 이모지 금지. 격식체.',
+  debit_card:          'iM 체크카드 담당 AI로서 최근 카드 사용 패턴(카페·쇼핑·식비 지출 등)을 바탕으로 소비 현황을 짧게 언급하며 먼저 말을 걸어라. 1-2문장. 이모지 금지. 격식체.',
+  credit_card:         'iM 신용카드 상품 안내 AI로서, 아직 신용카드가 없는 고객에게 iM 신용카드의 대표 혜택(적립·캐시백·할인)과 간단한 발급 방법을 친근하게 안내하라. 2-3문장. 이모지 금지. 격식체.',
 }
 
 app.post('/api/room-greeting', async (req, res) => {

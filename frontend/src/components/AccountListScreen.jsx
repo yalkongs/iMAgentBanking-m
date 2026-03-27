@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 const ICONS = {
   checking: (
@@ -32,6 +32,21 @@ const ICONS = {
       <path d="M12 2v10l6 3"/>
     </svg>
   ),
+  debit_card: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+      <line x1="1" y1="10" x2="23" y2="10"/>
+      <line x1="5" y1="15" x2="9" y2="15"/>
+      <line x1="12" y1="15" x2="15" y2="15"/>
+    </svg>
+  ),
+  credit_card: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+      <line x1="1" y1="10" x2="23" y2="10"/>
+      <circle cx="18" cy="15" r="2"/>
+    </svg>
+  ),
 }
 
 const TYPE_CONFIG = {
@@ -40,6 +55,8 @@ const TYPE_CONFIG = {
   term_deposit:        { color: '#8B5CF6', label: '정기예금' },
   savings:             { color: '#F59E0B', label: '비상금' },
   cma:                 { color: '#EF4444', label: 'CMA' },
+  debit_card:          { color: '#0EA5E9', label: '체크카드' },
+  credit_card:         { color: '#6B7280', label: '신용카드' },
 }
 
 function formatDateShort(dateStr) {
@@ -96,6 +113,37 @@ const PRODUCT_SUGGESTIONS = {
   },
 }
 
+function BalanceDisplay({ value, animate, prefix, suffix }) {
+  const [current, setCurrent] = useState(0)
+  const startedRef = useRef(false)
+  const rafRef = useRef(null)
+
+  useEffect(() => {
+    if (!animate || startedRef.current) {
+      setCurrent(value)
+      return
+    }
+    startedRef.current = true
+    const start = performance.now()
+    const DURATION = 750
+
+    const tick = (now) => {
+      const t = Math.min((now - start) / DURATION, 1)
+      const eased = 1 - Math.pow(1 - t, 3)
+      setCurrent(Math.round(value * eased))
+      if (t < 1) {
+        rafRef.current = requestAnimationFrame(tick)
+      }
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+  }, [animate, value])
+
+  const pref = prefix || ''
+  const suf = suffix || '원'
+  return <span className={`balance-counter${animate && !startedRef.current ? ' counting' : ''}`}>{pref}{current.toLocaleString('ko-KR')}{suf}</span>
+}
+
 export default function AccountListScreen({
   accounts,
   unreadCounts,
@@ -108,6 +156,13 @@ export default function AccountListScreen({
   onProductSuggest,
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [shouldAnimate, setShouldAnimate] = useState(false)
+
+  useEffect(() => {
+    if (!isLoading && accounts.length > 0 && !shouldAnimate) {
+      setShouldAnimate(true)
+    }
+  }, [isLoading, accounts.length])
 
   // 미보유 상품 타입 (계좌가 4개 미만일 때 표시)
   const ownedTypes = new Set(accounts.map((a) => a.type))
@@ -164,16 +219,17 @@ export default function AccountListScreen({
               const cfg = TYPE_CONFIG[acc.type] || { color: '#6B7280', label: acc.type }
               const unread = unreadCounts?.[acc.id] || 0
               const last = acc.lastTransaction
+              const isPromo = acc.isPromo === true
 
               return (
                 <button
                   key={acc.id}
-                  className="account-list-item"
+                  className={`account-list-item${isPromo ? ' account-list-item--promo' : ''}`}
                   onClick={() => onEnterRoom(acc.id)}
                 >
                   <div
                     className="account-avatar"
-                    style={{ background: cfg.color }}
+                    style={{ background: cfg.color, opacity: isPromo ? 0.5 : 1 }}
                   >
                     {ICONS[acc.type] || ICONS.checking}
                   </div>
@@ -181,11 +237,21 @@ export default function AccountListScreen({
                   <div className="account-list-item-body">
                     <div className="account-list-item-top">
                       <span className="account-list-name">{acc.name}</span>
-                      <span className="account-list-balance">{acc.balanceFormatted}</span>
+                      <span className="account-list-balance">
+                        {acc.isPromo ? (
+                          <span className="balance-promo-badge">미발급</span>
+                        ) : acc.type === 'debit_card' ? (
+                          <BalanceDisplay value={acc.balance} animate={shouldAnimate} prefix="이번달 " suffix="원 사용" />
+                        ) : (
+                          <BalanceDisplay value={acc.balance} animate={shouldAnimate} />
+                        )}
+                      </span>
                     </div>
                     <div className="account-list-item-bottom">
                       <span className="account-list-preview">
-                        {last
+                        {isPromo
+                          ? 'iM뱅크 신용카드 혜택 알아보기'
+                          : last
                           ? `${last.counterpart} ${last.amountFormatted}`
                           : cfg.label}
                       </span>

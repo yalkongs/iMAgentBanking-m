@@ -188,7 +188,7 @@ export default function App() {
   const [roomTransactions, setRoomTransactions] = useState({})
   const [roomMessages, setRoomMessages] = useState({})   // { [accountId]: Message[] }
   const [roomTxMeta, setRoomTxMeta] = useState({})       // { [accountId]: { page, hasMore, isLoadingMore } }
-  const [unreadCounts, setUnreadCounts] = useState({})   // { [accountId]: number }
+  const [unreadCounts, setUnreadCounts] = useState({ 'acc001': 3 })   // { [accountId]: number }
 
   const messagesEndRef = useRef(null)
   const messagesContainerRef = useRef(null)
@@ -608,7 +608,7 @@ export default function App() {
     setRoomMessages({})
     setRoomTransactions({})
     setRoomTxMeta({})
-    setUnreadCounts({})
+    setUnreadCounts({ 'acc001': 3 })
     setAlert(null)
     setLastCardType(null)
     setInsightsLoading(true)
@@ -798,7 +798,7 @@ export default function App() {
     setRoomMessages({})
     setRoomTransactions({})
     setRoomTxMeta({})
-    setUnreadCounts({})
+    setUnreadCounts({ 'acc001': 3 })
     setAlert(null)
     setLeavingEmpty(false)
     setLastCardType(null)

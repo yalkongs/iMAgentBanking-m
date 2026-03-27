@@ -53,6 +53,21 @@ const ICONS = {
       <path d="M12 2v10l6 3"/>
     </svg>
   ),
+  debit_card: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+      <line x1="1" y1="10" x2="23" y2="10"/>
+      <line x1="5" y1="15" x2="9" y2="15"/>
+      <line x1="12" y1="15" x2="15" y2="15"/>
+    </svg>
+  ),
+  credit_card: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+      <line x1="1" y1="10" x2="23" y2="10"/>
+      <circle cx="18" cy="15" r="2"/>
+    </svg>
+  ),
 }
 
 const TYPE_CONFIG = {
@@ -61,6 +76,8 @@ const TYPE_CONFIG = {
   term_deposit:        { color: '#8B5CF6', label: '정기예금' },
   savings:             { color: '#F59E0B', label: '비상금' },
   cma:                 { color: '#EF4444', label: 'CMA' },
+  debit_card:          { color: '#0EA5E9', label: '체크카드' },
+  credit_card:         { color: '#6B7280', label: '신용카드' },
 }
 
 function TxSkeleton() {
@@ -234,7 +251,9 @@ export default function AccountRoom({
       {/* 계좌 상세 ContactCard */}
       <div className={`contact-card ${contactCardOpen ? 'open' : ''}`}>
         <div className="contact-card-row">
-          <span className="contact-card-label">잔액</span>
+          <span className="contact-card-label">
+            {account.type === 'debit_card' ? '이번달 사용' : account.isPromo ? '상태' : '잔액'}
+          </span>
           <span className="contact-card-value">{account.balanceFormatted}</span>
         </div>
         <div className="contact-card-row">
@@ -248,6 +267,12 @@ export default function AccountRoom({
           <div className="contact-card-row">
             <span className="contact-card-label">금리</span>
             <span className="contact-card-value">연 {account.interestRate}%</span>
+          </div>
+        )}
+        {account.cardNo && (
+          <div className="contact-card-row">
+            <span className="contact-card-label">카드번호</span>
+            <span className="contact-card-value">{account.cardNo}</span>
           </div>
         )}
         {account.maturityDate && (
@@ -294,6 +319,17 @@ export default function AccountRoom({
         ref={chatContainerRef}
         style={{ display: activeTab === 'chat' ? 'flex' : 'none' }}
       >
+        {account?.isPromo && (
+          <div className="promo-banner">
+            <div className="promo-banner-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/><circle cx="18" cy="15" r="2"/></svg>
+            </div>
+            <div className="promo-banner-text">
+              <div className="promo-banner-title">아직 발급되지 않은 카드입니다</div>
+              <div className="promo-banner-sub">AI에게 혜택과 발급 방법을 물어보세요</div>
+            </div>
+          </div>
+        )}
         {(messages || []).map((msg) => {
           if (msg.role === 'assistant') {
             return (
@@ -362,7 +398,20 @@ export default function AccountRoom({
         ref={txContainerRef}
         style={{ display: activeTab === 'txlist' ? 'flex' : 'none' }}
       >
-        {isLoadingTxs ? (
+        {account?.isPromo ? (
+          <div className="txlist-promo">
+            <div className="txlist-promo-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/><circle cx="18" cy="15" r="2"/></svg>
+            </div>
+            <div className="txlist-promo-text">아직 발급되지 않은 카드입니다</div>
+            <button
+              className="txlist-promo-cta"
+              onClick={() => { setActiveTab('chat'); onSendMessage('iM 신용카드 발급 신청 방법 알려줘') }}
+            >
+              발급 신청 방법 알아보기
+            </button>
+          </div>
+        ) : isLoadingTxs ? (
           <>
             <TxSkeleton />
             <TxSkeleton />
