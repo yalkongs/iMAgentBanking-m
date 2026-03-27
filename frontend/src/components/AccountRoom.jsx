@@ -173,6 +173,12 @@ function InstallmentLifeCard({ account }) {
             <span className="slc-final-label">만기 수령 예상</span>
             <span className="slc-final-val">{(principalAtMaturity + expectedInterest).toLocaleString('ko-KR')}원</span>
           </div>
+          {account.earlyWithdrawalLoss > 0 && (
+            <div className="slc-early-row">
+              <span className="slc-early-label">지금 해지하면</span>
+              <span className="slc-early-loss">-{account.earlyWithdrawalLoss.toLocaleString('ko-KR')}원 손실</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -229,17 +235,43 @@ function TermDepositLifeCard({ account }) {
             <span className="slc-final-label">만기 수령 예상</span>
             <span className="slc-final-val">{finalAmount.toLocaleString('ko-KR')}원</span>
           </div>
+          {account.earlyWithdrawalLoss > 0 && (
+            <div className="slc-early-row">
+              <span className="slc-early-label">지금 해지하면</span>
+              <span className="slc-early-loss">-{account.earlyWithdrawalLoss.toLocaleString('ko-KR')}원 손실</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
   )
 }
 
-// ── CMA: 일일 이자 + 누적 ──
+// ── CMA: 실시간 이자 ticker ──
 function CMALifeCard({ account }) {
   const color = '#EF4444'
   const { balance = 0, accruedInterest = 0, todayInterest = 0, interestRate, openDate } = account
   const fmt = (s) => s ? s.replace(/-/g, '.') : ''
+  const ratePerSec = balance * ((interestRate || 0) / 100) / 86400
+
+  const [extra, setExtra] = useState(0)
+  const startRef = useRef(null)
+  const rafRef = useRef(null)
+
+  useEffect(() => {
+    startRef.current = performance.now()
+    setExtra(0)
+    const tick = (now) => {
+      setExtra((now - startRef.current) / 1000 * ratePerSec)
+      rafRef.current = requestAnimationFrame(tick)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+  }, [ratePerSec])
+
+  const live = accruedInterest + extra
+  const whole = Math.floor(live)
+  const frac = String(Math.floor((live - whole) * 100)).padStart(2, '0')
 
   return (
     <div className="slc-card slc-card--cma" style={{ '--slcc': color }}>
@@ -249,8 +281,10 @@ function CMALifeCard({ account }) {
       </div>
       <div className="slc-cma-body">
         <div className="slc-cma-today">
-          <div className="slc-cma-today-label">오늘 발생 이자</div>
-          <div className="slc-cma-today-val" style={{ color }}>+{todayInterest.toLocaleString('ko-KR')}원</div>
+          <div className="slc-cma-today-label">누적 이자 (실시간)</div>
+          <div className="slc-cma-today-val" style={{ color }}>
+            +{whole.toLocaleString('ko-KR')}<span className="cma-frac">.{frac}</span>원
+          </div>
           <div className="slc-cma-today-sub">지금 이 순간에도 이자가 쌓이고 있어요</div>
         </div>
         <div className="slc-cma-stats">
@@ -259,8 +293,8 @@ function CMALifeCard({ account }) {
             <span className="slc-row-val">{balance.toLocaleString('ko-KR')}원</span>
           </div>
           <div className="slc-row">
-            <span className="slc-row-label">누적 이자</span>
-            <span className="slc-row-val" style={{ color }}>+{accruedInterest.toLocaleString('ko-KR')}원</span>
+            <span className="slc-row-label">오늘 이자</span>
+            <span className="slc-row-val" style={{ color }}>+{todayInterest.toLocaleString('ko-KR')}원</span>
           </div>
           <div className="slc-row">
             <span className="slc-row-label">일 수익률</span>

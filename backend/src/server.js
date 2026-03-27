@@ -50,6 +50,9 @@ const BG_TRANSACTIONS = [
   { accountId: 'acc001', counterpart: '쿠팡', amount: -87900, category: '이체', memo: '쿠팡 결제' },
   { accountId: 'acc001', counterpart: '박재원', amount: 150000, category: '송금', memo: '' },
   { accountId: 'acc001', counterpart: 'LG유플러스', amount: -55000, category: '자동이체', memo: '통신요금' },
+  { accountId: 'acc006', counterpart: '스타벅스', amount: -6500, category: '카페', memo: '아메리카노', source: 'card' },
+  { accountId: 'acc006', counterpart: 'GS25', amount: -4200, category: '편의점', memo: '', source: 'card' },
+  { accountId: 'acc006', counterpart: '올리브영', amount: -35800, category: '쇼핑', memo: '', source: 'card' },
 ]
 
 let bgTxIndex = 0
@@ -92,6 +95,29 @@ setInterval(async () => {
 }, 90000) // 90초마다 (1회/분 이하)
 
 // ── 금융 모먼트 시뮬레이터 (급여, 카드대금 D-3) ──
+// ── 적금 납입일 계산 ──
+function getInstallmentReminders() {
+  const now = new Date()
+  const reminders = []
+  const accounts = getInitialAccounts()
+  for (const acc of accounts) {
+    if (acc.type !== 'installment_savings' || !acc.openDate || !acc.monthlyDeposit) continue
+    const paymentDay = new Date(acc.openDate).getDate()
+    let next = new Date(now.getFullYear(), now.getMonth(), paymentDay)
+    if (next <= now) next = new Date(now.getFullYear(), now.getMonth() + 1, paymentDay)
+    const daysLeft = Math.ceil((next - now) / 86400000)
+    reminders.push({
+      momentType: 'installment_reminder',
+      accountId: acc.id,
+      title: `${acc.name} 납입일이 ${daysLeft}일 남았습니다`,
+      amountFormatted: acc.monthlyDeposit.toLocaleString('ko-KR') + '원',
+      description: `${next.getMonth() + 1}월 ${next.getDate()}일에 ${acc.monthlyDeposit.toLocaleString('ko-KR')}원이 자동 이체됩니다. 주계좌 잔액을 미리 확인해 두세요.`,
+      daysLeft,
+    })
+  }
+  return reminders
+}
+
 const FINANCIAL_MOMENTS = [
   {
     momentType: 'salary',
@@ -101,13 +127,14 @@ const FINANCIAL_MOMENTS = [
   },
   {
     momentType: 'card_due',
-    title: '신한카드 결제일이 3일 남았습니다',
+    title: 'iM 체크카드 결제일이 3일 남았습니다',
     amountFormatted: '485,000원',
     dueAmount: 485000,
     dueDate: '2026-04-15',
     description: '3월 카드 이용금액 485,000원이 4월 15일에 자동 결제됩니다.',
     daysLeft: 3,
   },
+  ...getInstallmentReminders(),
 ]
 
 let momentIndex = 0
@@ -687,9 +714,14 @@ app.get('/api/accounts', (req, res) => {
         const expectedInterest = Math.round(acc.balance * (acc.interestRate / 100))
         const accruedInterest = Math.round(expectedInterest * (elapsedDays / totalDays))
         const finalAmount = acc.balance + expectedInterest
+        // 중도해지: 중도해지 이율 0.5% 적용
+        const earlyRate = 0.5
+        const earlyInterest = Math.round(acc.balance * (earlyRate / 100) * (elapsedDays / 365))
+        const earlyWithdrawalLoss = accruedInterest - earlyInterest
         maturityInfo = {
           progressRatio, daysRemaining, elapsedDays, totalDays,
           accruedInterest, expectedInterest, finalAmount,
+          earlyInterest, earlyWithdrawalLoss,
         }
       } else if (acc.type === 'cma') {
         // CMA: 일복리 근사 (간단히 단리)
@@ -702,26 +734,25 @@ app.get('/api/accounts', (req, res) => {
         }
       } else if (acc.type === 'installment_savings') {
         // 적금: 납입 횟수 기반
-        // 총 납입 횟수 = 개월 수 (월납)
         const totalMonths = Math.round(totalMs / (30.4375 * 86400000))
         const paymentsMade = Math.min(totalMonths, Math.floor(elapsedMs / (30.4375 * 86400000)))
         const paymentsRemaining = Math.max(0, totalMonths - paymentsMade)
         const monthlyDeposit = acc.monthlyDeposit || 0
         const monthlyRate = (acc.interestRate || 0) / 100 / 12
-        // 만기 예상 이자: 각 회차가 납입 후 남은 기간만큼 이자
-        // = monthlyDeposit × monthlyRate × (totalMonths-1 + totalMonths-2 + ... + 0)
-        // = monthlyDeposit × monthlyRate × totalMonths*(totalMonths-1)/2
         const expectedInterest = Math.round(monthlyDeposit * monthlyRate * totalMonths * (totalMonths - 1) / 2)
         const finalAmount = totalMonths * monthlyDeposit + expectedInterest
-        // 현재까지 누적 이자: 납입한 회차별 경과 기간
-        // i번째 납입(0-based)은 (paymentsMade-1-i)개월치 이자
         const accruedInterest = Math.round(monthlyDeposit * monthlyRate * paymentsMade * (paymentsMade - 1) / 2)
         const principalAtMaturity = totalMonths * monthlyDeposit
+        // 중도해지: 중도해지 이율 0.5%
+        const earlyRate = 0.5
+        const currentPrincipal = paymentsMade * monthlyDeposit
+        const earlyInterest = Math.round(currentPrincipal * (earlyRate / 100) * (elapsedDays / 365))
+        const earlyWithdrawalLoss = accruedInterest - earlyInterest
         maturityInfo = {
           progressRatio, daysRemaining, elapsedDays, totalDays,
           accruedInterest, expectedInterest, finalAmount,
           totalPayments: totalMonths, paymentsMade, paymentsRemaining,
-          principalAtMaturity,
+          principalAtMaturity, earlyInterest, earlyWithdrawalLoss,
         }
       }
     }
@@ -845,8 +876,42 @@ app.post('/api/room-greeting', async (req, res) => {
     .map((t) => `${t.counterpart} ${(t.amount > 0 ? '+' : '') + t.amount.toLocaleString('ko-KR')}원`)
     .join(', ')
 
-  const prompt = ROOM_GREETING_PROMPTS[acc.type] || ROOM_GREETING_PROMPTS.checking
-  const context = `계좌명: ${acc.name}, 잔액: ${acc.balance.toLocaleString('ko-KR')}원${recentTxs ? `, 최근 거래: ${recentTxs}` : ''}`
+  let prompt = ROOM_GREETING_PROMPTS[acc.type] || ROOM_GREETING_PROMPTS.checking
+  let context = `계좌명: ${acc.name}, 잔액: ${acc.balance.toLocaleString('ko-KR')}원${recentTxs ? `, 최근 거래: ${recentTxs}` : ''}`
+
+  // ② 만기 임박 (30일 이하): 재예치/재투자 행동 유도
+  if (acc.maturityDate && (acc.type === 'installment_savings' || acc.type === 'term_deposit')) {
+    const greetNow = new Date()
+    const daysLeft = Math.max(0, Math.ceil((new Date(acc.maturityDate) - greetNow) / 86400000))
+    if (daysLeft <= 30 && daysLeft > 0) {
+      const typeLabel = acc.type === 'installment_savings' ? '정기적금' : '정기예금'
+      prompt = `${typeLabel}이 ${daysLeft}일 후 만기됩니다. 만기 수령금 활용 방안(재예치·운용·목돈 계획)에 대해 AI 매니저로서 먼저 물어보며 조언을 제안하라. 2문장 이내. 이모지 금지. 격식체.`
+      context += `, 만기까지: ${daysLeft}일`
+    }
+  }
+
+  // ④ 입출금 계좌 월간 리포트 (월초 1-5일: 지난달 정산 / 월말 25일~: 이달 마감 리포트)
+  if (acc.type === 'checking') {
+    const dayOfMonth = new Date().getDate()
+    const txNow = ctx.transactions.filter((t) => t.accountId === acc.id)
+    if (dayOfMonth <= 5) {
+      const prev = new Date(); prev.setMonth(prev.getMonth() - 1)
+      const prevStart = new Date(prev.getFullYear(), prev.getMonth(), 1).toISOString().slice(0, 10)
+      const prevEnd = new Date(prev.getFullYear(), prev.getMonth() + 1, 0).toISOString().slice(0, 10)
+      const prevTxs = txNow.filter((t) => t.date >= prevStart && t.date <= prevEnd)
+      const income = prevTxs.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0)
+      const expense = Math.abs(prevTxs.filter((t) => t.amount < 0).reduce((s, t) => s + t.amount, 0))
+      const net = income - expense
+      context += `, 지난달 입금 ${income.toLocaleString('ko-KR')}원, 지출 ${expense.toLocaleString('ko-KR')}원, 순저축 ${net.toLocaleString('ko-KR')}원`
+      prompt = '새 달이 시작됐습니다. 지난 달 재정 요약(입금·지출·순저축)을 바탕으로 이번 달을 응원하며 간결하게 리포트하라. 2문장. 이모지 금지. 격식체.'
+    } else if (dayOfMonth >= 25) {
+      const thisStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10)
+      const thisTxs = txNow.filter((t) => t.date >= thisStart)
+      const thisExpense = Math.abs(thisTxs.filter((t) => t.amount < 0).reduce((s, t) => s + t.amount, 0))
+      context += `, 이번달 지출 ${thisExpense.toLocaleString('ko-KR')}원`
+      prompt = '월말이 다가옵니다. 이번 달 지출 현황과 잔액을 언급하며 월말 재정 정리를 돕겠다고 먼저 말을 걸어라. 2문장. 이모지 금지. 격식체.'
+    }
+  }
 
   res.setHeader('Content-Type', 'text/event-stream')
   res.setHeader('Cache-Control', 'no-cache')

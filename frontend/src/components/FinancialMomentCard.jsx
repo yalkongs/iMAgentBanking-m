@@ -33,6 +33,17 @@ const MOMENT_CONFIG = {
       { label: '카드 내역', msg: '이번 달 카드 내역 보여줘' },
     ],
   },
+  installment_reminder: {
+    accent: '#10B981',
+    bg: 'rgba(16,185,129,0.07)',
+    border: 'rgba(16,185,129,0.22)',
+    tag: 'D-DAY',
+    tagLabel: '적금 납입 예정',
+    actions: [
+      { label: '잔액 확인', msg: '잔액 얼마야?' },
+      { label: '적금 현황', msg: '정기적금 현황 알려줘' },
+    ],
+  },
 }
 
 export default function FinancialMomentCard({ data, onQuickAction }) {

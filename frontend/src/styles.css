@@ -5070,3 +5070,33 @@ input:focus-visible, textarea:focus-visible {
   gap: 0;
 }
 
+
+/* 중도해지 손실 행 */
+.slc-early-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px dashed rgba(248, 113, 113, 0.3);
+}
+
+.slc-early-label {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.slc-early-loss {
+  font-size: 12px;
+  font-weight: 700;
+  color: #F87171;
+}
+
+/* CMA 실시간 ticker 소수점 */
+.cma-frac {
+  font-size: 0.65em;
+  font-weight: 600;
+  opacity: 0.75;
+  letter-spacing: 0;
+}
+
