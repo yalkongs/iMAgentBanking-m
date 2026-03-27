@@ -69,6 +69,33 @@ function SkeletonItem() {
   )
 }
 
+const PRODUCT_SUGGESTIONS = {
+  installment_savings: {
+    label: '정기적금',
+    color: '#10B981',
+    desc: '매달 꾸준히 모아서 목돈 만들기',
+    query: '정기적금 상품 추천해줘',
+  },
+  term_deposit: {
+    label: '정기예금',
+    color: '#8B5CF6',
+    desc: '목돈을 안전하게 불려보세요',
+    query: '정기예금 상품 알려줘',
+  },
+  savings: {
+    label: '비상금 통장',
+    color: '#F59E0B',
+    desc: '언제든 꺼내 쓸 수 있는 안전망',
+    query: '비상금 통장 추천해줘',
+  },
+  cma: {
+    label: 'CMA',
+    color: '#EF4444',
+    desc: '하루만 맡겨도 이자가 붙는 통장',
+    query: 'CMA 계좌에 대해 알려줘',
+  },
+}
+
 export default function AccountListScreen({
   accounts,
   unreadCounts,
@@ -77,21 +104,26 @@ export default function AccountListScreen({
   onEnterRoom,
   onTtsToggle,
   onReset,
+  onShowOnboarding,
+  onProductSuggest,
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
-  const totalBalance = accounts.reduce((s, a) => s + a.balance, 0)
+
+  // 미보유 상품 타입 (계좌가 4개 미만일 때 표시)
+  const ownedTypes = new Set(accounts.map((a) => a.type))
+  const suggestedTypes = Object.keys(PRODUCT_SUGGESTIONS).filter((t) => !ownedTypes.has(t))
+  const showSuggestions = !isLoading && accounts.length > 0 && suggestedTypes.length > 0 && accounts.length < 4
 
   return (
     <div className="account-list-screen" onClick={() => menuOpen && setMenuOpen(false)}>
       <div className="account-list-header">
-        <div>
-          <div className="account-list-title">iM뱅크</div>
-          {!isLoading && (
-            <div className="account-list-total">
-              총 {totalBalance.toLocaleString('ko-KR')}원
-            </div>
-          )}
-        </div>
+        <button
+          className="account-list-title-btn"
+          onClick={() => onShowOnboarding?.()}
+          aria-label="앱 소개 보기"
+        >
+          iM뱅크
+        </button>
         <div className="account-list-menu-wrap">
           <button
             className="account-list-menu-btn"
@@ -122,6 +154,12 @@ export default function AccountListScreen({
       <div className="account-list-items">
         {isLoading
           ? Array.from({ length: 5 }, (_, i) => <SkeletonItem key={i} />)
+          : accounts.length === 0
+          ? (
+            <div className="account-list-empty">
+              <p>연결된 계좌가 없어요.</p>
+            </div>
+          )
           : accounts.map((acc) => {
               const cfg = TYPE_CONFIG[acc.type] || { color: '#6B7280', label: acc.type }
               const unread = unreadCounts?.[acc.id] || 0
@@ -163,6 +201,37 @@ export default function AccountListScreen({
                 </button>
               )
             })}
+
+        {/* 상품 추천 섹션 (콜드 스타트 / 계좌 4개 미만) */}
+        {showSuggestions && (
+          <div className="product-suggestion-section">
+            <div className="product-suggestion-header">
+              <span>더 열어볼 수 있어요</span>
+            </div>
+            {suggestedTypes.map((type) => {
+              const sg = PRODUCT_SUGGESTIONS[type]
+              return (
+                <button
+                  key={type}
+                  className="product-suggestion-item"
+                  onClick={() => onProductSuggest?.(sg.query)}
+                >
+                  <div
+                    className="product-suggestion-icon"
+                    style={{ background: sg.color }}
+                  >
+                    {ICONS[type] || ICONS.checking}
+                  </div>
+                  <div className="product-suggestion-body">
+                    <div className="product-suggestion-label">{sg.label}</div>
+                    <div className="product-suggestion-desc">{sg.desc}</div>
+                  </div>
+                  <div className="product-suggestion-cta">AI에게 물어보기</div>
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )

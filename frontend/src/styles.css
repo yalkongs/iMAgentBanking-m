@@ -4283,3 +4283,213 @@ input:focus-visible, textarea:focus-visible {
 .tx-load-sentinel {
   padding: 4px 0;
 }
+
+/* ──────────────────────────────────────────────
+   음성 입력 마이크 버튼
+   ────────────────────────────────────────────── */
+.room-mic-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.room-mic-btn:hover {
+  background: var(--bg-input);
+  color: var(--text-primary);
+}
+
+.room-mic-btn.recording {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #F87171;
+  animation: mic-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3); }
+  50%       { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+}
+
+/* ──────────────────────────────────────────────
+   거래 버블 — 전체 폭 + 상세 펼치기
+   ────────────────────────────────────────────── */
+.tx-bubble--full {
+  align-self: stretch;
+  max-width: 100%;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.tx-bubble--full:active {
+  opacity: 0.8;
+}
+
+.tx-bubble-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tx-bubble--full .tx-bubble-counterpart {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 0;
+}
+
+.tx-bubble--full .tx-bubble-amount {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.tx-bubble--expanded {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.tx-bubble-detail {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  animation: detail-slide 0.18s ease;
+}
+
+@keyframes detail-slide {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.tx-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.tx-detail-label {
+  color: var(--text-muted);
+}
+
+.tx-detail-value {
+  color: var(--text-secondary);
+}
+
+/* ──────────────────────────────────────────────
+   계좌 목록 헤더 — 로고 버튼
+   ────────────────────────────────────────────── */
+.account-list-title-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: pointer;
+  letter-spacing: -0.3px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.account-list-title-btn:active {
+  opacity: 0.7;
+}
+
+/* ──────────────────────────────────────────────
+   빈 계좌 목록
+   ────────────────────────────────────────────── */
+.account-list-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* ──────────────────────────────────────────────
+   상품 추천 섹션 (콜드 스타트)
+   ────────────────────────────────────────────── */
+.product-suggestion-section {
+  margin-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.product-suggestion-header {
+  padding: 12px 16px 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.product-suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid var(--border);
+}
+
+.product-suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.product-suggestion-item:active {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.product-suggestion-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.product-suggestion-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.product-suggestion-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+
+.product-suggestion-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.product-suggestion-cta {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}

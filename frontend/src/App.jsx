@@ -166,14 +166,18 @@ export default function App() {
   const [healthScore, setHealthScore] = useState(null)
   const [healthOpen, setHealthOpen] = useState(false)
 
-  // ── 온보딩 오버레이 ──
-  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('zb-m-onboarded'))
+  // ── 온보딩 오버레이 (매 새로고침 + 로고 탭 시 표시) ──
+  const [showOnboarding, setShowOnboarding] = useState(true)
   const [onboardingFading, setOnboardingFading] = useState(false)
 
   function dismissOnboarding() {
     setOnboardingFading(true)
-    localStorage.setItem('zb-m-onboarded', '1')
-    setTimeout(() => setShowOnboarding(false), 300)
+    setTimeout(() => { setShowOnboarding(false); setOnboardingFading(false) }, 300)
+  }
+
+  function showOnboardingAgain() {
+    setOnboardingFading(false)
+    setShowOnboarding(true)
   }
 
   // ── 메신저 UI 상태 ──
@@ -686,6 +690,15 @@ export default function App() {
   // 앱 시작 시 계좌 목록 로드
   useEffect(() => { fetchAccountList() }, [fetchAccountList])
 
+  // ── 상품 추천 카드 탭 → 첫 번째 계좌 방으로 이동 후 AI에게 질문 ──
+  function handleProductSuggest(query) {
+    const firstAccount = accountList[0]
+    if (!firstAccount) return
+    enterRoom(firstAccount.id)
+    // 약간의 딜레이 후 메시지 전송 (방 입장 애니메이션 후)
+    setTimeout(() => sendMessage(query), 300)
+  }
+
   // ── 방 입장 / 퇴장 ──
   function enterRoom(accountId) {
     const acc = accountList.find((a) => a.id === accountId)
@@ -791,9 +804,7 @@ export default function App() {
     setLastCardType(null)
     setIsAccountsLoading(true)
     if (window.speechSynthesis) window.speechSynthesis.cancel()
-    localStorage.removeItem('zb-m-onboarded')
-    setOnboardingFading(false)
-    setShowOnboarding(true)
+    showOnboardingAgain()
     fetchAccountList()
   }
 
@@ -847,6 +858,8 @@ export default function App() {
           onEnterRoom={enterRoom}
           onTtsToggle={() => setTtsEnabled((t) => !t)}
           onReset={handleResetMock}
+          onShowOnboarding={showOnboardingAgain}
+          onProductSuggest={handleProductSuggest}
         />
       )}
 

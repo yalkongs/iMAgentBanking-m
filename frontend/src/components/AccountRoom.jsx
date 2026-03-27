@@ -1,6 +1,25 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import Message from './Message.jsx'
+import { useVoiceInput } from '../hooks/useVoiceInput.js'
+
+function MicIcon({ active }) {
+  return active ? (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <rect x="9" y="2" width="6" height="11" rx="3"/>
+      <path d="M5 10a7 7 0 0 0 14 0" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round"/>
+      <line x1="12" y1="19" x2="12" y2="22" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      <line x1="9" y1="22" x2="15" y2="22" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  ) : (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="9" y="2" width="6" height="11" rx="3"/>
+      <path d="M5 10a7 7 0 0 0 14 0"/>
+      <line x1="12" y1="19" x2="12" y2="22"/>
+      <line x1="9" y1="22" x2="15" y2="22"/>
+    </svg>
+  )
+}
 
 const ICONS = {
   checking: (
@@ -99,6 +118,11 @@ export default function AccountRoom({
   const [input, setInput] = useState('')
   const [contactCardOpen, setContactCardOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [expandedTxId, setExpandedTxId] = useState(null)
+
+  const { isRecording, toggleRecording } = useVoiceInput(
+    useCallback((text) => { setInput(text) }, [])
+  )
   const chatContainerRef = useRef(null)
   const txContainerRef = useRef(null)
   const textareaRef = useRef(null)
@@ -357,16 +381,44 @@ export default function AccountRoom({
                 )
               }
               const tx = item.data
+              const txId = tx.id || 'tx_' + idx
               const isIncome = tx.amount > 0
               const amountFmt = (isIncome ? '+' : '') + tx.amount.toLocaleString('ko-KR') + '원'
+              const isExpanded = expandedTxId === txId
               return (
                 <div
-                  key={tx.id || 'tx_' + idx}
-                  className={`tx-bubble ${isIncome ? 'tx-bubble--income' : 'tx-bubble--expense'}`}
+                  key={txId}
+                  className={`tx-bubble tx-bubble--full ${isIncome ? 'tx-bubble--income' : 'tx-bubble--expense'}${isExpanded ? ' tx-bubble--expanded' : ''}`}
+                  onClick={() => setExpandedTxId((prev) => prev === txId ? null : txId)}
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={isExpanded}
                 >
-                  <div className="tx-bubble-counterpart">{tx.counterpart}</div>
-                  <div className="tx-bubble-amount">{amountFmt}</div>
-                  {tx.memo && <div className="tx-bubble-memo">{tx.memo}</div>}
+                  <div className="tx-bubble-main">
+                    <div className="tx-bubble-counterpart">{tx.counterpart}</div>
+                    <div className="tx-bubble-amount">{amountFmt}</div>
+                  </div>
+                  {isExpanded && (
+                    <div className="tx-bubble-detail">
+                      <div className="tx-detail-row">
+                        <span className="tx-detail-label">날짜</span>
+                        <span className="tx-detail-value">{tx.date}</span>
+                      </div>
+                      {tx.memo && (
+                        <div className="tx-detail-row">
+                          <span className="tx-detail-label">메모</span>
+                          <span className="tx-detail-value">{tx.memo}</span>
+                        </div>
+                      )}
+                      <div className="tx-detail-row">
+                        <span className="tx-detail-label">거래 유형</span>
+                        <span className="tx-detail-value">{isIncome ? '입금' : '출금'}</span>
+                      </div>
+                    </div>
+                  )}
+                  {!isExpanded && tx.memo && (
+                    <div className="tx-bubble-memo">{tx.memo}</div>
+                  )}
                 </div>
               )
             })}
@@ -392,13 +444,21 @@ export default function AccountRoom({
       {/* 채팅 입력창 (대화 탭에서만 표시) */}
       {activeTab === 'chat' && (
         <div className="room-input-bar">
+          <button
+            className={`room-mic-btn${isRecording ? ' recording' : ''}`}
+            onClick={toggleRecording}
+            type="button"
+            aria-label={isRecording ? '녹음 중지' : '음성 입력'}
+          >
+            <MicIcon active={isRecording} />
+          </button>
           <textarea
             ref={textareaRef}
             className="room-input"
             value={input}
             onChange={handleTextareaChange}
             onKeyDown={handleKeyDown}
-            placeholder={`${account.name}에 대해 물어보세요`}
+            placeholder={isRecording ? '듣고 있어요…' : `${account.name}에 대해 물어보세요`}
             rows={1}
             disabled={isLoading}
           />
