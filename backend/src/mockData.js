@@ -50,6 +50,7 @@ export const accounts = [
     bank: 'iM뱅크증권',
     accountNo: '503-90-1234567',
     interestRate: 3.5,
+    openDate: '2025-01-15',
   },
   {
     id: 'acc006',

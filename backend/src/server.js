@@ -669,7 +669,7 @@ app.get('/api/accounts', (req, res) => {
       balanceFormatted = acc.balance.toLocaleString('ko-KR') + '원'
     }
 
-    // 예금/적금: 만기 진행률 + 누적이자 계산
+    // 예금/적금: 만기 진행률 + 상품별 상세 지표
     let maturityInfo = null
     if (acc.openDate && acc.maturityDate) {
       const start = new Date(acc.openDate).getTime()
@@ -680,14 +680,50 @@ app.get('/api/accounts', (req, res) => {
       const progressRatio = Math.max(0, Math.min(1, elapsedMs / totalMs))
       const daysRemaining = Math.max(0, Math.ceil((end - nowMs) / 86400000))
       const elapsedDays = Math.ceil(elapsedMs / 86400000)
-      let accruedInterest = 0
+      const totalDays = Math.ceil(totalMs / 86400000)
+
       if (acc.type === 'term_deposit') {
-        accruedInterest = Math.round(acc.balance * (acc.interestRate / 100) * (elapsedDays / 365))
+        // 예금: 단리, 만기 이자 = 원금 × 금리
+        const expectedInterest = Math.round(acc.balance * (acc.interestRate / 100))
+        const accruedInterest = Math.round(expectedInterest * (elapsedDays / totalDays))
+        const finalAmount = acc.balance + expectedInterest
+        maturityInfo = {
+          progressRatio, daysRemaining, elapsedDays, totalDays,
+          accruedInterest, expectedInterest, finalAmount,
+        }
+      } else if (acc.type === 'cma') {
+        // CMA: 일복리 근사 (간단히 단리)
+        const dailyRate = (acc.interestRate || 0) / 100 / 365
+        const todayInterest = Math.round(acc.balance * dailyRate)
+        const accruedInterest = Math.round(acc.balance * dailyRate * elapsedDays)
+        maturityInfo = {
+          progressRatio: 0, daysRemaining: 0, elapsedDays, totalDays,
+          accruedInterest, todayInterest,
+        }
       } else if (acc.type === 'installment_savings') {
-        // 적금 단리 근사: 평균 예치 잔액 기준
-        accruedInterest = Math.round(acc.balance * (acc.interestRate / 100) * (elapsedDays / 365) * 0.55)
+        // 적금: 납입 횟수 기반
+        // 총 납입 횟수 = 개월 수 (월납)
+        const totalMonths = Math.round(totalMs / (30.4375 * 86400000))
+        const paymentsMade = Math.min(totalMonths, Math.floor(elapsedMs / (30.4375 * 86400000)))
+        const paymentsRemaining = Math.max(0, totalMonths - paymentsMade)
+        const monthlyDeposit = acc.monthlyDeposit || 0
+        const monthlyRate = (acc.interestRate || 0) / 100 / 12
+        // 만기 예상 이자: 각 회차가 납입 후 남은 기간만큼 이자
+        // = monthlyDeposit × monthlyRate × (totalMonths-1 + totalMonths-2 + ... + 0)
+        // = monthlyDeposit × monthlyRate × totalMonths*(totalMonths-1)/2
+        const expectedInterest = Math.round(monthlyDeposit * monthlyRate * totalMonths * (totalMonths - 1) / 2)
+        const finalAmount = totalMonths * monthlyDeposit + expectedInterest
+        // 현재까지 누적 이자: 납입한 회차별 경과 기간
+        // i번째 납입(0-based)은 (paymentsMade-1-i)개월치 이자
+        const accruedInterest = Math.round(monthlyDeposit * monthlyRate * paymentsMade * (paymentsMade - 1) / 2)
+        const principalAtMaturity = totalMonths * monthlyDeposit
+        maturityInfo = {
+          progressRatio, daysRemaining, elapsedDays, totalDays,
+          accruedInterest, expectedInterest, finalAmount,
+          totalPayments: totalMonths, paymentsMade, paymentsRemaining,
+          principalAtMaturity,
+        }
       }
-      maturityInfo = { progressRatio, daysRemaining, accruedInterest }
     }
 
     return {

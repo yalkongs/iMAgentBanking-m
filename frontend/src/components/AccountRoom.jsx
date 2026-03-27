@@ -82,68 +82,206 @@ const ICONS = {
   ),
 }
 
-// ── SavingsLifeCard: 예금/적금 만기 진행 시각화 ──
-function SavingsLifeCard({ account }) {
-  const isInstallment = account.type === 'installment_savings'
-  const color = isInstallment ? '#10B981' : '#8B5CF6'
-  const { progressRatio = 0, daysRemaining = 0, accruedInterest = 0,
-          maturityDate, openDate, interestRate, balance } = account
+// ── 공통: 링 SVG ──
+function LifeRing({ ratio, color, children }) {
+  const R = 38
+  const C = 2 * Math.PI * R
+  return (
+    <div className="life-ring-wrap">
+      <div className="life-ring-glow" style={{ background: `radial-gradient(circle, ${color} 0%, transparent 70%)` }} />
+      <svg className="life-ring-svg" viewBox="0 0 100 100" width="90" height="90">
+        <circle cx="50" cy="50" r={R} fill="none" stroke="rgba(128,128,128,0.13)" strokeWidth="6" />
+        <circle cx="50" cy="50" r={R} fill="none" stroke={color} strokeWidth="6"
+          strokeDasharray={`${C * ratio} ${C}`} strokeLinecap="round"
+          transform="rotate(-90 50 50)"
+          style={{ transition: 'stroke-dasharray 1.4s cubic-bezier(0.4,0,0.2,1)' }}
+        />
+        {children}
+      </svg>
+    </div>
+  )
+}
 
-  const R = 40
-  const circumference = 2 * Math.PI * R
-  const filled = circumference * progressRatio
-  const pct = Math.round(progressRatio * 100)
+// ── 공통: 성장 바 ──
+function GrowthBar({ label, current, total, color, isMoney = true, accent = false }) {
+  const pct = total > 0 ? Math.min(100, Math.round(current / total * 100)) : 0
+  const fmt = (v) => isMoney ? v.toLocaleString('ko-KR') + '원' : v
+  return (
+    <div className="slc-growth-block">
+      <div className="slc-growth-header">
+        <span className="slc-growth-label">{label}</span>
+        <span className={`slc-growth-right${accent ? ' accent' : ''}`}>
+          {accent ? '+' : ''}{fmt(current)}
+          <span className="slc-growth-total"> / {accent ? '+' : ''}{fmt(total)}</span>
+        </span>
+      </div>
+      <div className="slc-growth-bar">
+        <div className="slc-growth-fill" style={{ width: `${pct}%`, background: color }} />
+      </div>
+    </div>
+  )
+}
 
+// ── 정기적금: 납입 횟수 중심 ──
+function InstallmentLifeCard({ account }) {
+  const color = '#10B981'
+  const {
+    paymentsMade = 0, totalPayments = 1, paymentsRemaining = 0,
+    balance = 0, principalAtMaturity = 0,
+    accruedInterest = 0, expectedInterest = 0,
+    maturityDate, interestRate,
+  } = account
+
+  const payRatio = paymentsMade / totalPayments
   const fmt = (s) => s ? s.replace(/-/g, '.') : ''
 
   return (
-    <div className="savings-life-card" style={{ '--slc': color }}>
-      <div className="savings-life-egg-wrap">
-        <div className="savings-life-glow" />
-        <svg className="savings-life-svg" viewBox="0 0 100 100" width="96" height="96">
-          <circle cx="50" cy="50" r={R} fill="none" stroke="rgba(128,128,128,0.15)" strokeWidth="5" />
-          <circle cx="50" cy="50" r={R} fill="none" stroke={color} strokeWidth="5"
-            strokeDasharray={`${filled} ${circumference}`}
-            strokeLinecap="round"
-            transform="rotate(-90 50 50)"
-            style={{ transition: 'stroke-dasharray 1.2s ease' }}
-          />
-          <text x="50" y="46" textAnchor="middle" fontSize="17" fontWeight="800"
-            fill={color} fontFamily="inherit" style={{ letterSpacing: '-0.5px' }}>
-            D-{daysRemaining}
-          </text>
-          <text x="50" y="60" textAnchor="middle" fontSize="9"
-            fill="rgba(128,128,128,0.8)" fontFamily="inherit">
-            만기까지
-          </text>
-        </svg>
+    <div className="slc-card" style={{ '--slcc': color }}>
+      <div className="slc-top">
+        <div className="slc-tag">정기적금 · 연 {interestRate}%</div>
+        <div className="slc-maturity-label">만기 {fmt(maturityDate)}</div>
       </div>
-      <div className="savings-life-info">
-        <div className="savings-life-type">{isInstallment ? '정기적금' : '정기예금'}</div>
-        <div className="savings-life-row">
-          <span className="savings-life-label">원금</span>
-          <span className="savings-life-val">{balance.toLocaleString('ko-KR')}원</span>
-        </div>
-        <div className="savings-life-row">
-          <span className="savings-life-label">누적 이자</span>
-          <span className="savings-life-interest">+{accruedInterest.toLocaleString('ko-KR')}원</span>
-        </div>
-        <div className="savings-life-row">
-          <span className="savings-life-label">금리</span>
-          <span className="savings-life-val">연 {interestRate}%</span>
-        </div>
-        <div className="savings-life-progress">
-          <div className="savings-life-fill" style={{ width: `${pct}%` }} />
-        </div>
-        <div className="savings-life-dates">
-          <span>{fmt(openDate)}</span>
-          <span className="savings-life-pct">{pct}%</span>
-          <span>{fmt(maturityDate)}</span>
+      <div className="slc-body">
+        <LifeRing ratio={payRatio} color={color}>
+          <text x="50" y="43" textAnchor="middle" fontSize="20" fontWeight="900"
+            fill={color} fontFamily="inherit">{paymentsMade}</text>
+          <text x="50" y="56" textAnchor="middle" fontSize="9"
+            fill="rgba(128,128,128,0.9)" fontFamily="inherit">/ {totalPayments}회</text>
+          <text x="50" y="68" textAnchor="middle" fontSize="8"
+            fill="rgba(128,128,128,0.7)" fontFamily="inherit">납입 완료</text>
+        </LifeRing>
+        <div className="slc-stats">
+          <div className="slc-stat-badge" style={{ color }}>
+            <span className="slc-badge-num">{paymentsRemaining}</span>
+            <span className="slc-badge-unit">회 남음</span>
+          </div>
+          <div className="slc-divider" />
+          <GrowthBar
+            label="납입 원금"
+            current={balance}
+            total={principalAtMaturity}
+            color={color}
+          />
+          <GrowthBar
+            label="이자 성장"
+            current={accruedInterest}
+            total={expectedInterest}
+            color={color}
+            accent
+          />
+          <div className="slc-final-row">
+            <span className="slc-final-label">만기 수령 예상</span>
+            <span className="slc-final-val">{(principalAtMaturity + expectedInterest).toLocaleString('ko-KR')}원</span>
+          </div>
         </div>
       </div>
     </div>
   )
 }
+
+// ── 정기예금: 시간 경과 + 이자 성장 ──
+function TermDepositLifeCard({ account }) {
+  const color = '#8B5CF6'
+  const {
+    progressRatio = 0, daysRemaining = 0,
+    balance = 0, accruedInterest = 0, expectedInterest = 0, finalAmount = 0,
+    maturityDate, openDate, interestRate,
+  } = account
+
+  const fmt = (s) => s ? s.replace(/-/g, '.') : ''
+  const growthPct = ((accruedInterest / balance) * 100).toFixed(2)
+
+  return (
+    <div className="slc-card" style={{ '--slcc': color }}>
+      <div className="slc-top">
+        <div className="slc-tag">정기예금 · 연 {interestRate}%</div>
+        <div className="slc-maturity-label">만기 {fmt(maturityDate)}</div>
+      </div>
+      <div className="slc-body">
+        <LifeRing ratio={progressRatio} color={color}>
+          <text x="50" y="44" textAnchor="middle" fontSize="14" fontWeight="900"
+            fill={color} fontFamily="inherit">D-{daysRemaining}</text>
+          <text x="50" y="58" textAnchor="middle" fontSize="8.5"
+            fill="rgba(128,128,128,0.85)" fontFamily="inherit">만기까지</text>
+        </LifeRing>
+        <div className="slc-stats">
+          <div className="slc-stat-badge" style={{ color }}>
+            <span className="slc-badge-num">{Math.round(progressRatio * 100)}</span>
+            <span className="slc-badge-unit">% 경과</span>
+          </div>
+          <div className="slc-divider" />
+          <div className="slc-row">
+            <span className="slc-row-label">원금</span>
+            <span className="slc-row-val">{balance.toLocaleString('ko-KR')}원</span>
+          </div>
+          <GrowthBar
+            label="이자 성장"
+            current={accruedInterest}
+            total={expectedInterest}
+            color={color}
+            accent
+          />
+          <div className="slc-growth-subrow">
+            <span>현재 수익률 {growthPct}%</span>
+            <span>→ 만기 {interestRate}%</span>
+          </div>
+          <div className="slc-final-row">
+            <span className="slc-final-label">만기 수령 예상</span>
+            <span className="slc-final-val">{finalAmount.toLocaleString('ko-KR')}원</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── CMA: 일일 이자 + 누적 ──
+function CMALifeCard({ account }) {
+  const color = '#EF4444'
+  const { balance = 0, accruedInterest = 0, todayInterest = 0, interestRate, openDate } = account
+  const fmt = (s) => s ? s.replace(/-/g, '.') : ''
+
+  return (
+    <div className="slc-card slc-card--cma" style={{ '--slcc': color }}>
+      <div className="slc-top">
+        <div className="slc-tag">CMA · 연 {interestRate}%</div>
+        <div className="slc-maturity-label">운용 개시 {fmt(openDate)}</div>
+      </div>
+      <div className="slc-cma-body">
+        <div className="slc-cma-today">
+          <div className="slc-cma-today-label">오늘 발생 이자</div>
+          <div className="slc-cma-today-val" style={{ color }}>+{todayInterest.toLocaleString('ko-KR')}원</div>
+          <div className="slc-cma-today-sub">지금 이 순간에도 이자가 쌓이고 있어요</div>
+        </div>
+        <div className="slc-cma-stats">
+          <div className="slc-row">
+            <span className="slc-row-label">운용 잔액</span>
+            <span className="slc-row-val">{balance.toLocaleString('ko-KR')}원</span>
+          </div>
+          <div className="slc-row">
+            <span className="slc-row-label">누적 이자</span>
+            <span className="slc-row-val" style={{ color }}>+{accruedInterest.toLocaleString('ko-KR')}원</span>
+          </div>
+          <div className="slc-row">
+            <span className="slc-row-label">일 수익률</span>
+            <span className="slc-row-val">{((interestRate || 0) / 365).toFixed(4)}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── 라우터: 계좌 타입별 분기 ──
+function AccountLifeCard({ account }) {
+  if (account.type === 'installment_savings') return <InstallmentLifeCard account={account} />
+  if (account.type === 'term_deposit') return <TermDepositLifeCard account={account} />
+  if (account.type === 'cma') return <CMALifeCard account={account} />
+  return null
+}
+
+// 이전 이름 유지 (기존 코드 참조용)
+const SavingsLifeCard = AccountLifeCard
 
 const TYPE_CONFIG = {
   checking:            { color: '#3B82F6', label: '입출금' },
@@ -401,7 +539,7 @@ export default function AccountRoom({
             <div className="promo-banner-sub">캐시백, 할인, 포인트 — iM 신용카드의 혜택이 지금 당신을 기다립니다. 아래에서 AI에게 물어보세요.</div>
           </div>
         )}
-        {(account?.type === 'installment_savings' || account?.type === 'term_deposit') && account.progressRatio !== undefined && (
+        {(account?.type === 'installment_savings' || account?.type === 'term_deposit' || account?.type === 'cma') && account.accruedInterest !== undefined && (
           <SavingsLifeCard account={account} />
         )}
         {(messages || []).map((msg) => {
@@ -495,7 +633,7 @@ export default function AccountRoom({
               지금 바로 혜택 확인하기
             </button>
           </div>
-        ) : (account?.type === 'installment_savings' || account?.type === 'term_deposit') && account.progressRatio !== undefined ? (
+        ) : (account?.type === 'installment_savings' || account?.type === 'term_deposit' || account?.type === 'cma') && account.accruedInterest !== undefined ? (
           <>
             <SavingsLifeCard account={account} />
             {isLoadingTxs ? (

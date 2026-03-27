@@ -4832,3 +4832,241 @@ input:focus-visible, textarea:focus-visible {
   font-weight: 700;
   color: var(--slc, #10B981);
 }
+
+/* ══════════════════════════════════════════════
+   AccountLifeCard 공통 (slc-*)
+   ══════════════════════════════════════════════ */
+
+.slc-card {
+  margin: 12px 12px 8px;
+  padding: 16px 16px 14px;
+  background: color-mix(in srgb, var(--slcc, #10B981) 5%, var(--bg-secondary));
+  border: 1px solid color-mix(in srgb, var(--slcc, #10B981) 18%, transparent);
+  border-radius: 18px;
+}
+
+.slc-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.slc-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--slcc, #10B981);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+}
+
+.slc-maturity-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.slc-body {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+/* ── 링 ── */
+.life-ring-wrap {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  flex-shrink: 0;
+}
+
+.life-ring-glow {
+  position: absolute;
+  inset: 10px;
+  border-radius: 50%;
+  transform-origin: center;
+  animation: savings-breathe 3.8s ease-in-out infinite;
+  pointer-events: none;
+  opacity: 0;
+  animation-name: slc-breathe;
+}
+
+@keyframes slc-breathe {
+  0%, 100% { transform: scale(0.85); opacity: 0.06; }
+  50%       { transform: scale(1.08); opacity: 0.2; }
+}
+
+.life-ring-svg {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── 통계 패널 ── */
+.slc-stats {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.slc-stat-badge {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  margin-bottom: 8px;
+}
+
+.slc-badge-num {
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.slc-badge-unit {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.slc-divider {
+  height: 1px;
+  background: rgba(128,128,128,0.12);
+  margin: 6px 0 8px;
+}
+
+/* ── 성장 바 ── */
+.slc-growth-block {
+  margin-bottom: 8px;
+}
+
+.slc-growth-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.slc-growth-label {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.slc-growth-right {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.slc-growth-right.accent {
+  color: var(--slcc, #10B981);
+}
+
+.slc-growth-total {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.slc-growth-bar {
+  height: 5px;
+  background: rgba(128,128,128,0.13);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.slc-growth-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1.4s cubic-bezier(0.4,0,0.2,1);
+}
+
+.slc-growth-subrow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: -4px;
+  margin-bottom: 6px;
+}
+
+/* ── 일반 행 ── */
+.slc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.slc-row-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.slc-row-val {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ── 만기 수령액 ── */
+.slc-final-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(128,128,128,0.12);
+}
+
+.slc-final-label {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.slc-final-val {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--slcc, #10B981);
+}
+
+/* ── CMA ── */
+.slc-card--cma .slc-cma-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.slc-cma-today {
+  text-align: center;
+  padding: 14px 12px;
+  background: rgba(128,128,128,0.06);
+  border-radius: 12px;
+}
+
+.slc-cma-today-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  letter-spacing: 0.3px;
+}
+
+.slc-cma-today-val {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.slc-cma-today-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.slc-cma-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
