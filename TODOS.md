@@ -67,6 +67,72 @@
 
 ---
 
+## TODO-6: AccountRoom 탭 분리 (대화 / 거래내역) ✅ DONE 2026-03-27
+
+**What:** AccountRoom에 `[대화] [거래내역]` 탭 추가. 기본 탭은 대화. 거래내역 탭은 기존 타임라인을 분리.
+**Why:** 거래 건수가 늘면 AI 대화가 거래 버블 아래 묻힌다. 두 콘텐츠 타입(기록 vs 대화)의 성격이 다르다 — 분리가 맞다.
+**Pros:** 거래 100건이 쌓여도 AI 대화 접근성 유지. 구조적 확장성 확보.
+**Cons:** 탭 추가로 UI 복잡도 소폭 증가.
+**Context:**
+- plan-design-review 결정 (2026-03-27, 1B).
+- 탭 스타일 스펙: DESIGN.md "탭 바" 섹션 참조.
+- ARIA: `role="tablist"`, `role="tab"`, `aria-selected`, `role="tabpanel"` 필요.
+- AccountListScreen preview: 마지막 거래 → 마지막 AI 대화 발언으로 교체.
+**Effort:** M (human: ~반나절 / CC+gstack: ~25min)
+**Priority:** P1
+**Depends on:** 없음
+
+---
+
+## TODO-7: 첫 방문 온보딩 오버레이 ✅ DONE 2026-03-27
+
+**What:** 앱 최초 실행 시 풀스크린 오버레이. "계좌가 먼저 말을 걸어요" + 기능 3줄 + "시작하기" CTA.
+**Why:** 메신저 뱅킹 메타포를 처음 보는 임원/사용자가 "왜 카톡처럼 생겼지?"라고 혼란스러워한다. 힌트 없이는 무엇을 탭해야 하는지 모른다.
+**Pros:** 데모 발표자가 설명하지 않아도 앱이 스스로 설명한다. 임원 데모 첫인상 개선.
+**Cons:** 구현 30분.
+**Context:**
+- plan-design-review 결정 (2026-03-27, 3A).
+- 상세 스펙: DESIGN.md "온보딩 오버레이" 섹션.
+- 트리거: `localStorage['zb-m-onboarded']` 없을 때.
+- handleReset() 시 localStorage 초기화 → 온보딩 재표시.
+**Effort:** S (human: ~30min / CC+gstack: ~10min)
+**Priority:** P1
+**Depends on:** 없음
+
+---
+
+## TODO-8: 계좌 아바타 이모지 → SVG 아이콘 교체 ✅ DONE 2026-03-27
+
+**What:** TYPE_CONFIG의 이모지 아이콘(💳 🏦 📈 🐷 📊)을 인라인 SVG로 교체.
+**Why:** 이모지는 "빠르게 만든 프로토타입" 인상을 준다. iM뱅크 임원 데모에서 신뢰감을 낮춘다.
+**Pros:** 즉각적인 시각적 프로페셔널함 향상. 외부 라이브러리 불필요.
+**Cons:** SVG path 5개 작성 필요.
+**Context:**
+- plan-design-review 결정 (2026-03-27, 4B).
+- 상세 스펙: DESIGN.md "계좌 아바타 SVG" 섹션.
+- 수정 위치: AccountListScreen.jsx + AccountRoom.jsx TYPE_CONFIG.icon 필드.
+**Effort:** S (human: ~1시간 / CC+gstack: ~15min)
+**Priority:** P1
+**Depends on:** 없음
+
+---
+
+## TODO-9: 거래내역 탭 무한 스크롤 페이지네이션 ✅ DONE 2026-03-27
+
+**What:** 거래내역 탭 하단 도달 시 다음 페이지 자동 로드. 백엔드 page 파라미터 추가.
+**Why:** 현재 5건 고정 제한. 실제 사용자는 월 50건 이상. 탭 분리 후 거래내역 탭이 의미 있으려면 스크롤 가능해야 한다.
+**Pros:** 거래 건수 제한 없이 확장 가능. 데모에서도 "더 많은 거래 내역"을 보여줄 수 있음.
+**Cons:** 백엔드 API 변경 필요 (`/api/account/:id?page=N&limit=20`).
+**Context:**
+- plan-design-review 결정 (2026-03-27, 6B).
+- IntersectionObserver 사용 (scroll event 금지 — iOS 성능 이슈).
+- 로딩: TxSkeleton 2개. 종료: "모든 거래 내역을 확인했습니다" 문구.
+**Effort:** M (human: ~반나절 / CC+gstack: ~20min)
+**Priority:** P2
+**Depends on:** TODO-6 (탭 분리 완료 후)
+
+---
+
 ## TODO-4: Railway 워밍업 cron 재확인 (Feature A 완료 후)
 
 **What:** Feature A+B 배포 후 Railway 워밍업 cron이 새 엔드포인트와 함께 정상 동작하는지 확인. 기존 TODO-2의 후속.
