@@ -129,11 +129,11 @@ function BalanceDisplay({ value, animate, prefix, suffix }) {
     }
     startedRef.current = true
     const start = performance.now()
-    const DURATION = 750
+    const DURATION = 2200
 
     const tick = (now) => {
       const t = Math.min((now - start) / DURATION, 1)
-      const eased = 1 - Math.pow(1 - t, 3)
+      const eased = 1 - Math.pow(1 - t, 4)
       setCurrent(Math.round(value * eased))
       if (t < 1) {
         rafRef.current = requestAnimationFrame(tick)

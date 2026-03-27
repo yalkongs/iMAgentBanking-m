@@ -534,7 +534,7 @@ export default function AccountRoom({
                     </div>
                   )
                 })}
-                {hasMore && <div ref={loaderRef} style={{ height: 40 }} />}
+                {txMeta?.hasMore && <div ref={loadMoreRef} className="tx-load-sentinel" />}
               </>
             )}
           </>
