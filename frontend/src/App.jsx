@@ -166,6 +166,16 @@ export default function App() {
   const [healthScore, setHealthScore] = useState(null)
   const [healthOpen, setHealthOpen] = useState(false)
 
+  // ── 온보딩 오버레이 ──
+  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('zb-m-onboarded'))
+  const [onboardingFading, setOnboardingFading] = useState(false)
+
+  function dismissOnboarding() {
+    setOnboardingFading(true)
+    localStorage.setItem('zb-m-onboarded', '1')
+    setTimeout(() => setShowOnboarding(false), 300)
+  }
+
   // ── 메신저 UI 상태 ──
   const [screen, setScreen] = useState('home')           // 'home' | 'room'
   const [activeAccountId, setActiveAccountId] = useState(null)
@@ -173,6 +183,7 @@ export default function App() {
   const [isAccountsLoading, setIsAccountsLoading] = useState(true)
   const [roomTransactions, setRoomTransactions] = useState({})
   const [roomMessages, setRoomMessages] = useState({})   // { [accountId]: Message[] }
+  const [roomTxMeta, setRoomTxMeta] = useState({})       // { [accountId]: { page, hasMore, isLoadingMore } }
   const [unreadCounts, setUnreadCounts] = useState({})   // { [accountId]: number }
 
   const messagesEndRef = useRef(null)
@@ -592,6 +603,7 @@ export default function App() {
     setMessages([])
     setRoomMessages({})
     setRoomTransactions({})
+    setRoomTxMeta({})
     setUnreadCounts({})
     setAlert(null)
     setLastCardType(null)
@@ -696,11 +708,15 @@ export default function App() {
 
     // 거래 내역 로드 (캐시 없을 때만)
     if (!roomTransactions[accountId]) {
-      fetch(`${API_BASE}/api/account/${accountId}?sessionId=${sessionId}`)
+      fetch(`${API_BASE}/api/account/${accountId}?sessionId=${sessionId}&page=1&limit=20`)
         .then((r) => r.json())
         .then((d) => {
           if (d.recentTransactions) {
             setRoomTransactions((prev) => ({ ...prev, [accountId]: d.recentTransactions }))
+            setRoomTxMeta((prev) => ({
+              ...prev,
+              [accountId]: { page: 1, hasMore: d.pagination?.hasMore ?? false, isLoadingMore: false },
+            }))
           }
         })
         .catch(() => {})
@@ -720,6 +736,44 @@ export default function App() {
     fetchAccountList()
   }
 
+  // 거래내역 다음 페이지 로드
+  function handleLoadMoreTxs() {
+    if (!activeAccountId) return
+    const meta = roomTxMeta[activeAccountId]
+    if (!meta || !meta.hasMore || meta.isLoadingMore) return
+
+    const nextPage = meta.page + 1
+    setRoomTxMeta((prev) => ({
+      ...prev,
+      [activeAccountId]: { ...meta, isLoadingMore: true },
+    }))
+
+    fetch(`${API_BASE}/api/account/${activeAccountId}?sessionId=${sessionId}&page=${nextPage}&limit=20`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.recentTransactions) {
+          setRoomTransactions((prev) => ({
+            ...prev,
+            [activeAccountId]: [...(prev[activeAccountId] || []), ...d.recentTransactions],
+          }))
+          setRoomTxMeta((prev) => ({
+            ...prev,
+            [activeAccountId]: {
+              page: nextPage,
+              hasMore: d.pagination?.hasMore ?? false,
+              isLoadingMore: false,
+            },
+          }))
+        }
+      })
+      .catch(() => {
+        setRoomTxMeta((prev) => ({
+          ...prev,
+          [activeAccountId]: { ...meta, isLoadingMore: false },
+        }))
+      })
+  }
+
   // 대화 초기화 (세션만)
   async function handleReset() {
     await fetch(`${API_BASE}/api/reset`, {
@@ -730,12 +784,16 @@ export default function App() {
     setMessages([])
     setRoomMessages({})
     setRoomTransactions({})
+    setRoomTxMeta({})
     setUnreadCounts({})
     setAlert(null)
     setLeavingEmpty(false)
     setLastCardType(null)
     setIsAccountsLoading(true)
     if (window.speechSynthesis) window.speechSynthesis.cancel()
+    localStorage.removeItem('zb-m-onboarded')
+    setOnboardingFading(false)
+    setShowOnboarding(true)
     fetchAccountList()
   }
 
@@ -777,6 +835,8 @@ export default function App() {
           onSendMessage={(text) => sendMessage(text)}
           onTransferDone={() => {}}
           onMarkRead={() => setUnreadCounts((prev) => ({ ...prev, [activeAccountId]: 0 }))}
+          txMeta={roomTxMeta[activeAccountId]}
+          onLoadMoreTxs={handleLoadMoreTxs}
         />
       ) : (
         <AccountListScreen
@@ -816,6 +876,43 @@ export default function App() {
             {txNotif.aiComment && (
               <span className="tx-notif-comment">{txNotif.aiComment}</span>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* 온보딩 오버레이 */}
+      {showOnboarding && (
+        <div
+          className={`onboarding-overlay${onboardingFading ? ' fading' : ''}`}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="onboarding-headline"
+        >
+          <div className="onboarding-content">
+            <img src="/imbank-mark.png" alt="iM뱅크" className="onboarding-logo" />
+            <h1 id="onboarding-headline" className="onboarding-headline">계좌가 먼저 말을 걸어요</h1>
+            <p className="onboarding-sub">iM뱅크 AI 금융 어시스턴트</p>
+            <ul className="onboarding-features">
+              <li>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <span>각 계좌를 탭하면 AI 어시스턴트와 대화할 수 있어요</span>
+              </li>
+              <li>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span>입출금이 생기면 실시간으로 알려드려요</span>
+              </li>
+              <li>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                <span>음성으로도 이체, 조회, 분석이 가능해요</span>
+              </li>
+            </ul>
+            <button
+              className="onboarding-cta"
+              onClick={dismissOnboarding}
+              autoFocus
+            >
+              시작하기
+            </button>
           </div>
         </div>
       )}

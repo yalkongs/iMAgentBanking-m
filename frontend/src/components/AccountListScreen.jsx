@@ -1,11 +1,45 @@
 import { useState } from 'react'
 
+const ICONS = {
+  checking: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+      <line x1="1" y1="10" x2="23" y2="10"/>
+    </svg>
+  ),
+  installment_savings: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="11" r="6"/>
+      <path d="M12 17v2M9 20h6"/>
+      <path d="M15 11a3 3 0 0 0-6 0"/>
+      <line x1="16" y1="9" x2="18" y2="9"/>
+    </svg>
+  ),
+  term_deposit: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+      <polyline points="17 6 23 6 23 12"/>
+    </svg>
+  ),
+  savings: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+  ),
+  cma: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M12 2v10l6 3"/>
+    </svg>
+  ),
+}
+
 const TYPE_CONFIG = {
-  checking:            { icon: '💳', color: '#3B82F6', label: '입출금' },
-  installment_savings: { icon: '🏦', color: '#10B981', label: '정기적금' },
-  term_deposit:        { icon: '📈', color: '#8B5CF6', label: '정기예금' },
-  savings:             { icon: '🐷', color: '#F59E0B', label: '비상금' },
-  cma:                 { icon: '📊', color: '#EF4444', label: 'CMA' },
+  checking:            { color: '#3B82F6', label: '입출금' },
+  installment_savings: { color: '#10B981', label: '정기적금' },
+  term_deposit:        { color: '#8B5CF6', label: '정기예금' },
+  savings:             { color: '#F59E0B', label: '비상금' },
+  cma:                 { color: '#EF4444', label: 'CMA' },
 }
 
 function formatDateShort(dateStr) {
@@ -89,7 +123,7 @@ export default function AccountListScreen({
         {isLoading
           ? Array.from({ length: 5 }, (_, i) => <SkeletonItem key={i} />)
           : accounts.map((acc) => {
-              const cfg = TYPE_CONFIG[acc.type] || { icon: '🏦', color: '#6B7280', label: acc.type }
+              const cfg = TYPE_CONFIG[acc.type] || { color: '#6B7280', label: acc.type }
               const unread = unreadCounts?.[acc.id] || 0
               const last = acc.lastTransaction
 
@@ -103,7 +137,7 @@ export default function AccountListScreen({
                     className="account-avatar"
                     style={{ background: cfg.color }}
                   >
-                    {cfg.icon}
+                    {ICONS[acc.type] || ICONS.checking}
                   </div>
 
                   <div className="account-list-item-body">
