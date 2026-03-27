@@ -669,7 +669,8 @@ app.get('/api/accounts', (req, res) => {
 })
 
 // ──────────────────────────────────────────────
-// GET /api/account/:id — 계좌 상세 (잔액 + 최근 거래)
+// GET /api/account/:id — 계좌 상세 (잔액 + 거래 페이지네이션)
+// query: page (1-based, default 1), limit (default 20)
 // ──────────────────────────────────────────────
 app.get('/api/account/:id', (req, res) => {
   const sessionId = req.query.sessionId || 'default'
@@ -679,16 +680,27 @@ app.get('/api/account/:id', (req, res) => {
   const acc = ctx.accounts.find((a) => a.id === req.params.id)
   if (!acc) return res.status(404).json({ error: '계좌를 찾을 수 없습니다.' })
 
-  const recentTransactions = ctx.transactions
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1)
+  const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 20))
+  const offset = (page - 1) * limit
+
+  const allTxs = ctx.transactions
     .filter((t) => t.accountId === acc.id)
     .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 5)
+
+  const total = allTxs.length
+  const recentTransactions = allTxs
+    .slice(offset, offset + limit)
     .map((t) => ({
       ...t,
       amountFormatted: (t.amount > 0 ? '+' : '') + t.amount.toLocaleString('ko-KR') + '원',
     }))
 
-  res.json({ account: acc, recentTransactions })
+  res.json({
+    account: acc,
+    recentTransactions,
+    pagination: { page, limit, total, hasMore: offset + limit < total },
+  })
 })
 
 // ──────────────────────────────────────────────
@@ -726,6 +738,59 @@ app.get('/api/health-score', (req, res) => {
   score = Math.max(0, Math.min(100, score))
 
   res.json({ score, savingsRate: Math.round(savingsRate * 100), income, expense })
+})
+
+// ──────────────────────────────────────────────
+// POST /api/room-greeting — 계좌방 첫 입장 AI 인사말 (SSE)
+// ──────────────────────────────────────────────
+const ROOM_GREETING_PROMPTS = {
+  checking:            '입출금 계좌 담당 AI로서 오늘의 입출금 현황과 관련해 사용자에게 먼저 말을 걸어라. 1-2문장. 이모지 금지. 격식체(~입니다, ~까?).',
+  installment_savings: '정기적금 계좌 담당 AI로서 적금 목표 달성과 관련해 격려하며 말을 걸어라. 1-2문장. 이모지 금지. 격식체.',
+  term_deposit:        '정기예금 계좌 담당 AI로서 예금 만기/금리 관련해 신중하게 말을 걸어라. 1-2문장. 이모지 금지. 격식체.',
+  savings:             '비상금 계좌 담당 AI로서 비상금 현황과 관련해 안심시키며 말을 걸어라. 1-2문장. 이모지 금지. 격식체.',
+  cma:                 'CMA 계좌 담당 AI로서 수익률/운용 현황과 관련해 분석적으로 말을 걸어라. 1-2문장. 이모지 금지. 격식체.',
+}
+
+app.post('/api/room-greeting', async (req, res) => {
+  const { sessionId = 'default', accountId } = req.body
+  const session = getSession(sessionId)
+  const ctx = getSessionCtx(session)
+
+  const acc = ctx.accounts.find((a) => a.id === accountId)
+  if (!acc) return res.status(404).json({ error: '계좌를 찾을 수 없습니다.' })
+
+  const recentTxs = ctx.transactions
+    .filter((t) => t.accountId === acc.id)
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 3)
+    .map((t) => `${t.counterpart} ${(t.amount > 0 ? '+' : '') + t.amount.toLocaleString('ko-KR')}원`)
+    .join(', ')
+
+  const prompt = ROOM_GREETING_PROMPTS[acc.type] || ROOM_GREETING_PROMPTS.checking
+  const context = `계좌명: ${acc.name}, 잔액: ${acc.balance.toLocaleString('ko-KR')}원${recentTxs ? `, 최근 거래: ${recentTxs}` : ''}`
+
+  res.setHeader('Content-Type', 'text/event-stream')
+  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Connection', 'keep-alive')
+
+  try {
+    const stream = anthropic.messages.stream({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 150,
+      messages: [{ role: 'user', content: `${context}\n\n${prompt}` }],
+    })
+
+    for await (const event of stream) {
+      if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+        res.write(`data: ${JSON.stringify({ type: 'text', delta: event.delta.text })}\n\n`)
+      }
+    }
+    res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`)
+  } catch {
+    res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`)
+  } finally {
+    res.end()
+  }
 })
 
 // ──────────────────────────────────────────────
