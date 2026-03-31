@@ -314,9 +314,12 @@ export default function AccountListScreen({
                           {['installment_savings', 'term_deposit', 'cma', 'savings'].includes(acc.type) && !acc.isPromo && (
                             <span className="account-pulse-dot" aria-label="이자 발생 중" />
                           )}
+                          {acc.applicationStatus === 'pending' && (
+                            <span className="account-pending-lamp" aria-label="심사 진행 중" />
+                          )}
                         </span>
                         <span className="account-list-balance">
-                          {acc.isPromo ? null : acc.type === 'debit_card' ? (
+                          {acc.isPromo ? null : acc.applicationStatus === 'pending' ? null : acc.type === 'debit_card' ? (
                             <BalanceDisplay value={acc.balance} animate={true} prefix="이번달 " suffix="원 사용" />
                           ) : (
                             <BalanceDisplay value={acc.balance} animate={true} />
@@ -327,6 +330,8 @@ export default function AccountListScreen({
                         <span className="account-list-preview">
                           {isPromo
                             ? (acc.promoHook || cfg.label)
+                            : acc.applicationStatus === 'pending'
+                            ? '심사 중 · 영업일 3~5일 소요'
                             : last
                             ? `${last.counterpart} ${last.amountFormatted}`
                             : cfg.label}

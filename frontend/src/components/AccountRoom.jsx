@@ -599,6 +599,39 @@ export default function AccountRoom({
             <div className="promo-banner-sub">캐시백, 할인, 포인트 — iM 신용카드의 혜택이 지금 당신을 기다립니다. 아래에서 AI에게 물어보세요.</div>
           </div>
         )}
+        {account?.applicationStatus === 'pending' && (
+          <div className="card-pending-banner">
+            <div className="card-pending-lamp-wrap">
+              <span className="card-pending-lamp-icon" />
+              <span className="card-pending-lamp-ring" />
+            </div>
+            <div className="card-pending-content">
+              <div className="card-pending-title">카드 심사가 진행 중이에요</div>
+              <div className="card-pending-sub">
+                심사 결과는 영업일 기준 3~5일 내 문자로 안내드려요.<br />
+                신청일 {account.applicationDate?.replace(/-/g, '.')}
+              </div>
+              <div className="card-pending-steps">
+                <div className="card-pending-step card-pending-step--done">
+                  <span className="cps-dot" />
+                  <span className="cps-label">신청 완료</span>
+                </div>
+                <div className="card-pending-step card-pending-step--active">
+                  <span className="cps-dot" />
+                  <span className="cps-label">서류 심사</span>
+                </div>
+                <div className="card-pending-step">
+                  <span className="cps-dot" />
+                  <span className="cps-label">카드 발급</span>
+                </div>
+                <div className="card-pending-step">
+                  <span className="cps-dot" />
+                  <span className="cps-label">배송</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         {(account?.type === 'installment_savings' || account?.type === 'term_deposit' || account?.type === 'cma') && account.accruedInterest !== undefined && (
           <SavingsLifeCard account={account} />
         )}
