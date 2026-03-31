@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 // ── 단계 표시 dot indicator ──────────────────────────────
 function StepDots({ current, total }) {
@@ -88,8 +88,9 @@ function FundStep({ accounts, onComplete }) {
   return (
     <div className="enroll-step">
       <p className="enroll-step-desc">첫 입금 계좌와 금액을 설정해주세요.</p>
-      <label className="enroll-field-label">출금 계좌</label>
+      <label htmlFor="fund-from-account" className="enroll-field-label">출금 계좌</label>
       <select
+        id="fund-from-account"
         className="enroll-select"
         value={fromAccountId}
         onChange={(e) => setFromAccountId(e.target.value)}
@@ -100,8 +101,9 @@ function FundStep({ accounts, onComplete }) {
           </option>
         ))}
       </select>
-      <label className="enroll-field-label">입금 금액</label>
+      <label htmlFor="fund-amount" className="enroll-field-label">입금 금액</label>
       <input
+        id="fund-amount"
         className={`enroll-amount-input${insufficient ? ' enroll-code-input--error' : ''}`}
         type="tel"
         inputMode="numeric"
@@ -163,8 +165,8 @@ function TermStep({ accounts, onComplete }) {
         ))}
       </div>
 
-      <label className="enroll-field-label">출금 계좌</label>
-      <select className="enroll-select" value={fromAccountId} onChange={(e) => setFromAccountId(e.target.value)}>
+      <label htmlFor="term-from-account" className="enroll-field-label">출금 계좌</label>
+      <select id="term-from-account" className="enroll-select" value={fromAccountId} onChange={(e) => setFromAccountId(e.target.value)}>
         {checkingAccounts.map((a) => (
           <option key={a.id} value={a.id}>
             {a.name} ({a.balance.toLocaleString('ko-KR')}원)
@@ -172,8 +174,9 @@ function TermStep({ accounts, onComplete }) {
         ))}
       </select>
 
-      <label className="enroll-field-label">예치 금액</label>
+      <label htmlFor="term-amount" className="enroll-field-label">예치 금액</label>
       <input
+        id="term-amount"
         className={`enroll-amount-input${insufficient ? ' enroll-code-input--error' : ''}`}
         type="tel"
         inputMode="numeric"
@@ -218,12 +221,21 @@ function TermStep({ accounts, onComplete }) {
 // ── Step 4: 공인인증서 시뮬레이션 (정기예금만) ──────────
 function CertStep({ onComplete }) {
   const [status, setStatus] = useState('idle') // idle | loading | done
+  const mountedRef = useRef(true)
+
+  useEffect(() => {
+    return () => { mountedRef.current = false }
+  }, [])
 
   function handleCert() {
     setStatus('loading')
     setTimeout(() => {
+      if (!mountedRef.current) return
       setStatus('done')
-      setTimeout(() => onComplete({}), 500)
+      setTimeout(() => {
+        if (!mountedRef.current) return
+        onComplete({})
+      }, 500)
     }, 2000)
   }
 
