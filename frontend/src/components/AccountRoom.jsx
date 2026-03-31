@@ -592,13 +592,23 @@ export default function AccountRoom({
         ref={chatContainerRef}
         style={{ display: activeTab === 'chat' ? 'flex' : 'none' }}
       >
-        {account?.isPromo && (
-          <div className="promo-banner">
-            <div className="promo-banner-badge">혜택 준비됨</div>
-            <div className="promo-banner-title">당신을 기다리고 있어요</div>
-            <div className="promo-banner-sub">캐시백, 할인, 포인트 — iM 신용카드의 혜택이 지금 당신을 기다립니다. 아래에서 AI에게 물어보세요.</div>
-          </div>
-        )}
+        {account?.isPromo && (() => {
+          const PROMO_BANNER = {
+            credit_card: { badge: '혜택 준비됨', title: '당신을 기다리고 있어요', sub: '캐시백, 할인, 포인트 — iM 신용카드의 혜택이 지금 당신을 기다립니다. 아래에서 AI에게 물어보세요.' },
+            cma:         { badge: '매일 이자', title: '잔액이 쉬는 동안 불어납니다', sub: 'iM CMA는 잔액이 있는 날마다 이자를 드립니다. 연 4.75% — 아래에서 AI에게 물어보세요.' },
+            term_deposit:{ badge: '확정 금리', title: '목돈을 안전하게 키워보세요', sub: '연 4.20% 확정금리로 만기까지 안심하고 맡길 수 있습니다. 아래에서 AI에게 물어보세요.' },
+            savings:     { badge: '비상금', title: '든든한 안전망을 만드세요', sub: '언제든 출금 가능한 비상금 전용 통장. 이자는 챙기고 유동성도 지킵니다. 아래에서 AI에게 물어보세요.' },
+          }
+          const b = PROMO_BANNER[account.type]
+          if (!b) return null
+          return (
+            <div className="promo-banner">
+              <div className="promo-banner-badge">{b.badge}</div>
+              <div className="promo-banner-title">{b.title}</div>
+              <div className="promo-banner-sub">{b.sub}</div>
+            </div>
+          )
+        })()}
         {account?.applicationStatus === 'pending' && (
           <div className="card-pending-banner">
             <div className="card-pending-lamp-wrap">
@@ -713,7 +723,7 @@ export default function AccountRoom({
         ref={txContainerRef}
         style={{ display: activeTab === 'txlist' ? 'flex' : 'none' }}
       >
-        {account?.isPromo ? (
+        {account?.isPromo && account?.type === 'credit_card' ? (
           <div className="txlist-promo">
             <div className="txlist-promo-card-visual">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
