@@ -1050,16 +1050,25 @@ input:focus-visible, textarea:focus-visible {
    UI 카드 공통 — dark glass
    ────────────────────────────────────────────── */
 .ui-card {
-  margin-top: 4px; /* 텍스트 메시지 → 카드 전환 시 구분 */
-  background: rgba(11, 13, 30, 0.82);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(0, 201, 167, 0.13);
+  margin-top: 4px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow:
-    0 8px 40px rgba(0, 0, 0, 0.50),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: var(--glass-shadow), var(--glass-inset);
+  position: relative;
+}
+
+.ui-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: var(--glass-line);
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* ── 퀵액션 공통 ── */
