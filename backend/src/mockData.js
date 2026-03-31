@@ -629,7 +629,7 @@ export const savingsProducts = [
 // ──────────────────────────────────────────────
 // 신규 계좌 생성 (상품 가입)
 // ──────────────────────────────────────────────
-export function createAccount(productId, enrollData) {
+export function createAccount(productId, enrollData = {}) {
   const now = new Date()
   const accountNo = () =>
     '503-' + String(Math.floor(Math.random() * 90) + 10) + '-' + String(Math.floor(Math.random() * 9000000) + 1000000)
