@@ -1,0 +1,163 @@
+<h2>어떻게 가치를 먼저 보여줄까?</h2>
+<p class="subtitle">"개설하기" 없이 고객이 스스로 궁금해지게 만드는 3가지 방식</p>
+
+<style>
+.phone { width: 230px; border-radius: 24px; background: #0D0F1A; border: 1.5px solid rgba(255,255,255,0.12); overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.6); font-family: -apple-system, sans-serif; }
+.ph { padding:2px 0; }
+.sec { padding: 8px 12px 3px; font-size: 9px; font-weight: 700; color: #475569; letter-spacing: 0.8px; text-transform: uppercase; }
+.room { display: flex; align-items: stretch; border-bottom: 1px solid rgba(255,255,255,0.05); cursor:pointer; }
+.blk { width: 46px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border-radius:14px 0 0 14px; }
+.bd { padding: 10px 12px; flex:1; min-width:0; }
+.rn { font-size: 12px; font-weight:600; color:#F1F5F9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rp { font-size: 10px; color:#64748B; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rb { font-size: 11px; font-weight:600; color:#94A3B8; margin-top:1px; }
+
+/* A: 수치 미리보기 */
+.val-room { display:flex; align-items:stretch; border-bottom:1px solid rgba(255,255,255,0.04); position:relative; }
+.val-blk { width:46px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border-radius:14px 0 0 14px; opacity:0.4; }
+.val-bd { padding:10px 12px; flex:1; }
+.val-name { font-size:12px; font-weight:600; color:#64748B; }
+.val-num { font-size:11px; font-weight:700; margin-top:3px; }
+.val-sub { font-size:9px; color:#475569; margin-top:1px; }
+
+/* B: AI 미리보기 말풍선 */
+.ai-room { display:flex; align-items:stretch; border-bottom:1px solid rgba(255,255,255,0.04); }
+.ai-blk { width:46px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border-radius:14px 0 0 14px; opacity:0.35; }
+.ai-bd { padding:10px 12px; flex:1; }
+.ai-name { font-size:12px; font-weight:600; color:#64748B; }
+.ai-msg { font-size:10px; color:#94A3B8; margin-top:3px; font-style:italic; line-height:1.35; }
+.ai-unread { width:6px; height:6px; border-radius:50%; background:#475569; margin-top:4px; }
+
+/* C: 맥락 기반 힌트 (현재 계좌 → 이 상품) */
+.ctx-banner {
+  margin: 5px 8px 4px;
+  background: rgba(16,185,129,0.06);
+  border: 1px solid rgba(16,185,129,0.15);
+  border-radius: 12px;
+  padding: 9px 11px;
+  display:flex; align-items:flex-start; gap:8px;
+}
+.ctx-dot { width:6px; height:6px; border-radius:50%; background:#10B981; margin-top:3px; flex-shrink:0; box-shadow:0 0 6px #10B981; }
+.ctx-text { font-size:10px; color:#94A3B8; line-height:1.45; }
+.ctx-text b { color:#10B981; }
+
+.option-label { text-align:center; font-size:11px; font-weight:700; padding:8px; color:#94A3B8; background:rgba(255,255,255,0.03); border-top:1px solid rgba(255,255,255,0.06); }
+.option-desc { text-align:center; font-size:9px; color:#475569; padding:4px 8px 10px; line-height:1.5; }
+
+.keyword { display:inline-block; padding:1px 5px; border-radius:4px; font-weight:700; font-size:9px; }
+</style>
+
+<div class="options" style="gap:16px">
+
+  <!-- A: 수치 미리보기 -->
+  <div class="option" data-choice="a" onclick="toggleSelect(this)" style="padding:0;overflow:hidden;flex-direction:column;align-items:stretch">
+    <div class="letter" style="margin:10px 0 0 10px;align-self:flex-start">A</div>
+    <div class="phone" style="margin:8px;border:none;box-shadow:none;background:transparent">
+      <div class="ph">
+        <div class="sec">저축 · 투자</div>
+        <!-- 보유 -->
+        <div class="room">
+          <div class="blk" style="background:linear-gradient(180deg,#10B981,#059669)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="bd"><div class="rn">iM 정기적금</div><div class="rp">AI: 납입 3/12회 완료</div><div class="rb">3,200,000원</div></div>
+        </div>
+        <!-- 미보유: 수치 -->
+        <div class="val-room">
+          <div class="val-blk" style="background:linear-gradient(180deg,#8B5CF6,#6D28D9)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          </div>
+          <div class="val-bd">
+            <div class="val-name">정기예금</div>
+            <div class="val-num" style="color:#8B5CF6">연 4.20% 이자</div>
+            <div class="val-sub">1,000만원 → 매달 35,000원</div>
+          </div>
+        </div>
+        <div class="val-room">
+          <div class="val-blk" style="background:linear-gradient(180deg,#EF4444,#B91C1C)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 17 8.5 11 13 14.5 20 7"/><polyline points="15 7 20 7 20 12"/></svg>
+          </div>
+          <div class="val-bd">
+            <div class="val-name">CMA</div>
+            <div class="val-num" style="color:#EF4444">오늘도 이자 +130원</div>
+            <div class="val-sub">100만원 기준 · 연 4.75%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="option-label">A — 수치 미리보기</div>
+    <div class="option-desc">실제 이자·수익률을 바로 보여줌<br>"이만큼 벌 수 있다"는 금전적 동기</div>
+  </div>
+
+  <!-- B: AI 메시지 미리보기 -->
+  <div class="option" data-choice="b" onclick="toggleSelect(this)" style="padding:0;overflow:hidden;flex-direction:column;align-items:stretch">
+    <div class="letter" style="margin:10px 0 0 10px;align-self:flex-start">B</div>
+    <div class="phone" style="margin:8px;border:none;box-shadow:none;background:transparent">
+      <div class="ph">
+        <div class="sec">저축 · 투자</div>
+        <div class="room">
+          <div class="blk" style="background:linear-gradient(180deg,#10B981,#059669)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="bd"><div class="rn">iM 정기적금</div><div class="rp">AI: 납입 3/12회 완료</div><div class="rb">3,200,000원</div></div>
+        </div>
+        <!-- 미보유: AI 메시지 미리보기 -->
+        <div class="ai-room">
+          <div class="ai-blk" style="background:linear-gradient(180deg,#8B5CF6,#6D28D9)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          </div>
+          <div class="ai-bd">
+            <div class="ai-name" style="color:#64748B">정기예금</div>
+            <div class="ai-msg">"금리 오른 지금이 예금 넣기 딱 좋을 때예요."</div>
+            <div class="ai-unread"></div>
+          </div>
+        </div>
+        <div class="ai-room">
+          <div class="ai-blk" style="background:linear-gradient(180deg,#EF4444,#B91C1C)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="3 17 8.5 11 13 14.5 20 7"/><polyline points="15 7 20 7 20 12"/></svg>
+          </div>
+          <div class="ai-bd">
+            <div class="ai-name" style="color:#64748B">CMA</div>
+            <div class="ai-msg">"잠자는 잔액, 하루도 쉬면 안 됩니다."</div>
+            <div class="ai-unread"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="option-label">B — AI 메시지 미리보기</div>
+    <div class="option-desc">AI가 방 밖에서 먼저 말 걸듯<br>short 카피로 호기심 유발</div>
+  </div>
+
+  <!-- C: 맥락 기반 힌트 -->
+  <div class="option" data-choice="c" onclick="toggleSelect(this)" style="padding:0;overflow:hidden;flex-direction:column;align-items:stretch">
+    <div class="letter" style="margin:10px 0 0 10px;align-self:flex-start">C</div>
+    <div class="phone" style="margin:8px;border:none;box-shadow:none;background:transparent">
+      <div class="ph">
+        <div class="sec">저축 · 투자</div>
+        <div class="room">
+          <div class="blk" style="background:linear-gradient(180deg,#10B981,#059669)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="bd"><div class="rn">iM 정기적금</div><div class="rp">AI: 납입 3/12회 완료</div><div class="rb">3,200,000원</div></div>
+        </div>
+        <!-- 보유 계좌 기반 문맥 힌트 -->
+        <div class="ctx-banner">
+          <div class="ctx-dot"></div>
+          <div class="ctx-text">적금 외 <b>여유자금 180만원</b>이 입출금에 잠자고 있어요. CMA에 두면 <b>오늘부터 이자</b>가 붙습니다.</div>
+        </div>
+        <div style="height:3px"></div>
+        <div class="ctx-banner" style="background:rgba(139,92,246,0.06);border-color:rgba(139,92,246,0.15)">
+          <div class="ctx-dot" style="background:#8B5CF6;box-shadow:0 0 6px #8B5CF6"></div>
+          <div class="ctx-text">적금 만기 후 목돈 <b>예상 수령액 3,860만원</b>. 정기예금으로 굴리면 연 <b>+162만원</b>.</div>
+        </div>
+      </div>
+    </div>
+    <div class="option-label">C — 맥락 기반 힌트</div>
+    <div class="option-desc">현재 보유 계좌 데이터를 근거로<br>"지금 당신의 상황에서 이득" 제시</div>
+  </div>
+
+</div>
+
+<p style="text-align:center;font-size:11px;color:#475569;margin-top:16px">
+  세 방식 모두 "개설하기" CTA 없음 — 선택하거나 터미널로 의견 주세요
+</p>

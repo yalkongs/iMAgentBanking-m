@@ -1,0 +1,288 @@
+<h2>섹션 2/4 — 계좌 대화방</h2>
+<p class="subtitle">헤더 + 라이프카드 + 대화방 진입 영역 목업입니다.</p>
+
+<style>
+.phone-wrap { display:flex; justify-content:center; margin:16px 0; }
+.phone {
+  width:340px; height:620px;
+  border-radius:40px; overflow:hidden; position:relative;
+  border:2px solid rgba(255,255,255,0.12);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 32px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
+  background:#060810;
+  display:flex; flex-direction:column;
+}
+.phone-bg {
+  position:absolute; inset:0;
+  background:
+    radial-gradient(ellipse 70% 40% at 50% 0%, rgba(16,185,129,0.14) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 80% 80%, rgba(59,130,246,0.08) 0%, transparent 60%),
+    #060810;
+}
+
+/* ── Room Header ── */
+.room-header {
+  position:relative; z-index:10;
+  display:flex; align-items:center; gap:0;
+  background:linear-gradient(180deg, rgba(6,8,16,0.9) 0%, rgba(6,8,16,0.55) 100%);
+  backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+  border-bottom:1px solid rgba(255,255,255,0.07);
+  flex-shrink:0;
+  overflow:hidden;
+}
+/* 컬러 블록을 헤더 좌측에도 동일하게 */
+.room-header-block {
+  width:52px; align-self:stretch;
+  background:linear-gradient(180deg, #10B981 0%, #059669 100%);
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+  position:relative;
+}
+.room-header-block::after {
+  content:''; position:absolute; top:0; right:0; bottom:0; width:1px;
+  background:linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05), rgba(255,255,255,0.2));
+}
+.room-header-body {
+  flex:1; padding:14px 14px;
+}
+.room-header-name {
+  font-size:15px; font-weight:700; color:#F1F5F9; letter-spacing:-0.3px;
+}
+.room-header-sub { font-size:11px; color:#64748B; margin-top:2px; }
+.room-header-back {
+  width:44px; height:44px; display:flex; align-items:center; justify-content:center;
+  color:#94A3B8; font-size:18px; flex-shrink:0;
+}
+
+/* ── Tabs ── */
+.room-tabs {
+  position:relative; z-index:9;
+  display:flex;
+  background:rgba(14,16,34,0.8);
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  flex-shrink:0;
+}
+.room-tab {
+  flex:1; padding:10px 0; text-align:center;
+  font-size:12px; font-weight:500; color:#475569;
+  position:relative;
+}
+.room-tab.active {
+  color:#10B981; font-weight:700;
+}
+.room-tab.active::after {
+  content:''; position:absolute; bottom:0; left:20%; right:20%;
+  height:2px; background:#10B981; border-radius:1px 1px 0 0;
+}
+
+/* ── Content area ── */
+.room-content {
+  flex:1; overflow-y:auto; position:relative; z-index:5;
+  padding:14px 14px 80px;
+  display:flex; flex-direction:column; gap:10px;
+}
+.room-content::-webkit-scrollbar { display:none; }
+
+/* ── Life Card (정기적금) ── */
+.life-card {
+  border-radius:18px;
+  background:linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(5,150,105,0.06) 100%);
+  border:1px solid rgba(16,185,129,0.25);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.4), 0 0 0 1px rgba(16,185,129,0.1), inset 0 1px 0 rgba(255,255,255,0.06);
+  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  padding:16px;
+  position:relative; overflow:hidden;
+}
+.life-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg, transparent, rgba(16,185,129,0.4), transparent);
+}
+.life-card-top {
+  display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;
+}
+.life-card-label { font-size:11px; font-weight:700; color:#10B981; letter-spacing:0.5px; }
+.life-card-count { font-size:11px; color:#64748B; }
+
+/* Ring */
+.life-ring-row {
+  display:flex; align-items:center; gap:16px;
+}
+.ring-wrap { position:relative; width:84px; height:84px; flex-shrink:0; }
+.ring-glow {
+  position:absolute; inset:-8px;
+  background:radial-gradient(circle, rgba(16,185,129,0.25) 0%, transparent 70%);
+  border-radius:50%;
+}
+.ring-text {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+.ring-pct { font-size:18px; font-weight:800; color:#10B981; letter-spacing:-1px; }
+.ring-sub { font-size:9px; color:#64748B; margin-top:1px; }
+
+.life-stats { flex:1; display:flex; flex-direction:column; gap:8px; }
+.stat-row { display:flex; justify-content:space-between; align-items:baseline; }
+.stat-label { font-size:11px; color:#64748B; }
+.stat-val { font-size:13px; font-weight:700; color:#F1F5F9; letter-spacing:-0.3px; }
+.stat-accent { color:#10B981; }
+
+.life-card-footer {
+  margin-top:12px; padding-top:10px;
+  border-top:1px solid rgba(255,255,255,0.06);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.footer-pill {
+  font-size:10px; font-weight:600; padding:3px 10px; border-radius:20px;
+  background:rgba(16,185,129,0.15); color:#10B981; border:1px solid rgba(16,185,129,0.25);
+}
+
+/* ── AI greeting bubble ── */
+.ai-bubble {
+  display:flex; gap:8px; align-items:flex-start;
+}
+.ai-avatar {
+  width:28px; height:28px; border-radius:50%; flex-shrink:0;
+  background:linear-gradient(135deg,#1E2138,#252846);
+  border:1px solid rgba(255,255,255,0.1);
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; font-weight:700; color:#00C9A7;
+}
+.ai-msg {
+  flex:1;
+  background:linear-gradient(135deg,rgba(28,31,53,0.85),rgba(18,20,38,0.9));
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:4px 16px 16px 16px;
+  padding:10px 12px;
+  font-size:12px; color:#CBD5E1; line-height:1.6;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+/* ── Input bar ── */
+.room-input {
+  position:absolute; bottom:0; left:0; right:0; z-index:10;
+  padding:10px 14px 16px;
+  background:linear-gradient(180deg, transparent 0%, rgba(6,8,16,0.95) 30%);
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+}
+.input-wrap {
+  display:flex; align-items:center; gap:8px;
+  background:rgba(37,40,70,0.8);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:24px;
+  padding:8px 8px 8px 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.input-field {
+  flex:1; font-size:13px; color:#94A3B8;
+  background:none; border:none; outline:none;
+}
+.input-send {
+  width:32px; height:32px; border-radius:50%;
+  background:linear-gradient(135deg,#00C9A7,#00A88A);
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+  box-shadow:0 0 12px rgba(0,201,167,0.4);
+}
+</style>
+
+<div class="phone-wrap">
+  <div class="phone">
+    <div class="phone-bg"></div>
+
+    <!-- Room Header -->
+    <div class="room-header">
+      <div class="room-header-back">‹</div>
+      <div class="room-header-block">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <ellipse cx="12" cy="17" rx="7" ry="3"/><path d="M5 17v-3M19 17v-3"/>
+          <ellipse cx="12" cy="14" rx="7" ry="3"/><path d="M12 11V5"/><path d="M9 8l3-3 3 3"/>
+        </svg>
+      </div>
+      <div class="room-header-body">
+        <div class="room-header-name">iM 정기적금</div>
+        <div class="room-header-sub">잔액 1,400,000원 · 연 4.5%</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="room-tabs">
+      <div class="room-tab active">대화</div>
+      <div class="room-tab">거래내역</div>
+    </div>
+
+    <!-- Content -->
+    <div class="room-content">
+
+      <!-- Life Card -->
+      <div class="life-card">
+        <div class="life-card-top">
+          <span class="life-card-label">정기적금 진행률</span>
+          <span class="life-card-count">7 / 24회</span>
+        </div>
+        <div class="life-ring-row">
+          <div class="ring-wrap">
+            <div class="ring-glow"></div>
+            <svg viewBox="0 0 100 100" width="84" height="84" style="position:relative;z-index:1">
+              <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(16,185,129,0.1)" strokeWidth="7"/>
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#10B981" strokeWidth="7"
+                stroke-dasharray="89 239" stroke-linecap="round"
+                transform="rotate(-90 50 50)"
+                style="filter:drop-shadow(0 0 6px rgba(16,185,129,0.7))"/>
+            </svg>
+            <div class="ring-text">
+              <div class="ring-pct">29%</div>
+              <div class="ring-sub">완료</div>
+            </div>
+          </div>
+          <div class="life-stats">
+            <div class="stat-row">
+              <span class="stat-label">납입 잔여</span>
+              <span class="stat-val">17회</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">만기 예상</span>
+              <span class="stat-val stat-accent">4,920,000원</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">다음 납입</span>
+              <span class="stat-val">D-3</span>
+            </div>
+          </div>
+        </div>
+        <div class="life-card-footer">
+          <span style="font-size:11px;color:#64748B">만기 2026.12.01</span>
+          <div class="footer-pill">납입 중</div>
+        </div>
+      </div>
+
+      <!-- AI bubble -->
+      <div class="ai-bubble">
+        <div class="ai-avatar">iM</div>
+        <div class="ai-msg">
+          안녕하세요! 24회 적금 중 7회를 완납하셨네요. 이번 달 납입일이 3일 남았어요 — 놓치지 마세요 😊
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Input bar -->
+    <div class="room-input">
+      <div class="input-wrap">
+        <span class="input-field">메시지 입력...</span>
+        <div class="input-send">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2" fill="white"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<p style="text-align:center;font-size:12px;color:#475569;margin-top:8px">
+  계좌 대화방 — 헤더 컬러 블록 연속성, 라이프카드 glow, 입력창 pill 형태<br>
+  이 방향이 맞으면 "네", 수정할 부분 있으면 말씀해주세요
+</p>

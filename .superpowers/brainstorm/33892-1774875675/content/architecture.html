@@ -1,0 +1,103 @@
+<h2>Section 1 — 전체 아키텍처</h2>
+<p class="subtitle">모든 금융 행동의 진입점은 대화 하나</p>
+
+<div class="section" style="margin-bottom:2rem">
+  <div style="background:#0f172a;border-radius:12px;padding:2rem;font-family:monospace;font-size:13px;line-height:1.8;color:#94a3b8">
+    <div style="color:#38bdf8;font-weight:700;margin-bottom:1rem">[ 사용자 입력 / AI 선제 메시지 ]</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.5rem">
+      <div style="background:#1e293b;border-radius:8px;padding:1rem;border-left:3px solid #818cf8">
+        <div style="color:#818cf8;font-weight:600;margin-bottom:.5rem">💬 대화 입력</div>
+        <div style="color:#94a3b8;font-size:12px">"적금 가입해줘"<br>"식비 줄이고 싶어"<br>"다음달 1일에 이체해줘"</div>
+      </div>
+      <div style="background:#1e293b;border-radius:8px;padding:1rem;border-left:3px solid #34d399">
+        <div style="color:#34d399;font-weight:600;margin-bottom:.5rem">🔔 AI 선제 제안</div>
+        <div style="color:#94a3b8;font-size:12px">거래 감지<br>지출 패턴 분석<br>만기일/납입일 인식</div>
+      </div>
+      <div style="background:#1e293b;border-radius:8px;padding:1rem;border-left:3px solid #fb923c">
+        <div style="color:#fb923c;font-weight:600;margin-bottom:.5rem">⏰ 예약 트리거</div>
+        <div style="color:#94a3b8;font-size:12px">스케줄된 이체<br>목표 체크인<br>만기 알림</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;color:#475569;margin-bottom:1rem">▼ Claude Tool Use 루프</div>
+
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.75rem;margin-bottom:1.5rem">
+      <div style="background:#1e293b;border-radius:8px;padding:.75rem;text-align:center">
+        <div style="color:#f472b6;font-size:12px;font-weight:600">상품 가입</div>
+        <div style="color:#475569;font-size:11px;margin-top:.25rem">initiate_product_application<br>confirm_application</div>
+      </div>
+      <div style="background:#1e293b;border-radius:8px;padding:.75rem;text-align:center">
+        <div style="color:#60a5fa;font-size:12px;font-weight:600">목표 설정</div>
+        <div style="color:#475569;font-size:11px;margin-top:.25rem">set_goal<br>get_goal_status</div>
+      </div>
+      <div style="background:#1e293b;border-radius:8px;padding:.75rem;text-align:center">
+        <div style="color:#a78bfa;font-size:12px;font-weight:600">예약 이체</div>
+        <div style="color:#475569;font-size:11px;margin-top:.25rem">schedule_transfer<br>cancel_schedule</div>
+      </div>
+      <div style="background:#1e293b;border-radius:8px;padding:.75rem;text-align:center">
+        <div style="color:#34d399;font-size:12px;font-weight:600">읽음 확인</div>
+        <div style="color:#475569;font-size:11px;margin-top:.25rem">mark_read<br>(WebSocket)</div>
+      </div>
+      <div style="background:#1e293b;border-radius:8px;padding:.75rem;text-align:center">
+        <div style="color:#fb923c;font-size:12px;font-weight:600">상황 인식</div>
+        <div style="color:#475569;font-size:11px;margin-top:.25rem">analyze_context<br>→ proactive msg</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;color:#475569;margin-bottom:1rem">▼ UI 카드 렌더링 (Message.jsx)</div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem">
+      <div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:.75rem;text-align:center;color:#64748b;font-size:11px">ProductApplicationCard</div>
+      <div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:.75rem;text-align:center;color:#64748b;font-size:11px">GoalProgressCard</div>
+      <div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:.75rem;text-align:center;color:#64748b;font-size:11px">ScheduledTransferCard</div>
+      <div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:.75rem;text-align:center;color:#64748b;font-size:11px">ProactiveSuggestionCard</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>6개 핵심 기능 요약</h3>
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead>
+      <tr style="background:#1e293b;color:#94a3b8">
+        <th style="padding:.75rem;text-align:left">기능</th>
+        <th style="padding:.75rem;text-align:left">진입점</th>
+        <th style="padding:.75rem;text-align:left">핵심 추가 요소</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid #1e293b">
+        <td style="padding:.75rem;color:#818cf8">읽음 확인</td>
+        <td style="padding:.75rem;color:#64748b">AI 메시지 옆 "1"</td>
+        <td style="padding:.75rem;color:#64748b">read_at 타임스탬프, WebSocket mark_read</td>
+      </tr>
+      <tr style="border-bottom:1px solid #1e293b">
+        <td style="padding:.75rem;color:#fb923c">예약 이체</td>
+        <td style="padding:.75rem;color:#64748b">"다음달 1일에 이체해줘"</td>
+        <td style="padding:.75rem;color:#64748b">scheduledJobs Map, node-cron</td>
+      </tr>
+      <tr style="border-bottom:1px solid #1e293b">
+        <td style="padding:.75rem;color:#60a5fa">목표 설정 + 코칭</td>
+        <td style="padding:.75rem;color:#64748b">"식비 30만원으로 줄여줘"</td>
+        <td style="padding:.75rem;color:#64748b">goals Map, 주기적 WebSocket 체크인</td>
+      </tr>
+      <tr style="border-bottom:1px solid #1e293b">
+        <td style="padding:.75rem;color:#34d399">상황 인식 제안</td>
+        <td style="padding:.75rem;color:#64748b">거래 감지 → AI 분석</td>
+        <td style="padding:.75rem;color:#64748b">TRANSACTION_ALERT 확장, 패턴 분류</td>
+      </tr>
+      <tr style="border-bottom:1px solid #1e293b">
+        <td style="padding:.75rem;color:#f472b6">대화형 상품 가입</td>
+        <td style="padding:.75rem;color:#64748b">"적금 가입하고 싶어"</td>
+        <td style="padding:.75rem;color:#64748b">멀티턴 플로우, ProductApplicationCard</td>
+      </tr>
+      <tr>
+        <td style="padding:.75rem;color:#a78bfa">대화형 이체 개선</td>
+        <td style="padding:.75rem;color:#64748b">기존 이체 → 버튼 제거</td>
+        <td style="padding:.75rem;color:#64748b">텍스트 확인 응답으로 대체</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p class="subtitle" style="margin-top:1.5rem">이 아키텍처 방향이 맞나요? 다음으로 각 기능 상세 설계를 섹션별로 보여드립니다.</p>

@@ -1,0 +1,243 @@
+<h2>카드 수정 — 금액 우측 정렬</h2>
+<p class="subtitle">지출 분석, 이체 확인 카드의 금액이 우측 정렬로 수정되었습니다.</p>
+
+<style>
+.cards-wrap {
+  display: flex; flex-direction: column; gap: 12px;
+  margin-top: 16px; max-width: 360px;
+  margin-left: auto; margin-right: auto;
+}
+.card-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; color: #475569; padding: 4px 0 2px;
+}
+.g-card {
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(28,31,53,0.88) 0%, rgba(14,16,34,0.92) 100%);
+  border: 1px solid rgba(255,255,255,0.09);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  overflow: hidden; position: relative;
+}
+.g-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+}
+
+/* ── Spending Card v2 ── */
+.spend-card { padding: 16px; }
+.spend-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.spend-title { font-size: 13px; font-weight: 700; color: #F1F5F9; }
+.spend-month { font-size: 11px; color: #64748B; margin-top: 2px; }
+.spend-amount-block { text-align: right; }
+.spend-total {
+  font-size: 20px; font-weight: 800;
+  background: linear-gradient(135deg, #F87171 0%, #FCA5A5 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  letter-spacing: -0.6px;
+}
+.spend-vs { font-size: 10px; color: #64748B; margin-top: 2px; }
+.spend-vs span { color: #F87171; font-weight: 600; }
+.spend-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 12px 0; }
+.spend-bars { display: flex; flex-direction: column; gap: 9px; }
+.spend-bar-row { display: flex; align-items: center; gap: 8px; }
+.spend-bar-label { font-size: 11px; color: #94A3B8; width: 48px; flex-shrink: 0; }
+.spend-bar-track { flex: 1; height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+.spend-bar-fill { height: 100%; border-radius: 3px; }
+.spend-bar-val {
+  font-size: 11px; color: #F1F5F9; font-weight: 600;
+  width: 68px; text-align: right; flex-shrink: 0;
+}
+
+/* ── Transfer Card v2 ── */
+.tf-card { padding: 16px; }
+.tf-header {
+  font-size: 11px; font-weight: 700; color: #00C9A7;
+  letter-spacing: 0.5px; margin-bottom: 14px; text-transform: uppercase;
+}
+.tf-to-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.tf-to-left { display: flex; align-items: center; gap: 10px; }
+.tf-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: white; flex-shrink: 0;
+  box-shadow: 0 0 12px rgba(59,130,246,0.35);
+}
+.tf-name { font-size: 13px; font-weight: 600; color: #F1F5F9; }
+.tf-acct { font-size: 11px; color: #64748B; margin-top: 1px; font-family: monospace; }
+
+.tf-amount-row {
+  display: flex; align-items: baseline; justify-content: space-between;
+  background: rgba(0,201,167,0.08);
+  border: 1px solid rgba(0,201,167,0.2);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+.tf-amount-label { font-size: 12px; color: #64748B; }
+.tf-amount {
+  font-size: 22px; font-weight: 800;
+  background: linear-gradient(135deg, #00C9A7, #34D399);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  letter-spacing: -0.8px;
+}
+
+.tf-detail-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.tf-detail-row {
+  display: flex; justify-content: space-between; align-items: center;
+}
+.tf-detail-key { font-size: 11px; color: #64748B; }
+.tf-detail-val { font-size: 11px; color: #F1F5F9; font-weight: 500; }
+
+.tf-btn-row { display: flex; gap: 8px; }
+.tf-btn { flex: 1; padding: 10px; border-radius: 10px; font-size: 13px; font-weight: 700; text-align: center; }
+.tf-btn-confirm {
+  background: linear-gradient(135deg, #00C9A7, #00A88A);
+  color: #000; box-shadow: 0 4px 14px rgba(0,201,167,0.35);
+}
+.tf-btn-cancel {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1); color: #94A3B8;
+}
+
+/* ── Balance Card v2 ── */
+.bal-card { padding: 16px; }
+.bal-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+}
+.bal-type {
+  font-size: 10px; font-weight: 700; color: #3B82F6;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  display: flex; align-items: center; gap: 6px;
+}
+.bal-dot { width: 6px; height: 6px; border-radius: 50%; background: #3B82F6; box-shadow: 0 0 6px #3B82F6; }
+.bal-main-row {
+  display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px;
+}
+.bal-label { font-size: 11px; color: #64748B; }
+.bal-amount {
+  font-size: 26px; font-weight: 800;
+  background: linear-gradient(135deg, #FFFFFF 0%, #94A3B8 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  letter-spacing: -1px; line-height: 1;
+}
+.bal-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 12px 0; }
+.bal-stat-rows { display: flex; flex-direction: column; gap: 6px; }
+.bal-stat-row { display: flex; justify-content: space-between; align-items: center; }
+.bal-stat-key { font-size: 11px; color: #64748B; }
+.bal-stat-val { font-size: 12px; font-weight: 700; }
+</style>
+
+<div class="cards-wrap">
+
+  <div class="card-label">잔액 카드 — 통계 우측 정렬</div>
+  <div class="g-card bal-card">
+    <div class="bal-header">
+      <div class="bal-type">
+        <div class="bal-dot"></div> 입출금
+      </div>
+      <span style="font-size:11px;color:#64748B">iM 입출금통장</span>
+    </div>
+    <div class="bal-main-row">
+      <div class="bal-label">현재 잔액</div>
+      <div class="bal-amount">2,847,300원</div>
+    </div>
+    <div style="text-align:right;font-size:11px;color:#64748B">2026.03.31 기준</div>
+    <div class="bal-divider"></div>
+    <div class="bal-stat-rows">
+      <div class="bal-stat-row">
+        <span class="bal-stat-key">이번달 지출</span>
+        <span class="bal-stat-val" style="color:#F87171">-487,200원</span>
+      </div>
+      <div class="bal-stat-row">
+        <span class="bal-stat-key">이번달 입금</span>
+        <span class="bal-stat-val" style="color:#34D399">+2,300,000원</span>
+      </div>
+      <div class="bal-stat-row">
+        <span class="bal-stat-key">순 증가</span>
+        <span class="bal-stat-val" style="color:#F1F5F9">1,812,800원</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-label">지출 분석 — 총액 + 항목 우측 정렬</div>
+  <div class="g-card spend-card">
+    <div class="spend-header">
+      <div>
+        <div class="spend-title">이번달 지출 분석</div>
+        <div class="spend-month">2026년 3월</div>
+      </div>
+      <div class="spend-amount-block">
+        <div class="spend-total">487,200원</div>
+        <div class="spend-vs">전월 대비 <span>+12.3%</span></div>
+      </div>
+    </div>
+    <div class="spend-divider"></div>
+    <div class="spend-bars">
+      <div class="spend-bar-row">
+        <span class="spend-bar-label">식비</span>
+        <div class="spend-bar-track"><div class="spend-bar-fill" style="width:72%;background:linear-gradient(90deg,#F87171,rgba(248,113,113,0.3))"></div></div>
+        <span class="spend-bar-val">182,000원</span>
+      </div>
+      <div class="spend-bar-row">
+        <span class="spend-bar-label">교통</span>
+        <div class="spend-bar-track"><div class="spend-bar-fill" style="width:38%;background:linear-gradient(90deg,#3B82F6,rgba(59,130,246,0.3))"></div></div>
+        <span class="spend-bar-val">94,500원</span>
+      </div>
+      <div class="spend-bar-row">
+        <span class="spend-bar-label">쇼핑</span>
+        <div class="spend-bar-track"><div class="spend-bar-fill" style="width:28%;background:linear-gradient(90deg,#8B5CF6,rgba(139,92,246,0.3))"></div></div>
+        <span class="spend-bar-val">68,400원</span>
+      </div>
+      <div class="spend-bar-row">
+        <span class="spend-bar-label">카페</span>
+        <div class="spend-bar-track"><div class="spend-bar-fill" style="width:18%;background:linear-gradient(90deg,#F59E0B,rgba(245,158,11,0.3))"></div></div>
+        <span class="spend-bar-val">42,300원</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-label">이체 확인 — 금액 우측 정렬</div>
+  <div class="g-card tf-card">
+    <div class="tf-header">이체 확인</div>
+    <div class="tf-to-row">
+      <div class="tf-to-left">
+        <div class="tf-avatar">김</div>
+        <div>
+          <div class="tf-name">김민준</div>
+          <div class="tf-acct">iM뱅크 · 502-****-8821</div>
+        </div>
+      </div>
+    </div>
+    <div class="tf-amount-row">
+      <div class="tf-amount-label">이체 금액</div>
+      <div class="tf-amount">50,000원</div>
+    </div>
+    <div class="tf-detail-rows">
+      <div class="tf-detail-row">
+        <span class="tf-detail-key">출금 계좌</span>
+        <span class="tf-detail-val">iM 입출금통장</span>
+      </div>
+      <div class="tf-detail-row">
+        <span class="tf-detail-key">이체 후 잔액</span>
+        <span class="tf-detail-val">2,797,300원</span>
+      </div>
+    </div>
+    <div class="tf-btn-row">
+      <div class="tf-btn tf-btn-confirm">이체하기</div>
+      <div class="tf-btn tf-btn-cancel">취소</div>
+    </div>
+  </div>
+
+</div>
+
+<p style="text-align:center;font-size:12px;color:#475569;margin:16px 0 8px">
+  모든 금액이 우측 정렬로 수정됨. 이 방향이 맞으면 "네"
+</p>

@@ -1,0 +1,137 @@
+<h2>어느 화면까지 개선할까요?</h2>
+<p class="subtitle">Glassmorphism 적용 범위를 선택해주세요</p>
+
+<style>
+.scope-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+.scope-card {
+  border-radius: 12px;
+  padding: 16px;
+  border: 2px solid rgba(255,255,255,0.07);
+  background: rgba(30,33,56,0.6);
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.1s;
+}
+.scope-card:hover { transform: translateY(-1px); }
+.scope-card.selected { border-color: #00C9A7 !important; }
+
+.scope-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #F1F5F9;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.scope-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+}
+.badge-recommend {
+  background: rgba(0,201,167,0.15);
+  color: #00C9A7;
+  border: 1px solid rgba(0,201,167,0.3);
+}
+.badge-quick {
+  background: rgba(251,191,36,0.15);
+  color: #FBBF24;
+  border: 1px solid rgba(251,191,36,0.3);
+}
+.badge-full {
+  background: rgba(139,92,246,0.15);
+  color: #C4B5FD;
+  border: 1px solid rgba(139,92,246,0.3);
+}
+
+.screen-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.screen-chip {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.06);
+  color: #94A3B8;
+}
+.screen-chip.active {
+  background: rgba(0,201,167,0.12);
+  color: #00C9A7;
+}
+.screen-chip.dim {
+  opacity: 0.35;
+}
+
+.scope-desc {
+  font-size: 12px;
+  color: #64748B;
+  margin-top: 8px;
+  line-height: 1.5;
+}
+</style>
+
+<div class="scope-grid">
+
+  <div class="scope-card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="scope-title">
+      A. 핵심 2개 화면
+      <span class="scope-badge badge-recommend">추천</span>
+    </div>
+    <div class="screen-list">
+      <span class="screen-chip active">계좌 목록</span>
+      <span class="screen-chip active">계좌 대화방</span>
+      <span class="screen-chip dim">카드 컴포넌트</span>
+      <span class="screen-chip dim">온보딩</span>
+    </div>
+    <div class="scope-desc">
+      데모에서 가장 먼저 보이는 2개 화면에만 집중. 임팩트 최대, 리스크 최소.
+      카드 컴포넌트는 기존 스타일 유지.
+    </div>
+  </div>
+
+  <div class="scope-card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="scope-title">
+      B. 전체 앱
+      <span class="scope-badge badge-full">전면 개편</span>
+    </div>
+    <div class="screen-list">
+      <span class="screen-chip active">계좌 목록</span>
+      <span class="screen-chip active">계좌 대화방</span>
+      <span class="screen-chip active">카드 컴포넌트</span>
+      <span class="screen-chip active">온보딩</span>
+      <span class="screen-chip active">헤더/입력창</span>
+    </div>
+    <div class="scope-desc">
+      앱 전체를 Glassmorphism으로 통일. 가장 완성도 높지만
+      작업량 대폭 증가. AI 카드들도 포함.
+    </div>
+  </div>
+
+  <div class="scope-card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="scope-title">
+      C. 목록 화면 + 라이프 카드만
+      <span class="scope-badge badge-quick">빠른 적용</span>
+    </div>
+    <div class="screen-list">
+      <span class="screen-chip active">계좌 목록</span>
+      <span class="screen-chip dim">계좌 대화방 (헤더만)</span>
+      <span class="screen-chip active">라이프 카드</span>
+      <span class="screen-chip dim">기타 카드</span>
+    </div>
+    <div class="scope-desc">
+      가장 눈에 띄는 아이템 카드와 라이프 카드에 집중.
+      대화방 내부 카드들은 손대지 않음.
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,264 @@
+<h2>섹션 3/4 — AI 응답 카드</h2>
+<p class="subtitle">대화방 내 카드 컴포넌트들의 glassmorphism 처리 방식입니다. 스크롤해서 확인하세요.</p>
+
+<style>
+.cards-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+  max-width: 360px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.card-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #475569;
+  padding: 4px 0 2px;
+}
+
+/* ── Glass card base ── */
+.g-card {
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(28,31,53,0.88) 0%, rgba(14,16,34,0.92) 100%);
+  border: 1px solid rgba(255,255,255,0.09);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  overflow: hidden;
+  position: relative;
+}
+.g-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+}
+
+/* ── Balance Card ── */
+.bal-card {
+  padding: 16px;
+}
+.bal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.bal-type {
+  font-size: 10px; font-weight: 700; color: #3B82F6;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  display: flex; align-items: center; gap: 6px;
+}
+.bal-dot { width: 6px; height: 6px; border-radius: 50%; background: #3B82F6; box-shadow: 0 0 6px #3B82F6; }
+.bal-amount {
+  font-size: 28px; font-weight: 800;
+  background: linear-gradient(135deg, #FFFFFF 0%, #94A3B8 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  letter-spacing: -1px; line-height: 1;
+}
+.bal-sub { font-size: 11px; color: #64748B; margin-top: 4px; }
+.bal-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 12px 0; }
+.bal-row { display: flex; justify-content: space-between; }
+.bal-stat { text-align: center; }
+.bal-stat-val { font-size: 13px; font-weight: 700; color: #F1F5F9; }
+.bal-stat-label { font-size: 10px; color: #64748B; margin-top: 2px; }
+
+/* ── Spending Card ── */
+.spend-card { padding: 16px; }
+.spend-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+}
+.spend-title { font-size: 13px; font-weight: 700; color: #F1F5F9; }
+.spend-month { font-size: 11px; color: #64748B; }
+.spend-total {
+  font-size: 22px; font-weight: 800;
+  background: linear-gradient(135deg, #F87171 0%, #FCA5A5 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  letter-spacing: -0.8px;
+}
+.spend-vs { font-size: 11px; color: #64748B; margin-top: 2px; }
+.spend-vs span { color: #F87171; font-weight: 600; }
+.spend-bars { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.spend-bar-row { display: flex; align-items: center; gap: 8px; }
+.spend-bar-label { font-size: 11px; color: #94A3B8; width: 60px; flex-shrink: 0; }
+.spend-bar-track { flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+.spend-bar-fill { height: 100%; border-radius: 3px; }
+.spend-bar-val { font-size: 11px; color: #F1F5F9; font-weight: 600; width: 60px; text-align: right; flex-shrink: 0; }
+
+/* ── Transfer Card ── */
+.tf-card { padding: 16px; }
+.tf-header { font-size: 11px; font-weight: 700; color: #00C9A7; letter-spacing: 0.5px; margin-bottom: 14px; text-transform: uppercase; }
+.tf-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+}
+.tf-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: white;
+  flex-shrink: 0;
+  box-shadow: 0 0 12px rgba(59,130,246,0.35);
+}
+.tf-info { flex: 1; }
+.tf-name { font-size: 13px; font-weight: 600; color: #F1F5F9; }
+.tf-acct { font-size: 11px; color: #64748B; margin-top: 1px; font-family: monospace; }
+.tf-amount-wrap {
+  background: rgba(0,201,167,0.08);
+  border: 1px solid rgba(0,201,167,0.2);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex; align-items: baseline; justify-content: space-between;
+}
+.tf-amount {
+  font-size: 22px; font-weight: 800;
+  background: linear-gradient(135deg, #00C9A7, #34D399);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  letter-spacing: -0.8px;
+}
+.tf-amount-label { font-size: 11px; color: #64748B; }
+.tf-btn-row { display: flex; gap: 8px; margin-top: 12px; }
+.tf-btn {
+  flex: 1; padding: 10px; border-radius: 10px;
+  font-size: 13px; font-weight: 700; text-align: center;
+}
+.tf-btn-confirm {
+  background: linear-gradient(135deg, #00C9A7, #00A88A);
+  color: #000;
+  box-shadow: 0 4px 14px rgba(0,201,167,0.35);
+}
+.tf-btn-cancel {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #94A3B8;
+}
+
+/* ── Insight Card ── */
+.ins-card { padding: 16px; }
+.ins-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+}
+.ins-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(245,158,11,0.1));
+  border: 1px solid rgba(251,191,36,0.25);
+  display: flex; align-items: center; justify-content: center;
+}
+.ins-title { font-size: 13px; font-weight: 700; color: #F1F5F9; }
+.ins-body { font-size: 12px; color: #94A3B8; line-height: 1.6; }
+.ins-highlight {
+  display: inline-block;
+  background: rgba(251,191,36,0.12);
+  border: 1px solid rgba(251,191,36,0.2);
+  border-radius: 4px;
+  padding: 0 5px;
+  color: #FBBF24;
+  font-weight: 600;
+}
+</style>
+
+<div class="cards-wrap">
+
+  <div class="card-label">잔액 카드 (BalanceCard)</div>
+  <div class="g-card bal-card">
+    <div class="bal-header">
+      <div class="bal-type">
+        <div class="bal-dot"></div>
+        입출금
+      </div>
+      <span style="font-size:11px;color:#64748B">iM 입출금통장</span>
+    </div>
+    <div class="bal-amount">2,847,300원</div>
+    <div class="bal-sub">현재 잔액 · 2026.03.31 기준</div>
+    <div class="bal-divider"></div>
+    <div class="bal-row">
+      <div class="bal-stat">
+        <div class="bal-stat-val" style="color:#F87171">-487,200원</div>
+        <div class="bal-stat-label">이번달 지출</div>
+      </div>
+      <div class="bal-stat">
+        <div class="bal-stat-val" style="color:#34D399">+2,300,000원</div>
+        <div class="bal-stat-label">이번달 입금</div>
+      </div>
+      <div class="bal-stat">
+        <div class="bal-stat-val">1,812,800원</div>
+        <div class="bal-stat-label">순 증가</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-label">지출 분석 카드 (SpendingCard)</div>
+  <div class="g-card spend-card">
+    <div class="spend-header">
+      <div>
+        <div class="spend-title">이번달 지출 분석</div>
+        <div class="spend-month">2026년 3월</div>
+      </div>
+    </div>
+    <div class="spend-total">487,200원</div>
+    <div class="spend-vs">전월 대비 <span>+12.3%</span> 증가</div>
+    <div class="spend-bars">
+      <div class="spend-bar-row">
+        <span class="spend-bar-label">식비</span>
+        <div class="spend-bar-track"><div class="spend-bar-fill" style="width:72%;background:linear-gradient(90deg,#F87171,rgba(248,113,113,0.4))"></div></div>
+        <span class="spend-bar-val">182,000원</span>
+      </div>
+      <div class="spend-bar-row">
+        <span class="spend-bar-label">교통</span>
+        <div class="spend-bar-track"><div class="spend-bar-fill" style="width:38%;background:linear-gradient(90deg,#3B82F6,rgba(59,130,246,0.4))"></div></div>
+        <span class="spend-bar-val">94,500원</span>
+      </div>
+      <div class="spend-bar-row">
+        <span class="spend-bar-label">쇼핑</span>
+        <div class="spend-bar-track"><div class="spend-bar-fill" style="width:28%;background:linear-gradient(90deg,#8B5CF6,rgba(139,92,246,0.4))"></div></div>
+        <span class="spend-bar-val">68,400원</span>
+      </div>
+      <div class="spend-bar-row">
+        <span class="spend-bar-label">카페</span>
+        <div class="spend-bar-track"><div class="spend-bar-fill" style="width:18%;background:linear-gradient(90deg,#F59E0B,rgba(245,158,11,0.4))"></div></div>
+        <span class="spend-bar-val">42,300원</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-label">이체 확인 카드 (TransferCard)</div>
+  <div class="g-card tf-card">
+    <div class="tf-header">이체 확인</div>
+    <div class="tf-row">
+      <div class="tf-avatar">김</div>
+      <div class="tf-info">
+        <div class="tf-name">김민준</div>
+        <div class="tf-acct">iM뱅크 · 502-****-8821</div>
+      </div>
+    </div>
+    <div class="tf-amount-wrap">
+      <div class="tf-amount">50,000원</div>
+      <div class="tf-amount-label">이체 금액</div>
+    </div>
+    <div class="tf-btn-row">
+      <div class="tf-btn tf-btn-confirm">이체하기</div>
+      <div class="tf-btn tf-btn-cancel">취소</div>
+    </div>
+  </div>
+
+  <div class="card-label">인사이트 카드 (InsightCard)</div>
+  <div class="g-card ins-card">
+    <div class="ins-header">
+      <div class="ins-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <div class="ins-title">지출 패턴 분석</div>
+    </div>
+    <div class="ins-body">
+      이번달 카페 지출이 <span class="ins-highlight">42,300원</span>으로 전월보다 28% 증가했어요. 스타벅스가 전체 카페 지출의 <span class="ins-highlight">71%</span>를 차지하고 있어요. 텀블러 지참 시 연간 약 <span class="ins-highlight">180,000원</span> 절감 가능합니다.
+    </div>
+  </div>
+
+</div>
+
+<p style="text-align:center;font-size:12px;color:#475569;margin:16px 0 8px">
+  모든 카드 — 공통 glass base + 카드별 accent 컬러 강조<br>
+  이 방향이 맞으면 "네", 수정할 부분 있으면 말씀해주세요
+</p>

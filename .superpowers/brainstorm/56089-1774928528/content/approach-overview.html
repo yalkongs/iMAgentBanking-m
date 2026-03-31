@@ -1,0 +1,238 @@
+<h2>계좌 목록 — 상품 발견 메타포 방향</h2>
+<p class="subtitle">현재 계좌 목록은 메신저 대화방 은유. 미가입 상품을 어떻게 녹일지 3가지 방향을 비교합니다.</p>
+
+<style>
+.phone-wrap {
+  display: flex; gap: 20px; justify-content: center;
+  flex-wrap: wrap; margin-top: 20px;
+}
+.phone {
+  width: 220px; border-radius: 24px;
+  background: #0D0F1A;
+  border: 1.5px solid rgba(255,255,255,0.12);
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  font-family: -apple-system, sans-serif;
+}
+.phone-header {
+  padding: 14px 16px 10px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.phone-header-title { font-size: 15px; font-weight: 700; color: #F1F5F9; }
+.room-item {
+  display: flex; align-items: stretch;
+  padding: 0; gap: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  cursor: pointer;
+}
+.room-block {
+  width: 44px; display: flex; align-items: center; justify-content: center;
+  border-radius: 14px 0 0 14px;
+  flex-shrink: 0;
+}
+.room-body { padding: 10px 12px; flex: 1; }
+.room-name { font-size: 12px; font-weight: 600; color: #F1F5F9; }
+.room-preview { font-size: 10px; color: #64748B; margin-top: 2px; }
+.room-balance { font-size: 11px; font-weight: 600; color: #94A3B8; margin-top: 1px; }
+
+/* === A: 잠긴 방 === */
+.locked-room {
+  opacity: 0.55;
+  border: 1px dashed rgba(255,255,255,0.15);
+  border-radius: 14px;
+  margin: 4px 8px;
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+}
+.locked-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.locked-label { font-size: 11px; color: #64748B; }
+.locked-cta { font-size: 10px; color: #00C9A7; margin-top: 2px; }
+
+/* === B: 발견 배너 === */
+.discovery-row {
+  margin: 6px 8px;
+  background: linear-gradient(135deg, rgba(0,201,167,0.08), rgba(59,130,246,0.08));
+  border: 1px solid rgba(0,201,167,0.18);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+.discovery-row-title { font-size: 11px; font-weight: 700; color: #00C9A7; margin-bottom: 6px; }
+.disc-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+.disc-chip {
+  font-size: 10px; padding: 3px 8px; border-radius: 20px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #94A3B8;
+}
+
+/* === C: 유령 방 === */
+.ghost-room {
+  display: flex; align-items: stretch;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  position: relative; overflow: hidden;
+}
+.ghost-room::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, rgba(13,15,26,0) 60%, rgba(13,15,26,0.9) 100%);
+}
+.ghost-block {
+  width: 44px; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; border-radius: 14px 0 0 14px;
+  opacity: 0.3;
+}
+.ghost-body { padding: 10px 12px; flex: 1; opacity: 0.3; }
+.ghost-unlock {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  z-index: 2;
+  font-size: 9px; padding: 3px 7px; border-radius: 20px;
+  background: rgba(0,201,167,0.15);
+  border: 1px solid rgba(0,201,167,0.35);
+  color: #00C9A7;
+  white-space: nowrap;
+}
+
+/* 섹션 라벨 */
+.section-label {
+  padding: 8px 12px 3px;
+  font-size: 9px; font-weight: 700;
+  color: #475569; letter-spacing: 0.8px; text-transform: uppercase;
+}
+
+.option-label {
+  text-align: center; font-size: 11px; font-weight: 700; padding: 8px;
+  color: #94A3B8; background: rgba(255,255,255,0.03);
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.option-desc {
+  text-align: center; font-size: 9px; color: #475569; padding: 4px 8px 10px;
+  line-height: 1.4;
+}
+</style>
+
+<div class="options" style="gap:16px">
+
+  <!-- A: 잠긴 방 -->
+  <div class="option" data-choice="a" onclick="toggleSelect(this)" style="padding:0;overflow:hidden;flex-direction:column;align-items:stretch">
+    <div class="letter" style="margin:10px 0 0 10px;align-self:flex-start">A</div>
+    <div class="phone" style="margin:8px;border:none;box-shadow:none;background:transparent">
+      <div style="padding:2px 0">
+        <div class="section-label">저축 · 투자</div>
+        <div class="room-item">
+          <div class="room-block" style="background:linear-gradient(180deg,#10B981,#059669)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="room-body">
+            <div class="room-name">iM 정기적금</div>
+            <div class="room-preview">AI: 이번달 납입 완료</div>
+            <div class="room-balance">3,200,000원</div>
+          </div>
+        </div>
+        <div style="height:6px"></div>
+        <div class="section-label" style="color:#334155">열 수 있는 방</div>
+        <div class="locked-room">
+          <div class="locked-icon">🔒</div>
+          <div>
+            <div class="locked-label">정기예금</div>
+            <div class="locked-cta">목돈을 안전하게 → 개설하기</div>
+          </div>
+        </div>
+        <div class="locked-room">
+          <div class="locked-icon">🔒</div>
+          <div>
+            <div class="locked-label">CMA</div>
+            <div class="locked-cta">하루만 맡겨도 이자 → 개설하기</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="option-label">A — 잠긴 방</div>
+    <div class="option-desc">미가입 상품을 별도 섹션으로<br>명시적 CTA와 함께 노출</div>
+  </div>
+
+  <!-- B: 발견 배너 -->
+  <div class="option" data-choice="b" onclick="toggleSelect(this)" style="padding:0;overflow:hidden;flex-direction:column;align-items:stretch">
+    <div class="letter" style="margin:10px 0 0 10px;align-self:flex-start">B</div>
+    <div class="phone" style="margin:8px;border:none;box-shadow:none;background:transparent">
+      <div style="padding:2px 0">
+        <div class="section-label">저축 · 투자</div>
+        <div class="room-item">
+          <div class="room-block" style="background:linear-gradient(180deg,#10B981,#059669)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="room-body">
+            <div class="room-name">iM 정기적금</div>
+            <div class="room-preview">AI: 이번달 납입 완료</div>
+            <div class="room-balance">3,200,000원</div>
+          </div>
+        </div>
+        <div style="height:8px"></div>
+        <div style="margin:0 8px">
+          <div class="discovery-row">
+            <div class="discovery-row-title">✦ 더 열어볼 수 있어요</div>
+            <div class="disc-chips">
+              <div class="disc-chip">정기예금 →</div>
+              <div class="disc-chip">CMA →</div>
+              <div class="disc-chip">비상금 →</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="option-label">B — 발견 배너</div>
+    <div class="option-desc">컴팩트한 칩 배너로 미가입 상품<br>한 줄에 모아서 노출</div>
+  </div>
+
+  <!-- C: 유령 방 -->
+  <div class="option" data-choice="c" onclick="toggleSelect(this)" style="padding:0;overflow:hidden;flex-direction:column;align-items:stretch">
+    <div class="letter" style="margin:10px 0 0 10px;align-self:flex-start">C</div>
+    <div class="phone" style="margin:8px;border:none;box-shadow:none;background:transparent">
+      <div style="padding:2px 0">
+        <div class="section-label">저축 · 투자</div>
+        <div class="room-item">
+          <div class="room-block" style="background:linear-gradient(180deg,#10B981,#059669)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="room-body">
+            <div class="room-name">iM 정기적금</div>
+            <div class="room-preview">AI: 이번달 납입 완료</div>
+            <div class="room-balance">3,200,000원</div>
+          </div>
+        </div>
+        <!-- Ghost rooms -->
+        <div class="ghost-room">
+          <div class="ghost-block" style="background:linear-gradient(180deg,#8B5CF6,#6D28D9)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          </div>
+          <div class="ghost-body">
+            <div class="room-name">정기예금</div>
+            <div class="room-preview">목돈을 잠가두면...</div>
+          </div>
+          <div class="ghost-unlock">개설하기</div>
+        </div>
+        <div class="ghost-room">
+          <div class="ghost-block" style="background:linear-gradient(180deg,#EF4444,#B91C1C)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><polyline points="3 17 8.5 11 13 14.5 20 7"/><polyline points="15 7 20 7 20 12"/></svg>
+          </div>
+          <div class="ghost-body">
+            <div class="room-name">CMA</div>
+            <div class="room-preview">매일 이자가 붙는...</div>
+          </div>
+          <div class="ghost-unlock">개설하기</div>
+        </div>
+      </div>
+    </div>
+    <div class="option-label">C — 유령 방 (Ghost Room)</div>
+    <div class="option-desc">미가입 상품이 희미한 방으로<br>목록에 자연스럽게 공존</div>
+  </div>
+
+</div>
+
+<p style="text-align:center;font-size:11px;color:#475569;margin-top:16px">
+  방향을 선택하거나 터미널에서 의견을 주세요
+</p>

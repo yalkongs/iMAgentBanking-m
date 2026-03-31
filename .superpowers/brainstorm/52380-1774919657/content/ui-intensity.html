@@ -1,0 +1,250 @@
+<h2>Glassmorphism 강도</h2>
+<p class="subtitle">같은 계좌 목록 아이템으로 3가지 농도를 비교해보세요</p>
+
+<style>
+.intensity-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+.int-option {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.2s;
+}
+.int-option:hover { transform: translateY(-2px); }
+.int-option.selected { border-color: #00C9A7 !important; }
+.int-label {
+  padding: 10px 14px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+/* shared item layout */
+.int-item {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 13px 16px 15px;
+}
+.int-avatar {
+  width: 46px; height: 46px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.int-info { flex: 1; min-width: 0; }
+.int-name { font-size: 14px; font-weight: 600; color: #F1F5F9; letter-spacing: -0.2px; }
+.int-sub { font-size: 11px; margin-top: 2px; }
+.int-right { text-align: right; }
+.int-balance { font-size: 15px; font-weight: 700; letter-spacing: -0.4px; }
+.int-meta { font-size: 11px; margin-top: 3px; }
+.int-divider { height: 1px; margin: 0 16px; }
+.int-desc {
+  padding: 6px 16px 12px;
+  font-size: 11px;
+  color: rgba(148,163,184,0.5);
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ── A: Subtle ── */
+.int-a-wrap {
+  background: rgba(20,22,39,0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+.int-a .int-avatar {
+  background: rgba(59,130,246,0.18);
+  border: 1px solid rgba(59,130,246,0.2);
+}
+.int-a .int-sub { color: #64748B; }
+.int-a .int-balance { color: #F1F5F9; }
+.int-a .int-meta { color: #64748B; }
+.int-a .int-divider { background: rgba(255,255,255,0.05); }
+.int-a-label { color: #93C5FD; }
+
+/* ── B: Medium ── */
+.int-b-wrap {
+  background: linear-gradient(135deg, rgba(30,33,56,0.82) 0%, rgba(14,16,34,0.9) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07);
+}
+.int-b .int-avatar {
+  background: linear-gradient(135deg, rgba(59,130,246,0.3) 0%, rgba(29,78,216,0.2) 100%);
+  border: 1px solid rgba(59,130,246,0.35);
+  box-shadow: 0 0 12px rgba(59,130,246,0.2);
+}
+.int-b .int-sub { color: #64748B; }
+.int-b .int-balance { color: #F1F5F9; }
+.int-b .int-meta { color: #00C9A7; }
+.int-b .int-divider { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent); }
+.int-b-label { color: #00C9A7; }
+
+/* ── C: Bold ── */
+.int-c-wrap {
+  background: linear-gradient(135deg, rgba(30,33,70,0.7) 0%, rgba(10,12,30,0.88) 100%);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.12), 0 0 0 1px rgba(59,130,246,0.08);
+}
+.int-c .int-avatar {
+  background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+  border: 1px solid rgba(255,255,255,0.2);
+  box-shadow: 0 0 20px rgba(59,130,246,0.45), 0 4px 8px rgba(0,0,0,0.3);
+}
+.int-c .int-sub { color: #94A3B8; }
+.int-c .int-balance {
+  background: linear-gradient(90deg, #FFFFFF 0%, #CBD5E1 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.int-c .int-meta { color: #34D399; }
+.int-c .int-divider {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  height: 1px;
+}
+.int-c-label { color: #C4B5FD; }
+</style>
+
+<div class="intensity-col">
+
+  <!-- A: Subtle -->
+  <div class="int-option int-a" data-choice="a" onclick="toggleSelect(this)">
+    <div class="int-label int-a-label">A — Subtle (은은하게)</div>
+    <div class="int-a-wrap">
+      <div class="int-item int-a">
+        <div class="int-avatar">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M8 5L3 10l5 5"/><line x1="3" y1="10" x2="21" y2="10"/>
+            <path d="M16 19l5-5-5-5"/><line x1="21" y1="14" x2="3" y2="14"/>
+          </svg>
+        </div>
+        <div class="int-info">
+          <div class="int-name">iM 입출금통장</div>
+          <div class="int-sub">스타벅스 -4,800원</div>
+        </div>
+        <div class="int-right">
+          <div class="int-balance">2,847,300원</div>
+          <div class="int-meta">오늘</div>
+        </div>
+      </div>
+      <div class="int-divider int-a"></div>
+      <div class="int-item int-a" style="padding-top:10px">
+        <div class="int-avatar" style="background:rgba(16,185,129,0.18);border-color:rgba(16,185,129,0.2)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <ellipse cx="12" cy="17" rx="7" ry="3"/>
+            <path d="M5 17v-3M19 17v-3"/>
+            <ellipse cx="12" cy="14" rx="7" ry="3"/>
+            <path d="M12 11V5"/><path d="M9 8l3-3 3 3"/>
+          </svg>
+        </div>
+        <div class="int-info">
+          <div class="int-name">iM 정기적금</div>
+          <div class="int-sub">7/24회 완료</div>
+        </div>
+        <div class="int-right">
+          <div class="int-balance">1,400,000원</div>
+          <div class="int-meta">29%</div>
+        </div>
+      </div>
+    </div>
+    <div class="int-desc">blur(8px) · 투명도 낮은 배경 · 기존 스타일에 유리 질감만 추가</div>
+  </div>
+
+  <!-- B: Medium -->
+  <div class="int-option int-b" data-choice="b" onclick="toggleSelect(this)">
+    <div class="int-label int-b-label">B — Medium (균형) ★ 추천</div>
+    <div class="int-b-wrap">
+      <div class="int-item int-b">
+        <div class="int-avatar">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M8 5L3 10l5 5"/><line x1="3" y1="10" x2="21" y2="10"/>
+            <path d="M16 19l5-5-5-5"/><line x1="21" y1="14" x2="3" y2="14"/>
+          </svg>
+        </div>
+        <div class="int-info">
+          <div class="int-name">iM 입출금통장</div>
+          <div class="int-sub">스타벅스 -4,800원</div>
+        </div>
+        <div class="int-right">
+          <div class="int-balance">2,847,300원</div>
+          <div class="int-meta">+2.3%</div>
+        </div>
+      </div>
+      <div class="int-divider int-b"></div>
+      <div class="int-item int-b" style="padding-top:10px">
+        <div class="int-avatar" style="background:linear-gradient(135deg,rgba(16,185,129,0.3),rgba(5,150,105,0.2));border-color:rgba(16,185,129,0.35);box-shadow:0 0 12px rgba(16,185,129,0.2)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <ellipse cx="12" cy="17" rx="7" ry="3"/>
+            <path d="M5 17v-3M19 17v-3"/>
+            <ellipse cx="12" cy="14" rx="7" ry="3"/>
+            <path d="M12 11V5"/><path d="M9 8l3-3 3 3"/>
+          </svg>
+        </div>
+        <div class="int-info">
+          <div class="int-name">iM 정기적금</div>
+          <div class="int-sub">7/24회 완료</div>
+        </div>
+        <div class="int-right">
+          <div class="int-balance">1,400,000원</div>
+          <div class="int-meta">D-245</div>
+        </div>
+      </div>
+    </div>
+    <div class="int-desc">blur(16px) · 그라디언트 배경 · 컬러 glow 아이콘 · inset 하이라이트</div>
+  </div>
+
+  <!-- C: Bold -->
+  <div class="int-option int-c" data-choice="c" onclick="toggleSelect(this)">
+    <div class="int-label int-c-label">C — Bold (강렬하게)</div>
+    <div class="int-c-wrap">
+      <div class="int-item int-c">
+        <div class="int-avatar">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M8 5L3 10l5 5"/><line x1="3" y1="10" x2="21" y2="10"/>
+            <path d="M16 19l5-5-5-5"/><line x1="21" y1="14" x2="3" y2="14"/>
+          </svg>
+        </div>
+        <div class="int-info">
+          <div class="int-name">iM 입출금통장</div>
+          <div class="int-sub">스타벅스 -4,800원</div>
+        </div>
+        <div class="int-right">
+          <div class="int-balance">2,847,300원</div>
+          <div class="int-meta">+2.3%</div>
+        </div>
+      </div>
+      <div class="int-divider int-c"></div>
+      <div class="int-item int-c" style="padding-top:10px">
+        <div class="int-avatar" style="background:linear-gradient(135deg,#10B981,#059669);border-color:rgba(255,255,255,0.2);box-shadow:0 0 24px rgba(16,185,129,0.5),0 4px 8px rgba(0,0,0,0.3)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <ellipse cx="12" cy="17" rx="7" ry="3"/>
+            <path d="M5 17v-3M19 17v-3"/>
+            <ellipse cx="12" cy="14" rx="7" ry="3"/>
+            <path d="M12 11V5"/><path d="M9 8l3-3 3 3"/>
+          </svg>
+        </div>
+        <div class="int-info">
+          <div class="int-name">iM 정기적금</div>
+          <div class="int-sub">7/24회 완료</div>
+        </div>
+        <div class="int-right">
+          <div class="int-balance">1,400,000원</div>
+          <div class="int-meta">D-245</div>
+        </div>
+      </div>
+    </div>
+    <div class="int-desc">blur(28px) saturate · 솔리드 그라디언트 아이콘 · 강한 glow · 그라디언트 텍스트</div>
+  </div>
+
+</div>

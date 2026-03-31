@@ -1,0 +1,269 @@
+<h2>아이콘 ↔ 카드 관계 개선안</h2>
+<p class="subtitle">같은 아이콘·카드를 4가지 레이아웃 패턴으로 비교합니다. 현재 방식(A)부터 확인해보세요.</p>
+
+<style>
+.pattern-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 16px;
+}
+.pat-option {
+  border-radius: 14px;
+  overflow: visible;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.12s;
+  padding: 14px;
+  background: rgba(14,16,34,0.7);
+}
+.pat-option:hover { transform: translateY(-1px); }
+.pat-option.selected { border-color: #00C9A7 !important; }
+
+.pat-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.pat-desc {
+  font-size: 11px;
+  color: #64748B;
+  margin-top: 10px;
+  line-height: 1.5;
+}
+.pat-issue {
+  font-size: 11px;
+  color: #F87171;
+  margin-top: 4px;
+}
+.pat-good {
+  font-size: 11px;
+  color: #34D399;
+  margin-top: 4px;
+}
+
+/* ─ 공통 카드 껍데기 ─ */
+.demo-card {
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(30,33,56,0.82) 0%, rgba(14,16,34,0.92) 100%);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
+  position: relative;
+  overflow: hidden;
+}
+.demo-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+}
+.demo-info { flex: 1; min-width: 0; }
+.demo-name { font-size: 13px; font-weight: 600; color: #F1F5F9; letter-spacing: -0.2px; }
+.demo-sub { font-size: 10px; color: #64748B; margin-top: 2px; }
+.demo-balance {
+  font-size: 14px; font-weight: 700;
+  background: linear-gradient(135deg, #FFFFFF 0%, #CBD5E1 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+}
+.demo-meta { font-size: 10px; color: #10B981; margin-top: 3px; text-align: right; }
+
+
+/* ── A: Current (contained, 46px, r14) ── */
+.pat-a .demo-card {
+  border-radius: 18px;
+  padding: 13px 14px;
+  gap: 12px;
+}
+.pat-a .demo-avatar {
+  width: 46px; height: 46px;
+  border-radius: 14px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #10B981, #059669);
+  box-shadow: 0 0 18px rgba(16,185,129,0.45), 0 4px 8px rgba(0,0,0,0.3);
+  position: relative;
+}
+.pat-a .demo-avatar::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* ── B: Radius 비례 + 여백 확대 ── */
+.pat-b .demo-card {
+  border-radius: 20px;
+  padding: 12px 14px 12px 12px;
+  gap: 12px;
+}
+.pat-b .demo-avatar {
+  width: 44px; height: 44px;
+  border-radius: 10px;   /* 더 작은 radius — outer 20px 대비 명확한 계층 */
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #10B981, #059669);
+  box-shadow: 0 0 18px rgba(16,185,129,0.45), 0 4px 8px rgba(0,0,0,0.3);
+  position: relative;
+  margin: 2px 0; /* 카드 패딩과 아이콘 사이 내부 여백 명시 */
+}
+.pat-b .demo-avatar::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* ── C: 아이콘 돌출 (overflow) ── */
+.pat-c-wrap {
+  padding-left: 18px; /* 돌출 공간 확보 */
+  position: relative;
+}
+.pat-c .demo-card {
+  border-radius: 18px;
+  padding: 13px 14px 13px 44px; /* 아이콘 너비만큼 왼쪽 패딩 */
+  gap: 0;
+  overflow: visible;
+}
+.pat-c .demo-avatar {
+  position: absolute;
+  left: -2px; /* 카드 경계 밖으로 살짝 */
+  top: 50%; transform: translateY(-50%);
+  width: 50px; height: 50px;
+  border-radius: 15px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #10B981, #059669);
+  box-shadow: 0 0 24px rgba(16,185,129,0.55), 0 6px 14px rgba(0,0,0,0.4);
+  border: 2px solid rgba(14,16,34,0.9); /* 카드 배경색 테두리로 레이어 분리 */
+  z-index: 2;
+}
+
+/* ── D: 세로 컬러 블록 ── */
+.pat-d .demo-card {
+  border-radius: 18px;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+.pat-d .demo-avatar-block {
+  width: 56px;
+  align-self: stretch;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, #10B981 0%, #059669 100%);
+  border-radius: 16px 0 0 16px;
+  position: relative;
+}
+.pat-d .demo-avatar-block::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 1px; height: 100%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05), rgba(255,255,255,0.15));
+}
+.pat-d .demo-right {
+  flex: 1;
+  display: flex; align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+}
+</style>
+
+<div class="pattern-list">
+
+  <!-- A: 현재 방식 -->
+  <div class="pat-option pat-a" data-choice="a" onclick="toggleSelect(this)">
+    <div class="pat-label" style="color:#F87171">A — 현재 방식 (문제 있음)</div>
+    <div class="demo-card">
+      <div class="demo-avatar"></div>
+      <div class="demo-info">
+        <div class="demo-name">iM 정기적금</div>
+        <div class="demo-sub">7/24회 · D-3 납입</div>
+      </div>
+      <div>
+        <div class="demo-balance">1,400,000원</div>
+        <div class="demo-meta">29%</div>
+      </div>
+    </div>
+    <div class="pat-issue">문제: 카드 radius(18) ≈ 아이콘 radius(14) — 계층감 없음. 아이콘이 카드에 붙어 답답해 보임.</div>
+  </div>
+
+  <!-- B: 비례 반경 + 내부 여백 -->
+  <div class="pat-option pat-b" data-choice="b" onclick="toggleSelect(this)">
+    <div class="pat-label" style="color:#FBBF24">B — 비례 반경 + 내부 여백</div>
+    <div class="demo-card">
+      <div class="demo-avatar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <ellipse cx="12" cy="17" rx="7" ry="3"/><path d="M5 17v-3M19 17v-3"/>
+          <ellipse cx="12" cy="14" rx="7" ry="3"/><path d="M12 11V5"/><path d="M9 8l3-3 3 3"/>
+        </svg>
+      </div>
+      <div class="demo-info">
+        <div class="demo-name">iM 정기적금</div>
+        <div class="demo-sub">7/24회 · D-3 납입</div>
+      </div>
+      <div>
+        <div class="demo-balance">1,400,000원</div>
+        <div class="demo-meta">29%</div>
+      </div>
+    </div>
+    <div class="pat-good">카드 r20, 아이콘 r10 — 정비례. 내부 여백 2px 추가로 "숨 쉬는" 느낌.</div>
+    <div class="pat-desc">가장 무난하고 안전한 선택. 기존 레이아웃 유지, 수치만 조정.</div>
+  </div>
+
+  <!-- C: 아이콘 돌출 -->
+  <div class="pat-option pat-c" data-choice="c" onclick="toggleSelect(this)">
+    <div class="pat-label" style="color:#00C9A7">C — 아이콘 돌출 ★ 추천</div>
+    <div class="pat-c-wrap">
+      <div class="demo-card" style="position:relative">
+        <div class="demo-avatar">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <ellipse cx="12" cy="17" rx="7" ry="3"/><path d="M5 17v-3M19 17v-3"/>
+            <ellipse cx="12" cy="14" rx="7" ry="3"/><path d="M12 11V5"/><path d="M9 8l3-3 3 3"/>
+          </svg>
+        </div>
+        <div class="demo-info">
+          <div class="demo-name">iM 정기적금</div>
+          <div class="demo-sub">7/24회 · D-3 납입</div>
+        </div>
+        <div style="padding-right:4px">
+          <div class="demo-balance">1,400,000원</div>
+          <div class="demo-meta">29%</div>
+        </div>
+      </div>
+    </div>
+    <div class="pat-good">아이콘이 카드 레이어 위에 "떠 있는" 효과. 레이어 깊이감 극대화.</div>
+    <div class="pat-desc">카드 border로 아이콘과 배경을 분리. 고급 금융앱(Revolut, Robinhood)에서 자주 쓰임.</div>
+  </div>
+
+  <!-- D: 세로 블록 -->
+  <div class="pat-option pat-d" data-choice="d" onclick="toggleSelect(this)">
+    <div class="pat-label" style="color:#C4B5FD">D — 좌측 컬러 블록</div>
+    <div class="demo-card">
+      <div class="demo-avatar-block">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <ellipse cx="12" cy="17" rx="7" ry="3"/><path d="M5 17v-3M19 17v-3"/>
+          <ellipse cx="12" cy="14" rx="7" ry="3"/><path d="M12 11V5"/><path d="M9 8l3-3 3 3"/>
+        </svg>
+      </div>
+      <div class="demo-right">
+        <div class="demo-info">
+          <div class="demo-name">iM 정기적금</div>
+          <div class="demo-sub">7/24회 · D-3 납입</div>
+        </div>
+        <div>
+          <div class="demo-balance">1,400,000원</div>
+          <div class="demo-meta">29%</div>
+        </div>
+      </div>
+    </div>
+    <div class="pat-good">계좌 타입 컬러를 가장 강하게 전달. 한눈에 타입 구분 가능.</div>
+    <div class="pat-desc">리스트 스캔 속도 향상. 단, glassmorphism 분위기와 충돌할 수 있음.</div>
+  </div>
+
+</div>
