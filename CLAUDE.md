@@ -126,6 +126,24 @@ Claude가 호출 가능한 툴 목록 (총 15개):
 - 배경: `#0D0F1A` (primary) / `#1E2138` (card)
 - 이모지 디자인 요소 금지 — SVG 아이콘 사용
 
+## Skill routing
+
+When the user's request matches an available skill, ALWAYS invoke it using the Skill
+tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
+The skill has specialized workflows that produce better results than ad-hoc answers.
+
+Key routing rules:
+- Product ideas, "is this worth building", brainstorming → invoke office-hours
+- Bugs, errors, "why is this broken", 500 errors → invoke investigate
+- Ship, deploy, push, create PR → invoke ship
+- QA, test the site, find bugs → invoke qa
+- Code review, check my diff → invoke review
+- Update docs after shipping → invoke document-release
+- Weekly retro → invoke retro
+- Design system, brand → invoke design-consultation
+- Visual audit, design polish → invoke design-review
+- Architecture review → invoke plan-eng-review
+
 ## Deployment
 
 - **Backend**: Railway (`railway.toml` — nixpacks 빌드, `node src/server.js` 시작)
