@@ -5,6 +5,7 @@ import DrawerBanner from './components/DrawerBanner.jsx'
 import VoiceOverlay from './components/VoiceOverlay.jsx'
 import AccountListScreen from './components/AccountListScreen.jsx'
 import AccountRoom from './components/AccountRoom.jsx'
+import EnrollmentModal from './components/EnrollmentModal.jsx'
 import { useWebSocket } from './hooks/useWebSocket.js'
 import { useVoiceInput } from './hooks/useVoiceInput.js'
 import { loadSessionId, loadRoomMessages, saveRoomMessages, clearAllData } from './store/persistence.js'
@@ -184,6 +185,31 @@ export default function App() {
     setShowOnboarding(true)
   }
 
+  // ── 가입 상태 머신 상수 ──
+  const ENROLL_MESSAGES = {
+    promo_cma: {
+      afterPhone: '인증번호를 보냈어요. 문자 확인해주세요.',
+      afterSms: '확인됐어요! 입금할 금액만 정하면 바로 개설돼요.',
+      complete: 'iM CMA 계좌가 열렸어요. 오늘 밤부터 이자가 붙기 시작해요.',
+      nudge: '가입 중간에 나가셨더라고요. 아직 자리 있어요, 이어서 할까요?',
+    },
+    promo_term_deposit: {
+      afterPhone: '인증번호 보냈어요.',
+      afterSms: '확인됐어요! 기간이랑 금액만 정해볼게요.',
+      afterTerm: '마지막 단계예요. 공인인증서로 확인해 드릴게요.',
+      complete: '12개월 예금 가입됐어요. 만기일에 원금과 이자를 받으실 거예요.',
+      nudge: '예금 설정 중간에 나가셨어요. 언제든 이어서 하셔도 돼요.',
+    },
+    promo_savings: {
+      afterPhone: '인증번호 보냈어요.',
+      afterSms: '확인됐어요! 지금 넣어둘 금액이 있으면 정해볼게요. 없어도 괜찮아요.',
+      complete: '비상금통장이 생겼어요. 쓸 일이 없는 게 제일 좋지만, 있다는 게 중요해요.',
+      nudge: '비상금통장 개설 중이었어요. 3분이면 돼요, 이어서 할까요?',
+    },
+  }
+
+  const ENROLL_TOTAL_STEPS = { promo_cma: 3, promo_term_deposit: 4, promo_savings: 3 }
+
   // ── 메신저 UI 상태 ──
   const [screen, setScreen] = useState('home')           // 'home' | 'room'
   const [activeAccountId, setActiveAccountId] = useState(null)
@@ -194,9 +220,19 @@ export default function App() {
   const [roomTxMeta, setRoomTxMeta] = useState({})       // { [accountId]: { page, hasMore, isLoadingMore } }
   const [unreadCounts, setUnreadCounts] = useState({ 'acc001': 3 })   // { [accountId]: number }
 
+  // ── 가입 상태 머신 ──
+  const [enrollmentState, setEnrollmentState] = useState({
+    productId: null,
+    step: 0,
+    data: {},
+    isOpen: false,
+    status: 'idle', // 'idle' | 'in_progress' | 'completed' | 'abandoned'
+  })
+
   const messagesEndRef = useRef(null)
   const messagesContainerRef = useRef(null)
   const textareaRef = useRef(null)
+  const enrollNudgeTimeoutRef = useRef(null)
   const streamingIdRef = useRef(null)
   const prevMsgCountRef = useRef(0)
   // GUI 드릴-다운에서 발생한 메시지를 scope별로 제거하기 위한 ref
@@ -813,6 +849,129 @@ export default function App() {
       })
   }
 
+  // ── 가입 상태 머신 핸들러 ──
+  function injectAiMessage(accountId, text) {
+    const msg = {
+      id: 'enroll_msg_' + Date.now(),
+      role: 'assistant',
+      content: text,
+      text,
+      timestamp: new Date().toISOString(),
+    }
+    setRoomMessages((prev) => ({
+      ...prev,
+      [accountId]: [...(prev[accountId] || []), msg],
+    }))
+  }
+
+  function startEnrollment(productId) {
+    if (enrollNudgeTimeoutRef.current) {
+      clearTimeout(enrollNudgeTimeoutRef.current)
+      enrollNudgeTimeoutRef.current = null
+    }
+    setEnrollmentState({
+      productId,
+      step: 1,
+      data: {},
+      isOpen: true,
+      status: 'in_progress',
+    })
+  }
+
+  async function handleEnrollStep(stepData) {
+    const { productId, step } = enrollmentState
+    const msgs = ENROLL_MESSAGES[productId]
+    const totalSteps = ENROLL_TOTAL_STEPS[productId] || 3
+
+    // Merge step data
+    const newData = { ...enrollmentState.data, ...stepData }
+
+    // Close modal first
+    setEnrollmentState((prev) => ({ ...prev, isOpen: false, data: newData }))
+
+    // Determine AI message for this step
+    let aiText = null
+    if (step === 1) aiText = msgs.afterPhone
+    else if (step === 2) aiText = msgs.afterSms
+    else if (step === 3 && productId === 'promo_term_deposit') aiText = msgs.afterTerm
+
+    if (aiText && activeAccountId) {
+      await new Promise((r) => setTimeout(r, 500))
+      injectAiMessage(activeAccountId, aiText)
+      await new Promise((r) => setTimeout(r, 1200))
+    }
+
+    const nextStep = step + 1
+    if (nextStep > totalSteps) {
+      handleEnrollComplete(newData)
+    } else {
+      setEnrollmentState((prev) => ({ ...prev, step: nextStep, isOpen: true }))
+    }
+  }
+
+  async function handleEnrollComplete(data) {
+    const { productId } = enrollmentState
+    const msgs = ENROLL_MESSAGES[productId]
+
+    try {
+      const res = await fetch(`${API_BASE}/api/enroll`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, productId, enrollData: data }),
+      })
+      const json = await res.json()
+      if (!json.ok) throw new Error(json.error || '가입 실패')
+
+      const newAccount = json.account
+
+      // Update accounts list — replace promo with real account
+      setAccountList((prev) => prev.map((a) => (a.id === productId ? newAccount : a)))
+
+      // Migrate room messages to new account id
+      setRoomMessages((prev) => {
+        const updated = { ...prev }
+        updated[newAccount.id] = prev[productId] || []
+        delete updated[productId]
+        return updated
+      })
+
+      // Switch active room to new account
+      setActiveAccountId(newAccount.id)
+
+      // Mark enrollment complete
+      setEnrollmentState({
+        productId: null, step: 0, data: {}, isOpen: false, status: 'completed',
+      })
+
+      // Inject completion message after a brief delay
+      await new Promise((r) => setTimeout(r, 400))
+      injectAiMessage(newAccount.id, msgs.complete)
+
+    } catch (err) {
+      console.error('Enroll failed:', err)
+      if (activeAccountId) {
+        injectAiMessage(activeAccountId, '일시적 오류가 있어요. 잠시 후 다시 시도해 주세요.')
+      }
+      setEnrollmentState((prev) => ({ ...prev, isOpen: false, status: 'idle' }))
+    }
+  }
+
+  function handleEnrollDismiss() {
+    const { productId } = enrollmentState
+    setEnrollmentState((prev) => ({ ...prev, isOpen: false, status: 'abandoned' }))
+
+    // Re-nudge after 10 minutes (once)
+    if (enrollNudgeTimeoutRef.current) clearTimeout(enrollNudgeTimeoutRef.current)
+    enrollNudgeTimeoutRef.current = setTimeout(() => {
+      enrollNudgeTimeoutRef.current = null
+      // Only nudge if still in the same promo room
+      if (activeAccountId === productId) {
+        const msgs = ENROLL_MESSAGES[productId]
+        if (msgs) injectAiMessage(productId, msgs.nudge)
+      }
+    }, 10 * 60 * 1000)
+  }
+
   // 대화 초기화 (세션만)
   async function handleReset() {
     await fetch(`${API_BASE}/api/reset`, {
@@ -874,6 +1033,7 @@ export default function App() {
           onMarkRead={() => setUnreadCounts((prev) => ({ ...prev, [activeAccountId]: 0 }))}
           txMeta={roomTxMeta[activeAccountId]}
           onLoadMoreTxs={handleLoadMoreTxs}
+          onStartEnrollment={startEnrollment}
         />
       ) : (
         <AccountListScreen
@@ -973,6 +1133,16 @@ export default function App() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* 가입 모달 */}
+      {enrollmentState.isOpen && (
+        <EnrollmentModal
+          state={enrollmentState}
+          accounts={accountList}
+          onStepComplete={handleEnrollStep}
+          onDismiss={handleEnrollDismiss}
+        />
       )}
 
       {/* 음성 오버레이 */}
