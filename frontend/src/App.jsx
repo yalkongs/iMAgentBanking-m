@@ -7,6 +7,7 @@ import AccountListScreen from './components/AccountListScreen.jsx'
 import AccountRoom from './components/AccountRoom.jsx'
 import { useWebSocket } from './hooks/useWebSocket.js'
 import { useVoiceInput } from './hooks/useVoiceInput.js'
+import { loadSessionId, loadRoomMessages, saveRoomMessages, clearAllData } from './store/persistence.js'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -124,7 +125,7 @@ export default function App() {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('계좌 목록 보여줘')
   const [isLoading, setIsLoading] = useState(false)
-  const [sessionId] = useState(getSessionId)
+  const [sessionId] = useState(loadSessionId)
   const [alert, setAlert] = useState(null)
 
   // 프로액티브 AI 인사이트
@@ -631,6 +632,13 @@ export default function App() {
       .finally(() => setInsightsLoading(false))
     fetchAccountList()
   }
+
+  // roomMessages 변경 시 localStorage에 자동 저장
+  useEffect(() => {
+    if (screen === 'room' && activeAccountId && roomMessages[activeAccountId]) {
+      saveRoomMessages(activeAccountId, roomMessages[activeAccountId])
+    }
+  }, [screen, activeAccountId, roomMessages])
 
   // ── Living Accounts: 채팅방 첫 입장 시 AI 프로액티브 인사말 ──
   const fetchRoomGreeting = useCallback(async (accountId) => {
