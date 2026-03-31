@@ -101,6 +101,8 @@ export const contacts = [
   { id: 'c013', realName: '오승훈',      bank: '토스뱅크',    accountNo: '100-20-234567'  },
   { id: 'c014', realName: '김수진',      bank: '하나은행',    accountNo: '130-567-890123' },
   { id: 'c015', realName: '강남영어학원', bank: '기업은행',   accountNo: '110-901-234567' },
+  { id: 'c016', realName: '김순자',      bank: '농협은행',    accountNo: '301-5678-9012-01' },  // 엄마
+  { id: 'c017', realName: '김기준',      bank: '하나은행',    accountNo: '130-789-012345'  },  // 아빠
 ]
 
 // ──────────────────────────────────────────────
@@ -266,6 +268,30 @@ export let transactions = [
   { id: 't167', date: d(166), amount: -55000,  category: '자동이체', counterpart: 'LG유플러스 (홈인터넷)', accountId: 'acc001', source: 'account' },
   { id: 't168', date: d(164), amount: -120000, category: '자동이체', counterpart: '현대캐피탈 스마트폰 할부', accountId: 'acc001', source: 'account' },
   { id: 't169', date: d(154), amount: -45000,  category: '자동이체', counterpart: '쿠팡 로켓와우',      accountId: 'acc001', source: 'account' },
+
+  // ── 추가 송금 이력 (빠른 송금 패널 데모용) ──────────
+  // 엄마(김순자) — 매월 30만원 생활비, 4개월 연속
+  { id: 't170', date: d(3),   amount: -300000, category: '송금', counterpart: '김순자', accountId: 'acc001', source: 'account' },
+  { id: 't171', date: d(33),  amount: -300000, category: '송금', counterpart: '김순자', accountId: 'acc001', source: 'account' },
+  { id: 't172', date: d(64),  amount: -300000, category: '송금', counterpart: '김순자', accountId: 'acc001', source: 'account' },
+  { id: 't173', date: d(95),  amount: -300000, category: '송금', counterpart: '김순자', accountId: 'acc001', source: 'account' },
+  // 아빠(김기준) — 가끔 10만원
+  { id: 't174', date: d(45),  amount: -100000, category: '송금', counterpart: '김기준', accountId: 'acc001', source: 'account' },
+  { id: 't175', date: d(112), amount: -100000, category: '송금', counterpart: '김기준', accountId: 'acc001', source: 'account' },
+  // 박지수 — 정기적으로 5만원 (총 4회)
+  { id: 't176', date: d(50),  amount: -50000,  category: '송금', counterpart: '박지수', accountId: 'acc001', source: 'account' },
+  { id: 't177', date: d(81),  amount: -50000,  category: '송금', counterpart: '박지수', accountId: 'acc001', source: 'account' },
+  // 이민지 — 식비 정산, 5만원 패턴
+  { id: 't178', date: d(42),  amount: -50000,  category: '송금', counterpart: '이민지', accountId: 'acc001', source: 'account' },
+  { id: 't179', date: d(100), amount: -50000,  category: '송금', counterpart: '이민지', accountId: 'acc001', source: 'account' },
+  { id: 't180', date: d(140), amount: -50000,  category: '송금', counterpart: '이민지', accountId: 'acc001', source: 'account' },
+  // 정세영 — 소액 정산 2만원
+  { id: 't181', date: d(20),  amount: -20000,  category: '송금', counterpart: '정세영', accountId: 'acc001', source: 'account' },
+  { id: 't182', date: d(55),  amount: -20000,  category: '송금', counterpart: '정세영', accountId: 'acc001', source: 'account' },
+  // 오승훈 — 가끔 5만원 (t111과 연계)
+  { id: 't183', date: d(88),  amount: -50000,  category: '송금', counterpart: '오승훈', accountId: 'acc001', source: 'account' },
+  // 김수진 — 1회
+  { id: 't184', date: d(60),  amount: -30000,  category: '송금', counterpart: '김수진', accountId: 'acc001', source: 'account' },
 
   // ── 정기적금 납입·이자 (2025-04 ~ 2026-03, 12개월) ──
   { id: 't200', date: d(3),   amount: 1050,    category: '이자',    counterpart: 'iM 정기적금 이자',   accountId: 'acc002', source: 'account' },

@@ -160,7 +160,10 @@ function getSession(sessionId) {
       pendingTransfer: null,
       accounts: getInitialAccounts(),
       transactions: getInitialTransactions(),
-      aliasStore: new Map(),
+      aliasStore: new Map([
+        ['엄마', { realName: '김순자', bank: '농협은행', accountNo: '301-5678-9012-01', accountNoMasked: '****01' }],
+        ['아빠', { realName: '김기준', bank: '하나은행', accountNo: '130-789-012345',   accountNoMasked: '****45' }],
+      ]),
     })
   }
   return sessions.get(sessionId)
