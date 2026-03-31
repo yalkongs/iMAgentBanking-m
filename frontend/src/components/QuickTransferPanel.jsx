@@ -44,7 +44,6 @@ export default function QuickTransferPanel({ contacts, transactions, onTransferR
     try { return localStorage.getItem(LS_KEY) === 'true' } catch { return false }
   })
   const [activeTab, setActiveTab] = useState(0)
-  const [expandedId, setExpandedId] = useState(null)
   const [search, setSearch] = useState('')
 
   const { freqMap, amountStats } = useMemo(
@@ -98,10 +97,6 @@ export default function QuickTransferPanel({ contacts, transactions, onTransferR
     try { localStorage.setItem(LS_KEY, String(next)) } catch {}
   }
 
-  function handleExpand(id) {
-    setExpandedId((prev) => (prev === id ? null : id))
-  }
-
   function renderRow(contact) {
     const stats = amountStats[contact.realName] || {}
     return (
@@ -110,10 +105,7 @@ export default function QuickTransferPanel({ contacts, transactions, onTransferR
         contact={contact}
         recentAmount={stats.recentAmount ?? null}
         frequentAmount={stats.frequentAmount ?? null}
-        isExpanded={expandedId === contact.id}
-        onExpand={() => handleExpand(contact.id)}
         onTransfer={(amount) => {
-          setExpandedId(null)
           setCollapsed(true)
           try { localStorage.setItem(LS_KEY, 'true') } catch {}
           onTransferReady(contact.id, amount)
@@ -160,7 +152,7 @@ export default function QuickTransferPanel({ contacts, transactions, onTransferR
                 role="tab"
                 aria-selected={activeTab === i}
                 className={`qtp-tab${activeTab === i ? ' qtp-tab--active' : ''}`}
-                onClick={() => { setActiveTab(i); setExpandedId(null); setSearch('') }}
+                onClick={() => { setActiveTab(i); setSearch('') }}
               >
                 {tab}
               </button>

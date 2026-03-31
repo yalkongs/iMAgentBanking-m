@@ -111,9 +111,11 @@ export default function TransferCard({ data, sessionId, onDone, voiceMode }) {
   const [voiceHint, setVoiceHint] = useState(voiceMode ? '"네" 또는 "아니오"라고 말씀해 주세요' : null)
   const [accountsExpanded, setAccountsExpanded] = useState(accounts.length > 1)
   const [failureMsg, setFailureMsg] = useState(null)
+  const [amountInput, setAmountInput] = useState(data.amount > 0 ? String(data.amount) : '')
 
+  const effectiveAmount = data.amount > 0 ? data.amount : (Number(amountInput) || 0)
   const selectedAccount = accounts.find((a) => a.id === selectedId) || accounts[0]
-  const isInsufficient = selectedAccount?.balance != null && selectedAccount.balance < data.amount
+  const isInsufficient = selectedAccount?.balance != null && effectiveAmount > 0 && selectedAccount.balance < effectiveAmount
 
   // 음성 확인 (voiceMode일 때 자동 활성화)
   useVoiceConfirm({
@@ -131,7 +133,7 @@ export default function TransferCard({ data, sessionId, onDone, voiceMode }) {
       const res = await fetch(`${API_BASE}/api/confirm-transfer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, confirmed, from_account_id: selectedId }),
+        body: JSON.stringify({ sessionId, confirmed, from_account_id: selectedId, amount: effectiveAmount }),
       })
       const json = await res.json()
       if (!confirmed) {
@@ -160,7 +162,23 @@ export default function TransferCard({ data, sessionId, onDone, voiceMode }) {
       {voiceHint && <div className="transfer-voice-hint">{voiceHint}</div>}
       <div className="transfer-amount-row">
         <span className="transfer-amount-label">이체 금액</span>
-        <span className="transfer-amount-value">{amountFormatted || `${(data.amount || 0).toLocaleString('ko-KR')}원`}</span>
+        {data.amount > 0 ? (
+          <span className="transfer-amount-value">{amountFormatted || `${data.amount.toLocaleString('ko-KR')}원`}</span>
+        ) : (
+          <div className="transfer-amount-input-wrap">
+            <input
+              className="transfer-amount-input"
+              type="tel"
+              inputMode="numeric"
+              placeholder="금액 입력"
+              value={amountInput}
+              onChange={(e) => setAmountInput(e.target.value.replace(/\D/g, ''))}
+              disabled={status === 'confirming'}
+              autoFocus
+            />
+            <span className="transfer-amount-unit">원</span>
+          </div>
+        )}
       </div>
 
       {/* 이체 후 잔액 */}
@@ -231,18 +249,18 @@ export default function TransferCard({ data, sessionId, onDone, voiceMode }) {
 
       {/* 스와이프 확인 + 취소 */}
       <div className="transfer-swipe-row">
-        {!isInsufficient && status !== 'confirming' ? (
+        {!isInsufficient && effectiveAmount > 0 && status !== 'confirming' ? (
           <SwipeConfirm
             onConfirm={() => handleConfirm(true)}
-            disabled={isInsufficient || status === 'confirming'}
+            disabled={false}
           />
         ) : (
           <button
             className="transfer-btn-confirm"
             onClick={() => handleConfirm(true)}
-            disabled={status === 'confirming' || isInsufficient}
+            disabled={status === 'confirming' || isInsufficient || effectiveAmount <= 0}
           >
-            {status === 'confirming' ? '처리 중…' : '이체 확인'}
+            {status === 'confirming' ? '처리 중…' : effectiveAmount <= 0 ? '금액을 입력하세요' : '이체 확인'}
           </button>
         )}
       </div>
