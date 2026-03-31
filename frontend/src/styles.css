@@ -5451,7 +5451,7 @@ input:focus-visible, textarea:focus-visible {
   padding: 24px 24px 32px;
   width: 100%;
   max-width: 480px;
-  max-height: 85vh;
+  max-height: calc(var(--vvh, 100dvh) * 0.85);
   overflow-y: auto;
 }
 
@@ -6094,7 +6094,7 @@ input:focus-visible, textarea:focus-visible {
 
 /* 바디 */
 .qtp-body {
-  max-height: 40vh;
+  max-height: calc(var(--vvh, 100dvh) * 0.38);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -6324,4 +6324,54 @@ input:focus-visible, textarea:focus-visible {
 
 .qtp-send-btn:not(:disabled):active {
   opacity: 0.85;
+}
+
+/* ──────────────────────────────────────────────
+   TransferCard 계좌 선택 개선
+   ────────────────────────────────────────────── */
+.transfer-account-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.transfer-account-change {
+  font-size: 12px;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.transfer-account-selected {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: rgba(0,201,167,0.08);
+  border: 1px solid rgba(0,201,167,0.25);
+  border-radius: 10px;
+}
+
+/* ──────────────────────────────────────────────
+   계좌 펄스 인디케이터 (AccountListScreen)
+   ────────────────────────────────────────────── */
+.account-pulse-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-left: 5px;
+  vertical-align: middle;
+  flex-shrink: 0;
+  animation: account-pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes account-pulse {
+  0%   { opacity: 0.3; transform: scale(0.7); }
+  50%  { opacity: 1;   transform: scale(1.25); box-shadow: 0 0 0 3px rgba(0,201,167,0.2); }
+  100% { opacity: 0.3; transform: scale(0.7); }
 }

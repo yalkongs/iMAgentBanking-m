@@ -109,6 +109,8 @@ export default function TransferCard({ data, sessionId, onDone, voiceMode }) {
   const [selectedId, setSelectedId] = useState(from_account_id || accounts[0]?.id)
   const [status, setStatus] = useState('pending') // pending | confirming | done
   const [voiceHint, setVoiceHint] = useState(voiceMode ? '"네" 또는 "아니오"라고 말씀해 주세요' : null)
+  const [accountsExpanded, setAccountsExpanded] = useState(accounts.length > 1)
+  const [failureMsg, setFailureMsg] = useState(null)
 
   const selectedAccount = accounts.find((a) => a.id === selectedId) || accounts[0]
   const isInsufficient = selectedAccount?.balance != null && selectedAccount.balance < data.amount
@@ -124,6 +126,7 @@ export default function TransferCard({ data, sessionId, onDone, voiceMode }) {
 
   async function handleConfirm(confirmed) {
     setStatus('confirming')
+    setFailureMsg(null)
     try {
       const res = await fetch(`${API_BASE}/api/confirm-transfer`, {
         method: 'POST',
@@ -131,10 +134,21 @@ export default function TransferCard({ data, sessionId, onDone, voiceMode }) {
         body: JSON.stringify({ sessionId, confirmed, from_account_id: selectedId }),
       })
       const json = await res.json()
+      if (!confirmed) {
+        setStatus('done')
+        onDone(false, json)
+        return
+      }
+      if (json.success === false) {
+        setStatus('pending')
+        setFailureMsg(json.error || '이체에 실패했습니다.')
+        return
+      }
       setStatus('done')
-      onDone(confirmed, json)
+      onDone(true, json)
     } catch {
       setStatus('pending')
+      setFailureMsg('네트워크 오류가 발생했습니다. 다시 시도해 주세요.')
     }
   }
 
@@ -179,22 +193,39 @@ export default function TransferCard({ data, sessionId, onDone, voiceMode }) {
 
       {/* 출금 계좌 선택 */}
       <div className="transfer-account-section">
-        <div className="transfer-account-label">출금 계좌</div>
-        <div className="transfer-account-list">
-          {accounts.map((acc) => (
-            <button
-              key={acc.id}
-              className={`transfer-account-btn ${selectedId === acc.id ? 'selected' : ''}`}
-              onClick={() => setSelectedId(acc.id)}
-              disabled={status === 'confirming'}
-            >
-              <span className="transfer-account-name">{acc.name}</span>
-              <span className="transfer-account-balance">{acc.balanceFormatted}</span>
+        <div className="transfer-account-header">
+          <div className="transfer-account-label">출금 계좌</div>
+          {accounts.length > 1 && !accountsExpanded && (
+            <button className="transfer-account-change" onClick={() => setAccountsExpanded(true)}>
+              변경
             </button>
-          ))}
+          )}
         </div>
+        {accountsExpanded ? (
+          <div className="transfer-account-list">
+            {accounts.map((acc) => (
+              <button
+                key={acc.id}
+                className={`transfer-account-btn ${selectedId === acc.id ? 'selected' : ''}`}
+                onClick={() => { setSelectedId(acc.id); if (accounts.length > 1) setAccountsExpanded(false) }}
+                disabled={status === 'confirming'}
+              >
+                <span className="transfer-account-name">{acc.name}</span>
+                <span className="transfer-account-balance">{acc.balanceFormatted}</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="transfer-account-selected">
+            <span className="transfer-account-name">{selectedAccount?.name}</span>
+            <span className="transfer-account-balance">{selectedAccount?.balanceFormatted}</span>
+          </div>
+        )}
         {isInsufficient && (
           <div className="transfer-account-warn">잔액이 부족합니다.</div>
+        )}
+        {failureMsg && (
+          <div className="transfer-account-warn">{failureMsg}</div>
         )}
       </div>
 

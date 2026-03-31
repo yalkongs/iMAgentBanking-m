@@ -309,7 +309,12 @@ export default function AccountListScreen({
 
                     <div className="account-list-item-body">
                       <div className="account-list-item-top">
-                        <span className="account-list-name">{acc.name}</span>
+                        <span className="account-list-name">
+                          {acc.name}
+                          {['installment_savings', 'term_deposit', 'cma', 'savings'].includes(acc.type) && !acc.isPromo && (
+                            <span className="account-pulse-dot" aria-label="이자 발생 중" />
+                          )}
+                        </span>
                         <span className="account-list-balance">
                           {acc.isPromo ? null : acc.type === 'debit_card' ? (
                             <BalanceDisplay value={acc.balance} animate={true} prefix="이번달 " suffix="원 사용" />

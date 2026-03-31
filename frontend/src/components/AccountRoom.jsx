@@ -542,6 +542,12 @@ export default function AccountRoom({
             <span className="contact-card-value">{account.cardNo}</span>
           </div>
         )}
+        {(account.type === 'debit_card' || account.type === 'credit_card') && account.linkedAccountName && (
+          <div className="contact-card-row">
+            <span className="contact-card-label">결제 계좌</span>
+            <span className="contact-card-value">{account.linkedAccountName}</span>
+          </div>
+        )}
         {account.maturityDate && (
           <div className="contact-card-row">
             <span className="contact-card-label">만기일</span>
