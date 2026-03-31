@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import QuickTransferRecipientRow from './QuickTransferRecipientRow.jsx'
 
 const TABS = ['자주', '최근', '연락처']
@@ -39,12 +39,20 @@ function calcStats(transactions, contacts) {
   return { freqMap, amountStats }
 }
 
-export default function QuickTransferPanel({ contacts, transactions, onTransferReady }) {
+export default function QuickTransferPanel({ contacts, transactions, onTransferReady, hasPendingTransfer }) {
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem(LS_KEY) === 'true' } catch { return false }
   })
   const [activeTab, setActiveTab] = useState(0)
   const [search, setSearch] = useState('')
+
+  // #5 AI 경로로 이체 카드 생성 시 자동 collapse
+  useEffect(() => {
+    if (hasPendingTransfer) {
+      setCollapsed(true)
+      try { localStorage.setItem(LS_KEY, 'true') } catch {}
+    }
+  }, [hasPendingTransfer])
 
   const { freqMap, amountStats } = useMemo(
     () => calcStats(transactions, contacts),
@@ -105,7 +113,9 @@ export default function QuickTransferPanel({ contacts, transactions, onTransferR
         contact={contact}
         recentAmount={stats.recentAmount ?? null}
         frequentAmount={stats.frequentAmount ?? null}
+        disabled={hasPendingTransfer}
         onTransfer={(amount) => {
+          if (hasPendingTransfer) return  // #1 이중 탭 방지
           setCollapsed(true)
           try { localStorage.setItem(LS_KEY, 'true') } catch {}
           onTransferReady(contact.id, amount)

@@ -402,6 +402,9 @@ export default function AccountRoom({
   const [copied, setCopied] = useState(false)
   const [expandedTxId, setExpandedTxId] = useState(null)
 
+  // #9, #1, #5: 이체 확인 카드가 활성화되어 있는지 여부
+  const hasPendingTransfer = (messages || []).some((m) => m.type === 'transfer_pending')
+
   const { isRecording, toggleRecording } = useVoiceInput(
     useCallback((text) => { setInput(text) }, [])
   )
@@ -871,6 +874,7 @@ export default function AccountRoom({
           contacts={contacts || []}
           transactions={transactions || []}
           onTransferReady={onTransferReady}
+          hasPendingTransfer={hasPendingTransfer}
         />
       )}
 
@@ -882,6 +886,7 @@ export default function AccountRoom({
             onClick={toggleRecording}
             type="button"
             aria-label={isRecording ? '녹음 중지' : '음성 입력'}
+            disabled={hasPendingTransfer}
           >
             <MicIcon active={isRecording} />
           </button>
@@ -891,14 +896,14 @@ export default function AccountRoom({
             value={input}
             onChange={handleTextareaChange}
             onKeyDown={handleKeyDown}
-            placeholder={isRecording ? '듣고 있어요…' : `${account.name}에 대해 물어보세요`}
+            placeholder={hasPendingTransfer ? '이체 확인 후 대화 가능합니다' : isRecording ? '듣고 있어요…' : `${account.name}에 대해 물어보세요`}
             rows={1}
-            disabled={isLoading}
+            disabled={isLoading || hasPendingTransfer}
           />
           <button
             className="room-send-btn"
             onClick={handleSend}
-            disabled={!input.trim() || isLoading}
+            disabled={!input.trim() || isLoading || hasPendingTransfer}
             aria-label="전송"
           >
             ↑

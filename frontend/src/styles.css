@@ -622,6 +622,57 @@ input:focus-visible, textarea:focus-visible {
   letter-spacing: -0.3px;
 }
 
+/* #13 메모 인라인 편집 */
+.transfer-memo-val {
+  background: none;
+  border: none;
+  padding: 2px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  transition: background 0.15s;
+}
+.transfer-memo-val:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+.transfer-memo-val:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+.transfer-memo-placeholder {
+  color: var(--text-muted);
+  font-style: italic;
+  font-weight: 400;
+}
+.transfer-memo-input {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  letter-spacing: -0.3px;
+  outline: none;
+  width: 140px;
+}
+.transfer-memo-input:focus {
+  border-color: var(--accent);
+}
+/* QTP 수신자 행 disabled */
+.qtp-row-main--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* ── 출금 계좌 선택 ── */
 .transfer-account-section {
   margin-bottom: 14px;

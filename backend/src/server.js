@@ -158,6 +158,7 @@ function getSession(sessionId) {
     sessions.set(sessionId, {
       messages: [],
       pendingTransfer: null,
+      lastConfirmedTransferId: null,  // #7 멱등성: 마지막 처리된 이체 ID
       accounts: getInitialAccounts(),
       transactions: getInitialTransactions(),
       aliasStore: new Map([
@@ -785,10 +786,15 @@ app.post('/api/confirm-transfer', async (req, res) => {
   const session = getSession(sessionId)
 
   if (!session.pendingTransfer) {
+    // #7 멱등성: 이미 처리된 이체에 재시도가 온 경우
+    if (confirmed && session.lastConfirmedTransferId) {
+      return res.status(409).json({ error: '이미 처리된 이체입니다.', idempotent: true })
+    }
     return res.status(400).json({ error: '대기 중인 이체가 없습니다.' })
   }
 
   const pending = session.pendingTransfer
+  const transferId = pending.toolUseId || ('tr_' + Date.now())
   session.pendingTransfer = null
 
   if (!confirmed) {
@@ -810,6 +816,7 @@ app.post('/api/confirm-transfer', async (req, res) => {
   }, ctx)
 
   if (result.success) {
+    session.lastConfirmedTransferId = transferId  // #7 멱등성 마킹
     sendWsEvent(sessionId, {
       type: 'TRANSFER_COMPLETE',
       data: result,

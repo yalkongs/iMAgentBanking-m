@@ -3,6 +3,7 @@ export default function QuickTransferRecipientRow({
   recentAmount,
   frequentAmount,
   onTransfer,
+  disabled,
 }) {
   // 마지막 4자리 마스킹
   const parts = (contact.accountNo || '').split('-')
@@ -13,8 +14,9 @@ export default function QuickTransferRecipientRow({
 
   return (
     <button
-      className="qtp-row-main"
+      className={`qtp-row-main${disabled ? ' qtp-row-main--disabled' : ''}`}
       type="button"
+      disabled={disabled}
       onClick={() => onTransfer(defaultAmount)}
     >
       <div className="qtp-row-info">

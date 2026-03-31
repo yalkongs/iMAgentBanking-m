@@ -103,7 +103,7 @@ function SwipeConfirm({ onConfirm, disabled }) {
 }
 
 export default function TransferCard({ data, sessionId, onDone, voiceMode }) {
-  const { to_contact, amountFormatted, from_account_id, memo, contactInfo, availableAccounts } = data
+  const { to_contact, amountFormatted, from_account_id, contactInfo, availableAccounts } = data
 
   const accounts = availableAccounts || [{ id: from_account_id, name: '주계좌 (입출금)', balanceFormatted: '' }]
   const [selectedId, setSelectedId] = useState(from_account_id || accounts[0]?.id)
@@ -112,10 +112,43 @@ export default function TransferCard({ data, sessionId, onDone, voiceMode }) {
   const [accountsExpanded, setAccountsExpanded] = useState(accounts.length > 1)
   const [failureMsg, setFailureMsg] = useState(null)
   const [amountInput, setAmountInput] = useState(data.amount > 0 ? String(data.amount) : '')
+  // #13 메모 인라인 편집
+  const [memoValue, setMemoValue] = useState(data.memo || '')
+  const [memoEditing, setMemoEditing] = useState(false)
+
+  const cardRef = useRef(null)
+  const amountInputRef = useRef(null)
 
   const effectiveAmount = data.amount > 0 ? data.amount : (Number(amountInput) || 0)
   const selectedAccount = accounts.find((a) => a.id === selectedId) || accounts[0]
   const isInsufficient = selectedAccount?.balance != null && effectiveAmount > 0 && selectedAccount.balance < effectiveAmount
+
+  // #2 금액 입력이 필요한 카드: 마운트 후 카드 스크롤 보장
+  useEffect(() => {
+    if (data.amount > 0) return
+    const t = setTimeout(() => {
+      cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      amountInputRef.current?.focus()
+    }, 120)
+    return () => clearTimeout(t)
+  }, [data.amount])
+
+  // #2 키보드 닫힘 감지 (visualViewport 높이 복구) → 카드 재스크롤
+  useEffect(() => {
+    if (data.amount > 0) return
+    const vv = window.visualViewport
+    if (!vv) return
+    let prevH = vv.height
+    const onResize = () => {
+      if (vv.height > prevH + 100) {
+        // 키보드가 닫혔음
+        setTimeout(() => cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80)
+      }
+      prevH = vv.height
+    }
+    vv.addEventListener('resize', onResize)
+    return () => vv.removeEventListener('resize', onResize)
+  }, [data.amount])
 
   // 음성 확인 (voiceMode일 때 자동 활성화)
   useVoiceConfirm({
@@ -127,18 +160,26 @@ export default function TransferCard({ data, sessionId, onDone, voiceMode }) {
   })
 
   async function handleConfirm(confirmed) {
+    const hadAmount = effectiveAmount > 0
     setStatus('confirming')
     setFailureMsg(null)
     try {
       const res = await fetch(`${API_BASE}/api/confirm-transfer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, confirmed, from_account_id: selectedId, amount: effectiveAmount }),
+        body: JSON.stringify({
+          sessionId,
+          confirmed,
+          from_account_id: selectedId,
+          amount: effectiveAmount,
+          memo: memoValue,
+        }),
       })
       const json = await res.json()
       if (!confirmed) {
         setStatus('done')
-        onDone(false, json)
+        // #3 금액 미입력 취소는 조용히 사라짐, 금액 입력 후 취소만 메시지 표시
+        onDone(false, json, { hadAmount })
         return
       }
       if (json.success === false) {
@@ -147,7 +188,7 @@ export default function TransferCard({ data, sessionId, onDone, voiceMode }) {
         return
       }
       setStatus('done')
-      onDone(true, json)
+      onDone(true, json, { hadAmount })
     } catch {
       setStatus('pending')
       setFailureMsg('네트워크 오류가 발생했습니다. 다시 시도해 주세요.')
@@ -157,9 +198,11 @@ export default function TransferCard({ data, sessionId, onDone, voiceMode }) {
   if (status === 'done') return null
 
   return (
-    <div className="transfer-card">
+    <div className="transfer-card" ref={cardRef}>
       <div className="transfer-card-label">이체 확인</div>
-      {voiceHint && <div className="transfer-voice-hint">{voiceHint}</div>}
+      {voiceMode && (
+        <div className="transfer-voice-hint">{voiceHint || '"네" 또는 "아니오"라고 말씀해 주세요'}</div>
+      )}
       <div className="transfer-amount-row">
         <span className="transfer-amount-label">이체 금액</span>
         {data.amount > 0 ? (
@@ -167,14 +210,18 @@ export default function TransferCard({ data, sessionId, onDone, voiceMode }) {
         ) : (
           <div className="transfer-amount-input-wrap">
             <input
+              ref={amountInputRef}
               className="transfer-amount-input"
               type="tel"
               inputMode="numeric"
               placeholder="금액 입력"
               value={amountInput}
               onChange={(e) => setAmountInput(e.target.value.replace(/\D/g, ''))}
+              onBlur={() => {
+                // 키보드 닫힌 후 카드가 보이도록 스크롤
+                setTimeout(() => cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 300)
+              }}
               disabled={status === 'confirming'}
-              autoFocus
             />
             <span className="transfer-amount-unit">원</span>
           </div>
@@ -201,12 +248,35 @@ export default function TransferCard({ data, sessionId, onDone, voiceMode }) {
             <span className="transfer-val">{contactInfo.bank} · {contactInfo.accountNo}</span>
           </div>
         )}
-        {memo && (
-          <div className="transfer-row">
-            <span className="transfer-lbl">메모</span>
-            <span className="transfer-val">{memo}</span>
-          </div>
-        )}
+        {/* #13 메모 인라인 편집 */}
+        <div className="transfer-row transfer-row--memo">
+          <span className="transfer-lbl">메모</span>
+          {memoEditing ? (
+            <input
+              className="transfer-memo-input"
+              type="text"
+              value={memoValue}
+              maxLength={20}
+              placeholder="메모 없음"
+              autoFocus
+              onChange={(e) => setMemoValue(e.target.value)}
+              onBlur={() => setMemoEditing(false)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setMemoEditing(false) } }}
+            />
+          ) : (
+            <button
+              className="transfer-memo-val"
+              onClick={() => setMemoEditing(true)}
+              disabled={status === 'confirming'}
+            >
+              {memoValue || <span className="transfer-memo-placeholder">탭해서 입력</span>}
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4, opacity: 0.5 }}>
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 출금 계좌 선택 */}

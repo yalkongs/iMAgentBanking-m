@@ -25,9 +25,14 @@ export default function Message({ msg, sessionId, onTransferDone, onQuickAction,
         data={msg.data}
         sessionId={sessionId}
         voiceMode={voiceMode}
-        onDone={(confirmed, result) => onTransferDone(confirmed, result, msg.id)}
+        onDone={(confirmed, result, meta) => onTransferDone(confirmed, result, meta)}
       />
     )
+  }
+
+  // #11 이전 이체 카드가 새 이체로 교체된 경우 — 조용히 사라짐
+  if (msg.type === 'transfer_expired') {
+    return null
   }
 
   // 백그라운드 입출금 알림

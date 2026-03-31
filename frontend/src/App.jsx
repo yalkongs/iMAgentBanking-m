@@ -292,6 +292,8 @@ export default function App() {
   // 메신저 라우팅 refs (sendMessage 클로저에서 사용)
   const screenRef = useRef('home')
   const activeAccountIdRef = useRef(null)
+  // #12 이체 카드가 어느 계좌방에 속하는지 추적
+  const pendingTransferAccountIdRef = useRef(null)
 
   // screenRef, activeAccountIdRef 동기화 (sendMessage 클로저용)
   useEffect(() => { screenRef.current = screen }, [screen])
@@ -443,16 +445,44 @@ export default function App() {
     if (event.type === 'PENDING_TRANSFER') {
       // voiceMode일 때 녹음 일시 정지 → useVoiceConfirm이 처리
       if (voiceModeRef.current) stopRecording()
+      // #12 from_account_id로 정확한 계좌방에 라우팅
+      const targetAccountId = event.data?.from_account_id || activeAccountIdRef.current
+      pendingTransferAccountIdRef.current = targetAccountId
       const msgId = 'transfer_' + Date.now()
-      appendToActiveStore({ id: msgId, type: 'transfer_pending', data: event.data })
+      // #11 중복 방지: 이미 pending이 있으면 새 카드로 교체 (기존 카드 expired 처리)
+      setRoomMessages((prev) => {
+        const existing = prev[targetAccountId] || []
+        const cleaned = existing.map((m) =>
+          m.type === 'transfer_pending' ? { ...m, type: 'transfer_expired' } : m
+        )
+        return { ...prev, [targetAccountId]: [...cleaned, { id: msgId, type: 'transfer_pending', data: event.data }] }
+      })
+    // #8 TRANSFER_COMPLETE/CANCELLED/FAILED: onTransferDone 콜백에서 처리하므로 WS는 무시
+    // (WS가 먼저 올 경우에 대비해 onTransferDone이 호출 안 된 경우만 처리)
     } else if (event.type === 'TRANSFER_COMPLETE') {
-      const r = event.data
-      appendToActiveStore({ id: 'tr_done_' + Date.now(), type: 'transfer_receipt', data: r })
-      setLastCardType('transfer_receipt')
+      // onTransferDone이 이미 호출됐으면 pendingTransferAccountIdRef가 null
+      // null이 아니면 WS로만 온 경우 (드문 엣지케이스) — 여기서도 처리
+      const aid = pendingTransferAccountIdRef.current
+      if (aid) {
+        pendingTransferAccountIdRef.current = null
+        const r = event.data
+        setRoomMessages((prev) => ({
+          ...prev,
+          [aid]: [...(prev[aid] || []), { id: 'tr_done_' + Date.now(), type: 'transfer_receipt', data: r }],
+        }))
+        setLastCardType('transfer_receipt')
+      }
     } else if (event.type === 'TRANSFER_CANCELLED') {
-      appendToActiveStore({ id: 'tr_cancel_' + Date.now(), type: 'transfer_result', success: false, text: '이체가 취소되었습니다.' })
+      pendingTransferAccountIdRef.current = null
     } else if (event.type === 'TRANSFER_FAILED') {
-      appendToActiveStore({ id: 'tr_fail_' + Date.now(), type: 'transfer_result', success: false, text: `이체 실패: ${event.error}` })
+      const aid = pendingTransferAccountIdRef.current
+      if (aid) {
+        pendingTransferAccountIdRef.current = null
+        setRoomMessages((prev) => ({
+          ...prev,
+          [aid]: [...(prev[aid] || []), { id: 'tr_fail_' + Date.now(), type: 'transfer_result', success: false, text: `이체 실패: ${event.error}` }],
+        }))
+      }
     } else if (event.type === 'TRANSACTION_ALERT') {
       const data = event.data
       const inMatchingRoom =
@@ -929,6 +959,10 @@ export default function App() {
   async function handleTransferReady(contactId, amount) {
     const accountId = activeAccountId
     if (!accountId) return
+    // #11 이미 pending 이체 카드가 있으면 중단
+    const currentMsgs = roomMessages[accountId] || []
+    if (currentMsgs.some((m) => m.type === 'transfer_pending')) return
+
     try {
       const res = await fetch(`${API_BASE}/api/quick-transfer`, {
         method: 'POST',
@@ -937,6 +971,9 @@ export default function App() {
       })
       if (!res.ok) return
       const { userText, aiText, pendingTransfer } = await res.json()
+
+      // #12 QTP 경로도 pendingTransferAccountId 설정
+      pendingTransferAccountIdRef.current = accountId
 
       // 1. 사용자 말풍선
       setRoomMessages((prev) => ({
@@ -968,6 +1005,42 @@ export default function App() {
       }))
     } catch (err) {
       console.error('quick-transfer failed:', err)
+      pendingTransferAccountIdRef.current = null
+    }
+  }
+
+  // #8 WS 없이도 영수증/결과 메시지 처리
+  // #3 금액 미입력 취소: 조용히 사라짐 / 금액 입력 후 취소: 메시지 표시
+  function handleTransferDone(confirmed, json, meta) {
+    const accountId = pendingTransferAccountIdRef.current || activeAccountId
+    pendingTransferAccountIdRef.current = null
+
+    if (!confirmed) {
+      if (meta?.hadAmount) {
+        setRoomMessages((prev) => ({
+          ...prev,
+          [accountId]: [
+            ...(prev[accountId] || []),
+            { id: 'tr_cancel_' + Date.now(), type: 'transfer_result', success: false, text: '이체가 취소되었습니다.' },
+          ],
+        }))
+      }
+      // hadAmount=false면 조용히 카드만 사라짐
+      return
+    }
+
+    // 이체 성공: REST 응답으로 바로 영수증 주입 (WS fallback 중복 방지용 flag는 WS 핸들러의 ref로 관리)
+    if (json.success && json.result) {
+      setRoomMessages((prev) => ({
+        ...prev,
+        [accountId]: [
+          ...(prev[accountId] || []),
+          { id: 'tr_done_' + Date.now(), type: 'transfer_receipt', data: json.result },
+        ],
+      }))
+      setLastCardType('transfer_receipt')
+      // 잔액 갱신
+      fetchAccountList()
     }
   }
 
@@ -1190,7 +1263,7 @@ export default function App() {
           voiceMode={voiceMode}
           onBack={exitRoom}
           onSendMessage={(text) => sendMessage(text)}
-          onTransferDone={() => {}}
+          onTransferDone={handleTransferDone}
           onMarkRead={() => setUnreadCounts((prev) => ({ ...prev, [activeAccountId]: 0 }))}
           txMeta={roomTxMeta[activeAccountId]}
           onLoadMoreTxs={handleLoadMoreTxs}
