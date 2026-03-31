@@ -5,7 +5,7 @@ function StepDots({ current, total }) {
   return (
     <div className="enroll-dots">
       {Array.from({ length: total }).map((_, i) => (
-        <span key={i} className={`enroll-dot${i < current ? ' enroll-dot--done' : i === current - 1 ? ' enroll-dot--active' : ''}`} />
+        <span key={i} className={`enroll-dot${i < current - 1 ? ' enroll-dot--done' : i === current - 1 ? ' enroll-dot--active' : ''}`} />
       ))}
     </div>
   )
@@ -112,7 +112,7 @@ function FundStep({ accounts, onComplete }) {
       {insufficient && <p className="enroll-step-error">잔액이 부족해요. ({maxAmount.toLocaleString('ko-KR')}원 이하)</p>}
       <button
         className="enroll-btn-primary"
-        disabled={insufficient || !fromAccountId}
+        disabled={insufficient || !fromAccountId || amount === 0}
         onClick={handleSubmit}
       >
         개설하기
