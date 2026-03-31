@@ -3666,7 +3666,7 @@ input:focus-visible, textarea:focus-visible {
   padding: 8px 16px 24px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .account-section-label {
@@ -3731,7 +3731,7 @@ input:focus-visible, textarea:focus-visible {
 }
 
 .account-list-item-block {
-  width: 54px;
+  width: 58px;
   align-self: stretch;
   border-radius: 16px 0 0 16px;
   display: flex;
@@ -3752,14 +3752,14 @@ input:focus-visible, textarea:focus-visible {
 .account-list-item-body {
   flex: 1;
   min-width: 0;
-  padding: 13px 14px;
+  padding: 15px 14px;
 }
 
 .account-list-item-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 3px;
+  margin-bottom: 5px;
 }
 
 .account-list-name {
