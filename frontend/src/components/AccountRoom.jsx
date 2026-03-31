@@ -21,6 +21,16 @@ function MicIcon({ active }) {
   )
 }
 
+const BLOCK_COLORS = {
+  checking:            ['#3B82F6', '#1D4ED8'],
+  installment_savings: ['#10B981', '#059669'],
+  term_deposit:        ['#8B5CF6', '#6D28D9'],
+  savings:             ['#F59E0B', '#D97706'],
+  cma:                 ['#EF4444', '#B91C1C'],
+  debit_card:          ['#0EA5E9', '#0369A1'],
+  credit_card:         ['rgba(107,114,128,0.35)', 'rgba(107,114,128,0.2)'],
+}
+
 const ICONS = {
   // 입출금: 양방향 화살표 (돈의 흐름)
   checking: (
@@ -94,7 +104,10 @@ function LifeRing({ ratio, color, children }) {
         <circle cx="50" cy="50" r={R} fill="none" stroke={color} strokeWidth="6"
           strokeDasharray={`${C * ratio} ${C}`} strokeLinecap="round"
           transform="rotate(-90 50 50)"
-          style={{ transition: 'stroke-dasharray 1.4s cubic-bezier(0.4,0,0.2,1)' }}
+          style={{
+            transition: 'stroke-dasharray 1.4s cubic-bezier(0.4,0,0.2,1)',
+            filter: `drop-shadow(0 0 6px ${color}99)`,
+          }}
         />
         {children}
       </svg>
@@ -483,8 +496,10 @@ export default function AccountRoom({
           ‹
         </button>
         <div
-          className="room-header-avatar"
-          style={{ background: cfg.color }}
+          className="room-header-block"
+          style={{
+            background: `linear-gradient(180deg, ${(BLOCK_COLORS[account?.type] || BLOCK_COLORS.checking)[0]} 0%, ${(BLOCK_COLORS[account?.type] || BLOCK_COLORS.checking)[1]} 100%)`,
+          }}
         >
           {ICONS[account?.type] || ICONS.checking}
         </div>
@@ -537,7 +552,7 @@ export default function AccountRoom({
       </div>
 
       {/* 탭 바 */}
-      <div className="room-tab-bar" role="tablist" aria-label="계좌 탭">
+      <div className="room-tab-bar" role="tablist" aria-label="계좌 탭" style={{ '--tab-active-color': (BLOCK_COLORS[account?.type] || BLOCK_COLORS.checking)[0] }}>
         <button
           role="tab"
           aria-selected={activeTab === 'chat'}
