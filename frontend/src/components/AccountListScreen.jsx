@@ -1,4 +1,20 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+
+const BANKING_TYPES_SET = new Set(['checking', 'debit_card', 'credit_card'])
+
+function getAccountSection(acc) {
+  return BANKING_TYPES_SET.has(acc.type) ? 'banking' : 'savings'
+}
+
+function DragHandleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+      <line x1="3" y1="5" x2="15" y2="5"/>
+      <line x1="3" y1="9" x2="15" y2="9"/>
+      <line x1="3" y1="13" x2="15" y2="13"/>
+    </svg>
+  )
+}
 
 const BLOCK_COLORS = {
   checking:            ['#3B82F6', '#1D4ED8'],
@@ -207,8 +223,133 @@ export default function AccountListScreen({
   onReset,
   onShowOnboarding,
   onProductSuggest,
+  onReorder,
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [sortMode, setSortMode] = useState(false)
+  const [draggingId, setDraggingId] = useState(null)
+  const [dragOverId, setDragOverId] = useState(null)
+
+  const listRef = useRef(null)
+  const longPressTimerRef = useRef(null)
+  const longPressCancelledRef = useRef(false)
+  const dragActiveRef = useRef(false)
+  const dragInfoRef = useRef({ dragId: null, dragSection: null })
+
+  // Long-press to enter sort mode (500ms)
+  function handleLongPressStart(e, accId, isPromo) {
+    if (sortMode || isPromo) return
+    longPressCancelledRef.current = false
+    const touch = e.touches ? e.touches[0] : e
+    const startY = touch.clientY
+
+    longPressTimerRef.current = setTimeout(() => {
+      if (!longPressCancelledRef.current) {
+        setSortMode(true)
+        if (navigator.vibrate) navigator.vibrate(40)
+      }
+    }, 500)
+
+    function cancelOnMove(me) {
+      const t = me.touches ? me.touches[0] : me
+      if (Math.abs(t.clientY - startY) > 8) {
+        longPressCancelledRef.current = true
+        clearTimeout(longPressTimerRef.current)
+        document.removeEventListener('touchmove', cancelOnMove)
+        document.removeEventListener('mousemove', cancelOnMove)
+      }
+    }
+    document.addEventListener('touchmove', cancelOnMove, { passive: true })
+    document.addEventListener('mousemove', cancelOnMove)
+  }
+
+  function handleLongPressEnd() {
+    clearTimeout(longPressTimerRef.current)
+  }
+
+  // Drag start (from handle)
+  const handleDragStart = useCallback((e, accId) => {
+    e.stopPropagation()
+    const acc = accounts.find((a) => a.id === accId)
+    if (!acc) return
+    dragActiveRef.current = true
+    dragInfoRef.current = { dragId: accId, dragSection: getAccountSection(acc) }
+    setDraggingId(accId)
+    setDragOverId(null)
+  }, [accounts])
+
+  const handleDragMove = useCallback((e) => {
+    if (!dragActiveRef.current) return
+    const touch = e.touches ? e.touches[0] : e
+    const { dragId, dragSection } = dragInfoRef.current
+    const list = listRef.current
+    if (!list) return
+
+    const buttons = Array.from(
+      list.querySelectorAll(`.account-list-item[data-sort-section="${dragSection}"]`)
+    )
+    if (buttons.length === 0) return
+
+    let targetId = null
+    for (let i = 0; i < buttons.length; i++) {
+      const rect = buttons[i].getBoundingClientRect()
+      if (touch.clientY < rect.top + rect.height / 2) {
+        targetId = buttons[i].getAttribute('data-acc-id')
+        break
+      }
+    }
+    if (!targetId) {
+      targetId = buttons[buttons.length - 1].getAttribute('data-acc-id')
+    }
+    setDragOverId(targetId !== dragId ? targetId : null)
+  }, [])
+
+  const handleDragEnd = useCallback(() => {
+    if (!dragActiveRef.current) return
+    const { dragId, dragSection } = dragInfoRef.current
+    dragActiveRef.current = false
+
+    setDraggingId(null)
+    setDragOverId((currentDragOver) => {
+      if (currentDragOver && currentDragOver !== dragId) {
+        // Reorder within section
+        const sectionItems = accounts.filter((a) => !a.isPromo && getAccountSection(a) === dragSection)
+        const fromIdx = sectionItems.findIndex((a) => a.id === dragId)
+        const toIdx = sectionItems.findIndex((a) => a.id === currentDragOver)
+        if (fromIdx !== -1 && toIdx !== -1) {
+          const newSection = [...sectionItems]
+          const [moved] = newSection.splice(fromIdx, 1)
+          newSection.splice(toIdx, 0, moved)
+
+          // Rebuild full account list preserving non-section items
+          let secIdx = 0
+          const newOrder = accounts.map((a) => {
+            if (!a.isPromo && getAccountSection(a) === dragSection) {
+              return newSection[secIdx++]
+            }
+            return a
+          })
+          onReorder?.(newOrder)
+        }
+      }
+      return null
+    })
+  }, [accounts, onReorder])
+
+  // Attach drag move/end to document when sort mode is active
+  useEffect(() => {
+    if (!sortMode) return
+    document.addEventListener('touchmove', handleDragMove, { passive: true })
+    document.addEventListener('touchend', handleDragEnd)
+    document.addEventListener('mousemove', handleDragMove)
+    document.addEventListener('mouseup', handleDragEnd)
+    return () => {
+      document.removeEventListener('touchmove', handleDragMove)
+      document.removeEventListener('touchend', handleDragEnd)
+      document.removeEventListener('mousemove', handleDragMove)
+      document.removeEventListener('mouseup', handleDragEnd)
+    }
+  }, [sortMode, handleDragMove, handleDragEnd])
 
   // 콜드스타트 가드: 저축·투자 계좌 1개 이상 보유 시에만 프로모 방 표시
   const SAVINGS_TYPES = new Set(['installment_savings', 'term_deposit', 'savings', 'cma'])
@@ -254,7 +395,22 @@ export default function AccountListScreen({
         </div>
       </div>
 
-      <div className="account-list-items">
+      {sortMode && (
+        <div className="account-sort-mode-bar">
+          <span>핸들을 드래그해서 순서를 바꿔요</span>
+          <button
+            className="account-sort-done-btn"
+            onClick={() => setSortMode(false)}
+          >
+            완료
+          </button>
+        </div>
+      )}
+
+      <div
+        ref={listRef}
+        className={`account-list-items${sortMode ? ' account-sort-mode' : ''}`}
+      >
         {isLoading
           ? Array.from({ length: 5 }, (_, i) => <SkeletonItem key={i} />)
           : accounts.length === 0
@@ -264,7 +420,6 @@ export default function AccountListScreen({
             </div>
           )
           : (() => {
-              const BANKING_TYPES = new Set(['checking', 'debit_card', 'credit_card'])
               const items = []
               let lastSection = null
               let animIdx = 0
@@ -273,7 +428,7 @@ export default function AccountListScreen({
                 // showPromoRooms가 false이면 프로모 계좌는 목록에서 숨김 (콜드스타트)
                 if (acc.isPromo && !showPromoRooms) return
 
-                const section = BANKING_TYPES.has(acc.type) ? 'banking' : 'savings'
+                const section = BANKING_TYPES_SET.has(acc.type) ? 'banking' : 'savings'
                 if (section !== lastSection) {
                   lastSection = section
                   const sIdx = animIdx++
@@ -287,14 +442,31 @@ export default function AccountListScreen({
                 const unread = unreadCounts?.[acc.id] || 0
                 const last = acc.lastTransaction
                 const isPromo = acc.isPromo === true
+                const canSort = sortMode && !isPromo
+                const isDragging = draggingId === acc.id
+                const isDragOver = dragOverId === acc.id
 
                 const bIdx = animIdx++
                 items.push(
                   <button
                     key={acc.id}
-                    className={`account-list-item${isPromo ? ' account-list-item--promo' : ''}${['installment_savings', 'term_deposit', 'cma', 'savings'].includes(acc.type) && !acc.isPromo ? ` account-item-glow--${acc.type}` : ''} list-item-animated`}
+                    data-acc-id={acc.id}
+                    data-sort-section={section}
+                    className={[
+                      'account-list-item',
+                      isPromo ? 'account-list-item--promo' : '',
+                      ['installment_savings', 'term_deposit', 'cma', 'savings'].includes(acc.type) && !acc.isPromo ? `account-item-glow--${acc.type}` : '',
+                      'list-item-animated',
+                      isDragging ? 'account-list-item--dragging' : '',
+                      isDragOver ? 'account-list-item--drag-over' : '',
+                    ].filter(Boolean).join(' ')}
                     style={{ animationDelay: `${bIdx * 60}ms` }}
-                    onClick={() => onEnterRoom(acc.id)}
+                    onClick={() => { if (!sortMode) onEnterRoom(acc.id) }}
+                    onTouchStart={(e) => handleLongPressStart(e, acc.id, isPromo)}
+                    onTouchEnd={handleLongPressEnd}
+                    onMouseDown={(e) => handleLongPressStart(e, acc.id, isPromo)}
+                    onMouseUp={handleLongPressEnd}
+                    onMouseLeave={handleLongPressEnd}
                   >
                     <div
                       className={`account-list-item-block${['installment_savings', 'term_deposit', 'cma', 'savings'].includes(acc.type) && !acc.isPromo ? ' account-block-breathing' : ''}`}
@@ -342,9 +514,20 @@ export default function AccountListScreen({
                       </div>
                     </div>
 
-                    <div className="unread-badge-slot">
-                      {unread > 0 && <div className="unread-badge">{unread}</div>}
-                    </div>
+                    {canSort ? (
+                      <div
+                        className="account-sort-handle"
+                        onTouchStart={(e) => { e.stopPropagation(); handleDragStart(e, acc.id) }}
+                        onMouseDown={(e) => { e.stopPropagation(); handleDragStart(e, acc.id) }}
+                        aria-label="순서 변경"
+                      >
+                        <DragHandleIcon />
+                      </div>
+                    ) : (
+                      <div className="unread-badge-slot">
+                        {unread > 0 && <div className="unread-badge">{unread}</div>}
+                      </div>
+                    )}
                   </button>
                 )
 

@@ -236,6 +236,29 @@ export default function App() {
     return null  // savings 등 life card 없는 타입
   }
 
+  // ── 계좌 순서 localStorage 유틸 ──
+  const ACCOUNT_ORDER_KEY = 'zb-m-account-order'
+  function loadAccountOrder() {
+    try { return JSON.parse(localStorage.getItem(ACCOUNT_ORDER_KEY) || 'null') } catch { return null }
+  }
+  function saveAccountOrder(accs) {
+    try { localStorage.setItem(ACCOUNT_ORDER_KEY, JSON.stringify(accs.map((a) => a.id))) } catch {}
+  }
+  function applyStoredOrder(fetched) {
+    const order = loadAccountOrder()
+    if (!order || order.length === 0) return fetched
+    const orderMap = new Map(order.map((id, i) => [id, i]))
+    return [...fetched].sort((a, b) => {
+      const ia = orderMap.has(a.id) ? orderMap.get(a.id) : 9999
+      const ib = orderMap.has(b.id) ? orderMap.get(b.id) : 9999
+      return ia - ib
+    })
+  }
+  function handleAccountReorder(newOrder) {
+    setAccountList(newOrder)
+    saveAccountOrder(newOrder)
+  }
+
   // ── 메신저 UI 상태 ──
   const [screen, setScreen] = useState('home')           // 'home' | 'room'
   const [activeAccountId, setActiveAccountId] = useState(null)
@@ -771,7 +794,7 @@ export default function App() {
     setIsAccountsLoading(true)
     fetch(`${API_BASE}/api/accounts?sessionId=${sessionId}`)
       .then((r) => r.json())
-      .then((d) => { if (Array.isArray(d.accounts)) setAccountList(d.accounts) })
+      .then((d) => { if (Array.isArray(d.accounts)) setAccountList(applyStoredOrder(d.accounts)) })
       .catch(() => {})
       .finally(() => setIsAccountsLoading(false))
   }, [sessionId])
@@ -1186,6 +1209,7 @@ export default function App() {
           onReset={handleResetAll}
           onShowOnboarding={showOnboardingAgain}
           onProductSuggest={handleProductSuggest}
+          onReorder={handleAccountReorder}
         />
       )}
 
