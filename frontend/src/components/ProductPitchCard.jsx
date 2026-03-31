@@ -27,7 +27,7 @@ const TYPE_COLORS = {
   savings: '#F59E0B',
 }
 
-export default function ProductPitchCard({ data }) {
+export default function ProductPitchCard({ data, onStartEnrollment }) {
   const { product, personal, compare } = data
   const color = TYPE_COLORS[product.type] || '#00C9A7'
   const Icon = TYPE_ICONS[product.type]
@@ -88,6 +88,15 @@ export default function ProductPitchCard({ data }) {
 
       {product.earlyWithdrawal && (
         <div className="pitch-footnote">{product.earlyWithdrawal}</div>
+      )}
+
+      {onStartEnrollment && data.productId && (
+        <button
+          className="pitch-enroll-btn"
+          onClick={() => onStartEnrollment(data.productId)}
+        >
+          가입하기
+        </button>
       )}
     </div>
   )
