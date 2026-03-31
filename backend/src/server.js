@@ -477,8 +477,9 @@ app.post('/api/enroll', (req, res) => {
 
   const session = getSession(sessionId)
 
-  // 이미 가입된 경우 (중복 방지)
-  if (!session.accounts.some((a) => a.id === productId)) {
+  // 프로모 계좌 확인 (미가입 상품만 가입 가능)
+  const promoAcc = session.accounts.find((a) => a.id === productId && a.isPromo)
+  if (!promoAcc) {
     return res.status(409).json({ ok: false, error: '이미 가입되었거나 존재하지 않는 상품입니다.' })
   }
 
@@ -490,34 +491,35 @@ app.post('/api/enroll', (req, res) => {
   const amount = Number(enrollData.amount) || 0
   if (amount > 0 && enrollData.fromAccountId) {
     const fromAcc = session.accounts.find((a) => a.id === enrollData.fromAccountId)
-    if (fromAcc) {
-      if (fromAcc.balance < amount) {
-        return res.status(400).json({ ok: false, error: '잔액이 부족합니다.' })
-      }
-      fromAcc.balance -= amount
-      newAccount.balance = amount
-
-      // 거래내역 기록
-      const txId = 'tx_enroll_' + Date.now()
-      session.transactions.unshift({
-        id: txId,
-        date: new Date().toISOString().slice(0, 10),
-        amount: -amount,
-        category: '이체',
-        counterpart: newAccount.name,
-        accountId: enrollData.fromAccountId,
-        source: 'account',
-      })
-      session.transactions.unshift({
-        id: txId + '_in',
-        date: new Date().toISOString().slice(0, 10),
-        amount: amount,
-        category: '입금',
-        counterpart: fromAcc.name,
-        accountId: newAccount.id,
-        source: 'account',
-      })
+    if (!fromAcc) {
+      return res.status(400).json({ ok: false, error: '출금 계좌를 찾을 수 없습니다.' })
     }
+    if (fromAcc.balance < amount) {
+      return res.status(400).json({ ok: false, error: '잔액이 부족합니다.' })
+    }
+    fromAcc.balance -= amount
+    newAccount.balance = amount
+
+    // 거래내역 기록
+    const txId = 'tx_enroll_' + Date.now()
+    session.transactions.unshift({
+      id: txId,
+      date: new Date().toISOString().slice(0, 10),
+      amount: -amount,
+      category: '이체',
+      counterpart: newAccount.name,
+      accountId: enrollData.fromAccountId,
+      source: 'account',
+    })
+    session.transactions.unshift({
+      id: txId + '_in',
+      date: new Date().toISOString().slice(0, 10),
+      amount: amount,
+      category: '입금',
+      counterpart: fromAcc.name,
+      accountId: newAccount.id,
+      source: 'account',
+    })
   }
 
   // 프로모 계좌 제거 + 신규 계좌 추가
