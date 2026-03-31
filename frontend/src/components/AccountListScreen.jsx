@@ -11,20 +11,25 @@ const BLOCK_COLORS = {
 }
 
 const ICONS = {
+  // 입출금: 위아래 화살표 (입금↑ 출금↓)
   checking: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M8 5L3 10l5 5"/><line x1="3" y1="10" x2="21" y2="10"/>
-      <path d="M16 19l5-5-5-5"/><line x1="21" y1="14" x2="3" y2="14"/>
+      <path d="M12 3v7M9 7l3-4 3 4"/>
+      <path d="M12 21v-7M9 17l3 4 3-4"/>
+      <line x1="5" y1="12" x2="19" y2="12" strokeOpacity="0.4"/>
     </svg>
   ),
+  // 정기적금: 달력 (월납입 스케줄)
   installment_savings: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <ellipse cx="12" cy="17" rx="7" ry="3"/>
-      <path d="M5 17v-3M19 17v-3"/>
-      <ellipse cx="12" cy="14" rx="7" ry="3"/>
-      <path d="M12 11V5"/><path d="M9 8l3-3 3 3"/>
+      <rect x="3" y="4" width="18" height="17" rx="2"/>
+      <line x1="8" y1="2" x2="8" y2="6"/>
+      <line x1="16" y1="2" x2="16" y2="6"/>
+      <line x1="3" y1="10" x2="21" y2="10"/>
+      <path d="M12 14v4M10 16l2-2 2 2"/>
     </svg>
   ),
+  // 정기예금: 자물쇠 (만기까지 잠금)
   term_deposit: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="5" y="11" width="14" height="10" rx="2"/>
@@ -32,33 +37,36 @@ const ICONS = {
       <circle cx="12" cy="16" r="1.5" fill="white"/>
     </svg>
   ),
+  // 비상금: 방패 + 체크 (긴급 자금 보호)
   savings: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M23 12a11.05 11.05 0 0 0-22 0z"/>
-      <path d="M12 12v7a2 2 0 0 0 4 0"/>
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      <path d="M9 12l2 2 4-4"/>
     </svg>
   ),
+  // CMA: 우상향 꺾은선 (수익 성장)
   cma: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="3" y1="20" x2="21" y2="20"/>
-      <rect x="4" y="14" width="4" height="6" rx="1" fill="white" fillOpacity="0.3"/>
-      <rect x="10" y="8" width="4" height="12" rx="1" fill="white" fillOpacity="0.3"/>
-      <rect x="16" y="4" width="4" height="16" rx="1" fill="white" fillOpacity="0.3"/>
+      <polyline points="3 17 8.5 11 13 14.5 20 7"/>
+      <polyline points="15 7 20 7 20 12"/>
     </svg>
   ),
+  // 체크카드: 카드 + EMV 칩
   debit_card: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="2" y="5" width="20" height="14" rx="2"/>
-      <rect x="6" y="9" width="4" height="4" rx="1"/>
-      <line x1="2" y1="11" x2="6" y2="11"/>
-      <line x1="14" y1="15" x2="19" y2="15"/>
+      <rect x="6" y="9" width="4" height="4" rx="1" fill="white" fillOpacity="0.35"/>
+      <line x1="14" y1="13" x2="19" y2="13"/>
+      <line x1="14" y1="16" x2="17" y2="16"/>
     </svg>
   ),
+  // 신용카드: 카드 + 컨택리스 웨이브
   credit_card: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="2" y="5" width="20" height="14" rx="2"/>
       <line x1="2" y1="10" x2="22" y2="10"/>
-      <path d="M15 15l.8 2 1.7-2.5-2.5.8.8-1.7-.8 1.7-2.5-.8 1.7 2.5.8-2z" fill="white" stroke="none"/>
+      <path d="M13.5 15.5c.8-.8.8-2.2 0-3" strokeWidth="1.8"/>
+      <path d="M16 13c1.5-1.5 1.5-4 0-5.5" strokeWidth="1.8" strokeOpacity="0.55"/>
     </svg>
   ),
 }
