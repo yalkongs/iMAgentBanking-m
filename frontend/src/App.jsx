@@ -155,6 +155,9 @@ export default function App() {
   const [txNotif, setTxNotif] = useState(null)
   const [txNotifVisible, setTxNotifVisible] = useState(false)
   const txNotifTimersRef = useRef([])
+  const [momentNotif, setMomentNotif] = useState(null)
+  const [momentNotifVisible, setMomentNotifVisible] = useState(false)
+  const momentNotifTimersRef = useRef([])
 
   // TTS 활성 여부
   const [ttsEnabled, setTtsEnabled] = useState(false)
@@ -260,6 +263,7 @@ export default function App() {
   }, [messages, scrollToBottom, scrollToCardTop, isNearBottom])
 
   useEffect(() => () => txNotifTimersRef.current.forEach(clearTimeout), [])
+  useEffect(() => () => momentNotifTimersRef.current.forEach(clearTimeout), [])
 
   // visualViewport → CSS 변수 동기화
   // resize: Android Chrome 키보드 (viewport 높이 변화)
@@ -395,8 +399,14 @@ export default function App() {
         })
       }
     } else if (event.type === 'FINANCIAL_MOMENT') {
-      // 금융 모먼트 카드 (급여, 카드대금, 과소비) — 방에 있으면 방으로
-      appendToActiveStore({ id: 'moment_' + Date.now(), type: 'financial_moment', data: event.data, noAutoScroll: false })
+      // 금융 모먼트 (급여, 카드대금, 납입일) — 어느 화면에서든 상단 팝오버로 표시
+      momentNotifTimersRef.current.forEach(clearTimeout)
+      momentNotifTimersRef.current = []
+      setMomentNotif(event.data)
+      const mt1 = setTimeout(() => setMomentNotifVisible(true), 30)
+      const mt2 = setTimeout(() => setMomentNotifVisible(false), 6000)
+      const mt3 = setTimeout(() => setMomentNotif(null), 6350)
+      momentNotifTimersRef.current = [mt1, mt2, mt3]
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appendToActiveStore]))
@@ -665,6 +675,22 @@ export default function App() {
                   m.id === greetingId ? { ...m, streaming: false } : m
                 ),
               }))
+            } else if (data.type === 'ui_card') {
+              // 상품 방 room-greeting에서 발송한 ProductPitchCard 등
+              setRoomMessages((prev) => ({
+                ...prev,
+                [accountId]: [
+                  ...(prev[accountId] || []).map((m) =>
+                    m.id === greetingId ? { ...m, streaming: false } : m
+                  ),
+                  {
+                    id: 'greeting_card_' + Date.now(),
+                    type: 'ui_card',
+                    cardType: data.cardType,
+                    data: data.data,
+                  },
+                ],
+              }))
             }
           } catch {}
         }
@@ -888,6 +914,19 @@ export default function App() {
             </span>
             {txNotif.aiComment && (
               <span className="tx-notif-comment">{txNotif.aiComment}</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 금융 모먼트 알림 오버레이 (급여·카드대금·납입일) */}
+      {momentNotif && (
+        <div className={`tx-notif-wrap${momentNotifVisible ? ' visible' : ''}`}>
+          <div className="tx-notif-inner moment">
+            <span className="tx-notif-badge moment">알림</span>
+            <span className="tx-notif-counterpart">{momentNotif.title}</span>
+            {momentNotif.amountFormatted && (
+              <span className="tx-notif-amount moment">{momentNotif.amountFormatted}</span>
             )}
           </div>
         </div>
