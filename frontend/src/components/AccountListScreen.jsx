@@ -1,5 +1,15 @@
 import { useState, useRef, useEffect } from 'react'
 
+const BLOCK_COLORS = {
+  checking:            ['#3B82F6', '#1D4ED8'],
+  installment_savings: ['#10B981', '#059669'],
+  term_deposit:        ['#8B5CF6', '#6D28D9'],
+  savings:             ['#F59E0B', '#D97706'],
+  cma:                 ['#EF4444', '#B91C1C'],
+  debit_card:          ['#0EA5E9', '#0369A1'],
+  credit_card:         ['rgba(107,114,128,0.35)', 'rgba(107,114,128,0.2)'],
+}
+
 const ICONS = {
   checking: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -219,58 +229,78 @@ export default function AccountListScreen({
               <p>연결된 계좌가 없어요.</p>
             </div>
           )
-          : accounts.map((acc) => {
-              const cfg = TYPE_CONFIG[acc.type] || { color: '#6B7280', label: acc.type }
-              const unread = unreadCounts?.[acc.id] || 0
-              const last = acc.lastTransaction
-              const isPromo = acc.isPromo === true
+          : (() => {
+              const BANKING_TYPES = new Set(['checking', 'debit_card', 'credit_card'])
+              const items = []
+              let lastSection = null
 
-              return (
-                <button
-                  key={acc.id}
-                  className={`account-list-item${isPromo ? ' account-list-item--promo' : ''}`}
-                  onClick={() => onEnterRoom(acc.id)}
-                >
-                  <div
-                    className="account-avatar"
-                    style={{ background: cfg.color, opacity: isPromo ? 0.5 : 1 }}
+              accounts.forEach((acc, idx) => {
+                const section = BANKING_TYPES.has(acc.type) ? 'banking' : 'savings'
+                if (section !== lastSection) {
+                  lastSection = section
+                  items.push(
+                    <div key={`section-${section}`} className="account-section-label">
+                      {section === 'banking' ? '입출금 · 카드' : '저축 · 투자'}
+                    </div>
+                  )
+                }
+                const cfg = TYPE_CONFIG[acc.type] || { color: '#6B7280', label: acc.type }
+                const unread = unreadCounts?.[acc.id] || 0
+                const last = acc.lastTransaction
+                const isPromo = acc.isPromo === true
+
+                items.push(
+                  <button
+                    key={acc.id}
+                    className={`account-list-item${isPromo ? ' account-list-item--promo' : ''}`}
+                    onClick={() => onEnterRoom(acc.id)}
                   >
-                    {ICONS[acc.type] || ICONS.checking}
-                  </div>
-
-                  <div className="account-list-item-body">
-                    <div className="account-list-item-top">
-                      <span className="account-list-name">{acc.name}</span>
-                      <span className="account-list-balance">
-                        {acc.isPromo ? (
-                          <span className="balance-promo-badge">발급 가능</span>
-                        ) : acc.type === 'debit_card' ? (
-                          <BalanceDisplay value={acc.balance} animate={shouldAnimate} prefix="이번달 " suffix="원 사용" />
-                        ) : (
-                          <BalanceDisplay value={acc.balance} animate={shouldAnimate} />
-                        )}
-                      </span>
+                    <div
+                      className="account-list-item-block"
+                      style={{
+                        background: isPromo
+                          ? 'rgba(107,114,128,0.25)'
+                          : `linear-gradient(180deg, ${(BLOCK_COLORS[acc.type] || BLOCK_COLORS.checking)[0]} 0%, ${(BLOCK_COLORS[acc.type] || BLOCK_COLORS.checking)[1]} 100%)`,
+                      }}
+                    >
+                      {ICONS[acc.type] || ICONS.checking}
                     </div>
-                    <div className="account-list-item-bottom">
-                      <span className="account-list-preview">
-                        {isPromo
-                          ? '혜택을 가져가세요 →'
-                          : last
-                          ? `${last.counterpart} ${last.amountFormatted}`
-                          : cfg.label}
-                      </span>
-                      <span className="account-list-time">
-                        {last ? formatDateShort(last.date) : ''}
-                      </span>
-                    </div>
-                  </div>
 
-                  <div className="unread-badge-slot">
-                    {unread > 0 && <div className="unread-badge">{unread}</div>}
-                  </div>
-                </button>
-              )
-            })}
+                    <div className="account-list-item-body">
+                      <div className="account-list-item-top">
+                        <span className="account-list-name">{acc.name}</span>
+                        <span className="account-list-balance">
+                          {acc.isPromo ? (
+                            <span className="balance-promo-badge">발급 가능</span>
+                          ) : acc.type === 'debit_card' ? (
+                            <BalanceDisplay value={acc.balance} animate={shouldAnimate} prefix="이번달 " suffix="원 사용" />
+                          ) : (
+                            <BalanceDisplay value={acc.balance} animate={shouldAnimate} />
+                          )}
+                        </span>
+                      </div>
+                      <div className="account-list-item-bottom">
+                        <span className="account-list-preview">
+                          {isPromo
+                            ? '혜택을 가져가세요 →'
+                            : last
+                            ? `${last.counterpart} ${last.amountFormatted}`
+                            : cfg.label}
+                        </span>
+                        <span className="account-list-time">
+                          {last ? formatDateShort(last.date) : ''}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="unread-badge-slot">
+                      {unread > 0 && <div className="unread-badge">{unread}</div>}
+                    </div>
+                  </button>
+                )
+              })
+              return items
+            })()}
 
         {/* 상품 추천 섹션 (콜드 스타트 / 계좌 4개 미만) */}
         {showSuggestions && (
