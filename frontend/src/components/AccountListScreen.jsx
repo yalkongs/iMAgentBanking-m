@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 const BLOCK_COLORS = {
   checking:            ['#3B82F6', '#1D4ED8'],
@@ -209,13 +209,6 @@ export default function AccountListScreen({
   onProductSuggest,
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
-  const [shouldAnimate, setShouldAnimate] = useState(false)
-
-  useLayoutEffect(() => {
-    if (!isLoading && accounts.length > 0 && !shouldAnimate) {
-      setShouldAnimate(true)
-    }
-  }, [isLoading, accounts.length])
 
   // 콜드스타트 가드: 저축·투자 계좌 1개 이상 보유 시에만 프로모 방 표시
   const SAVINGS_TYPES = new Set(['installment_savings', 'term_deposit', 'savings', 'cma'])
@@ -285,7 +278,7 @@ export default function AccountListScreen({
                   lastSection = section
                   const sIdx = animIdx++
                   items.push(
-                    <div key={`section-${section}`} className={`account-section-label${shouldAnimate ? ' list-item-animated' : ''}`} style={shouldAnimate ? { animationDelay: `${sIdx * 60}ms` } : undefined}>
+                    <div key={`section-${section}`} className="account-section-label list-item-animated" style={{ animationDelay: `${sIdx * 60}ms` }}>
                       {section === 'banking' ? '입출금 · 카드' : '저축 · 투자'}
                     </div>
                   )
@@ -299,8 +292,8 @@ export default function AccountListScreen({
                 items.push(
                   <button
                     key={acc.id}
-                    className={`account-list-item${isPromo ? ' account-list-item--promo' : ''}${shouldAnimate ? ' list-item-animated' : ''}`}
-                    style={shouldAnimate ? { animationDelay: `${bIdx * 60}ms` } : undefined}
+                    className={`account-list-item${isPromo ? ' account-list-item--promo' : ''} list-item-animated`}
+                    style={{ animationDelay: `${bIdx * 60}ms` }}
                     onClick={() => onEnterRoom(acc.id)}
                   >
                     <div
@@ -319,9 +312,9 @@ export default function AccountListScreen({
                         <span className="account-list-name">{acc.name}</span>
                         <span className="account-list-balance">
                           {acc.isPromo ? null : acc.type === 'debit_card' ? (
-                            <BalanceDisplay value={acc.balance} animate={shouldAnimate} prefix="이번달 " suffix="원 사용" />
+                            <BalanceDisplay value={acc.balance} animate={true} prefix="이번달 " suffix="원 사용" />
                           ) : (
-                            <BalanceDisplay value={acc.balance} animate={shouldAnimate} />
+                            <BalanceDisplay value={acc.balance} animate={true} />
                           )}
                         </span>
                       </div>
@@ -360,8 +353,8 @@ export default function AccountListScreen({
                   items.push(
                     <button
                       key="product-hint"
-                      className={`product-hint-card${shouldAnimate ? ' list-item-animated' : ''}`}
-                      style={{ borderColor: hint.accentColor + '26', backgroundColor: hint.accentColor + '0D', ...(shouldAnimate ? { animationDelay: `${hIdx * 60}ms` } : {}) }}
+                      className="product-hint-card list-item-animated"
+                      style={{ borderColor: hint.accentColor + '26', backgroundColor: hint.accentColor + '0D', animationDelay: `${hIdx * 60}ms` }}
                       onClick={() => onEnterRoom(hint.promoAccountId)}
                     >
                       <span className="product-hint-dot" style={{ background: hint.accentColor, boxShadow: `0 0 5px ${hint.accentColor}` }} />
