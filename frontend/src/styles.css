@@ -3686,6 +3686,7 @@ input:focus-visible, textarea:focus-visible {
   display: flex;
   align-items: stretch;
   width: 100%;
+  height: auto;
   text-align: left;
   cursor: pointer;
   border-radius: 18px;
@@ -3694,6 +3695,7 @@ input:focus-visible, textarea:focus-visible {
   box-shadow: var(--glass-shadow), var(--glass-inset);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
+  -webkit-appearance: none;
   overflow: hidden;
   position: relative;
   transition: transform 0.12s, box-shadow 0.12s;
@@ -3731,7 +3733,7 @@ input:focus-visible, textarea:focus-visible {
 }
 
 .account-list-item-block {
-  width: 58px;
+  width: 54px;
   align-self: stretch;
   border-radius: 16px 0 0 16px;
   display: flex;
@@ -3752,14 +3754,14 @@ input:focus-visible, textarea:focus-visible {
 .account-list-item-body {
   flex: 1;
   min-width: 0;
-  padding: 15px 14px;
+  padding: 13px 14px;
 }
 
 .account-list-item-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 5px;
+  margin-bottom: 3px;
 }
 
 .account-list-name {
