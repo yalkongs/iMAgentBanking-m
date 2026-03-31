@@ -935,6 +935,14 @@ export default function App() {
         return updated
       })
 
+      // Migrate roomTransactions to new account id
+      setRoomTransactions((prev) => {
+        const updated = { ...prev }
+        updated[newAccount.id] = prev[productId] || []
+        delete updated[productId]
+        return updated
+      })
+
       // Switch active room to new account
       setActiveAccountId(newAccount.id)
 
