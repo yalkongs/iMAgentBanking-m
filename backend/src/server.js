@@ -696,9 +696,18 @@ app.get('/api/accounts', (req, res) => {
       balanceFormatted = acc.balance.toLocaleString('ko-KR') + '원'
     }
 
-    // 예금/적금: 만기 진행률 + 상품별 상세 지표
+    // 예금/적금/CMA: 만기 진행률 + 상품별 상세 지표
     let maturityInfo = null
-    if (acc.openDate && acc.maturityDate) {
+    if (acc.type === 'cma' && acc.openDate) {
+      // CMA: maturityDate 없음 — openDate 기준 경과일만 사용
+      const start = new Date(acc.openDate).getTime()
+      const elapsedMs = Math.max(0, now.getTime() - start)
+      const elapsedDays = Math.ceil(elapsedMs / 86400000)
+      const dailyRate = (acc.interestRate || 0) / 100 / 365
+      const todayInterest = Math.round(acc.balance * dailyRate)
+      const accruedInterest = Math.round(acc.balance * dailyRate * elapsedDays)
+      maturityInfo = { progressRatio: 0, daysRemaining: 0, elapsedDays, totalDays: elapsedDays, accruedInterest, todayInterest }
+    } else if (acc.openDate && acc.maturityDate) {
       const start = new Date(acc.openDate).getTime()
       const end = new Date(acc.maturityDate).getTime()
       const nowMs = now.getTime()
@@ -722,15 +731,6 @@ app.get('/api/accounts', (req, res) => {
           progressRatio, daysRemaining, elapsedDays, totalDays,
           accruedInterest, expectedInterest, finalAmount,
           earlyInterest, earlyWithdrawalLoss,
-        }
-      } else if (acc.type === 'cma') {
-        // CMA: 일복리 근사 (간단히 단리)
-        const dailyRate = (acc.interestRate || 0) / 100 / 365
-        const todayInterest = Math.round(acc.balance * dailyRate)
-        const accruedInterest = Math.round(acc.balance * dailyRate * elapsedDays)
-        maturityInfo = {
-          progressRatio: 0, daysRemaining: 0, elapsedDays, totalDays,
-          accruedInterest, todayInterest,
         }
       } else if (acc.type === 'installment_savings') {
         // 적금: 납입 횟수 기반
@@ -824,11 +824,15 @@ app.post('/api/reset', (req, res) => {
 // GET /api/health-score — 금융 건강도 점수
 // ──────────────────────────────────────────────
 app.get('/api/health-score', (req, res) => {
+  const sessionId = req.query.sessionId || 'default'
+  const session = getSession(sessionId)
+  const ctx = getSessionCtx(session)
+
   // 이번 달 거래 집계
   const now = new Date()
   const year = now.getFullYear()
   const month = now.getMonth() + 1
-  const monthTxs = transactions.filter((t) => {
+  const monthTxs = ctx.transactions.filter((t) => {
     const d = new Date(t.date)
     return d.getFullYear() === year && d.getMonth() + 1 === month
   })
@@ -837,7 +841,7 @@ app.get('/api/health-score', (req, res) => {
   const savingsRate = income > 0 ? (income - expense) / income : 0
 
   // 전체 자산 대비 부채 (단순화: 없으므로 0)
-  const totalBalance = accounts.reduce((s, a) => s + a.balance, 0)
+  const totalBalance = ctx.accounts.reduce((s, a) => s + a.balance, 0)
 
   // 점수 계산 (0-100)
   let score = 50
