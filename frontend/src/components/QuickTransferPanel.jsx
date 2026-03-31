@@ -114,6 +114,8 @@ export default function QuickTransferPanel({ contacts, transactions, onTransferR
         onExpand={() => handleExpand(contact.id)}
         onTransfer={(amount) => {
           setExpandedId(null)
+          setCollapsed(true)
+          try { localStorage.setItem(LS_KEY, 'true') } catch {}
           onTransferReady(contact.id, amount)
         }}
       />

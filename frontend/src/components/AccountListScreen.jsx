@@ -297,11 +297,12 @@ export default function AccountListScreen({
                     onClick={() => onEnterRoom(acc.id)}
                   >
                     <div
-                      className="account-list-item-block"
+                      className={`account-list-item-block${['installment_savings', 'term_deposit', 'cma', 'savings'].includes(acc.type) && !acc.isPromo ? ' account-block-breathing' : ''}`}
                       style={{
                         background: isPromo
                           ? 'rgba(107,114,128,0.25)'
                           : `linear-gradient(180deg, ${(BLOCK_COLORS[acc.type] || BLOCK_COLORS.checking)[0]} 0%, ${(BLOCK_COLORS[acc.type] || BLOCK_COLORS.checking)[1]} 100%)`,
+                        '--block-color': (BLOCK_COLORS[acc.type] || BLOCK_COLORS.checking)[0],
                       }}
                     >
                       {ICONS[acc.type] || ICONS.checking}

@@ -716,7 +716,7 @@ app.post('/api/chat', async (req, res) => {
                 memo,
                 contactInfo: contact,
                 availableAccounts: session.accounts
-                  .filter((a) => a.type === '입출금' || a.type === 'CMA')
+                  .filter((a) => a.type === 'checking' || a.type === 'cma')
                   .map((a) => ({
                     id: a.id,
                     name: a.name,

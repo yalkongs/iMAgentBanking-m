@@ -6356,6 +6356,19 @@ input:focus-visible, textarea:focus-visible {
 }
 
 /* ──────────────────────────────────────────────
+   예적금 아이콘 블록 숨쉬는 glow (AccountListScreen)
+   ────────────────────────────────────────────── */
+.account-block-breathing {
+  animation: account-breathing 3s ease-in-out infinite;
+}
+
+@keyframes account-breathing {
+  0%   { filter: brightness(1)    drop-shadow(0 0 0px transparent); }
+  45%  { filter: brightness(1.22) drop-shadow(0 0 10px var(--block-color, #10B981)); }
+  100% { filter: brightness(1)    drop-shadow(0 0 0px transparent); }
+}
+
+/* ──────────────────────────────────────────────
    계좌 펄스 인디케이터 (AccountListScreen)
    ────────────────────────────────────────────── */
 .account-pulse-dot {
