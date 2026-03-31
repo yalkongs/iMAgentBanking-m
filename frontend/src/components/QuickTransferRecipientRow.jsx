@@ -31,12 +31,9 @@ export default function QuickTransferRecipientRow({
     : (selectedAmount || 0)
 
   function handleRowClick() {
-    // 확장 시 상태 초기화
-    if (!isExpanded) {
-      setSelectedAmount(frequentAmount || recentAmount || null)
-      setDirectInput('')
-      setShowDirect(false)
-    }
+    setSelectedAmount(frequentAmount || recentAmount || null)
+    setDirectInput('')
+    setShowDirect(false)
     onExpand()
   }
 
