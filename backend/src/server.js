@@ -828,7 +828,15 @@ app.get('/api/accounts', (req, res) => {
   const now = new Date()
   const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
 
-  const result = ctx.accounts.map((acc) => {
+  const enrichedAccounts = ctx.accounts.map((acc) => {
+    if ((acc.type === 'debit_card' || acc.type === 'credit_card') && acc.linkedAccountId) {
+      const linked = ctx.accounts.find((a) => a.id === acc.linkedAccountId)
+      return { ...acc, linkedAccountName: linked ? linked.name : null }
+    }
+    return acc
+  })
+
+  const result = enrichedAccounts.map((acc) => {
     const lastTx = ctx.transactions
       .filter((t) => t.accountId === acc.id)
       .sort((a, b) => b.date.localeCompare(a.date))[0] || null
@@ -932,7 +940,7 @@ app.get('/api/accounts', (req, res) => {
 // GET /api/account/:id — 계좌 상세 (잔액 + 거래 페이지네이션)
 // query: page (1-based, default 1), limit (default 20)
 // ──────────────────────────────────────────────
-app.get('/api/account/:id', (req, res) => {
+app.get('/api/account/:id', async (req, res) => {
   const sessionId = req.query.sessionId || 'default'
   const session = getSession(sessionId)
   const ctx = getSessionCtx(session)
@@ -943,6 +951,34 @@ app.get('/api/account/:id', (req, res) => {
   const page = Math.max(1, parseInt(req.query.page, 10) || 1)
   const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 20))
   const offset = (page - 1) * limit
+
+  // credit_card 계좌: cardTransactions(card002) 반환
+  if (acc.type === 'credit_card') {
+    const { cardTransactions } = await import('./mockData.js')
+    const cardId = 'card002'
+    const ctAll = cardTransactions
+      .filter((ct) => ct.cardId === cardId)
+      .sort((a, b) => b.date.localeCompare(a.date))
+
+    const slice = ctAll.slice(offset, offset + limit)
+    const txs = slice.map((ct) => ({
+      id: ct.id,
+      date: ct.date,
+      amount: ct.amount,
+      amountFormatted: (ct.amount > 0 ? '+' : '') + Math.abs(ct.amount).toLocaleString('ko-KR') + '원',
+      category: ct.inferredCategory,
+      counterpart: ct.merchant,
+      accountId: acc.id,
+      memo: ct.categoryNote || '',
+      source: 'card',
+    }))
+
+    return res.json({
+      account: acc,
+      recentTransactions: txs,
+      pagination: { page, limit, total: ctAll.length, hasMore: offset + limit < ctAll.length },
+    })
+  }
 
   const allTxs = ctx.transactions
     .filter((t) => t.accountId === acc.id)
@@ -1112,8 +1148,8 @@ const ROOM_GREETING_PROMPTS = {
   term_deposit:        '정기예금 계좌 담당 AI로서 예금 만기/금리 관련해 신중하게 말을 걸어라. 1-2문장. 이모지 금지. 격식체.',
   savings:             '비상금 계좌 담당 AI로서 비상금 현황과 관련해 안심시키며 말을 걸어라. 1-2문장. 이모지 금지. 격식체.',
   cma:                 'CMA 계좌 담당 AI로서 수익률/운용 현황과 관련해 분석적으로 말을 걸어라. 1-2문장. 이모지 금지. 격식체.',
-  debit_card:          'iM 체크카드 담당 AI로서 최근 카드 사용 패턴(카페·쇼핑·식비 지출 등)을 바탕으로 소비 현황을 짧게 언급하며 먼저 말을 걸어라. 1-2문장. 이모지 금지. 격식체.',
-  credit_card:         'iM 신용카드 상품 안내 AI로서, 아직 신용카드가 없는 고객에게 iM 신용카드의 대표 혜택(적립·캐시백·할인)과 간단한 발급 방법을 친근하게 안내하라. 2-3문장. 이모지 금지. 격식체.',
+  debit_card:          '체크카드 AI 도우미로서, 이번달 카드 지출 현황을 간략히 언급하고, 현재 주계좌가 결제 계좌로 연결되어 있음을 자연스럽게 안내하라. 결제 계좌 변경이 필요할 경우 AI에게 말하면 된다고 유도하라. 2-3문장. 격식체. 이모지 금지.',
+  credit_card:         'iM 신용카드 AI 도우미로서, 이번달 신용카드 사용 내역을 간략히 언급하고 캐시백·할인 혜택 현황을 친근하게 안내하라. 2-3문장. 격식체. 이모지 금지.',
   promo_cma:          (bal) => `고객 주계좌 잔액이 ${bal}원입니다. CMA 안내 AI로서, 이 금액이 입출금에 방치될 때의 기회비용을 먼저 언급하고 CMA의 매일 이자 장점을 2문장 이내로 설명하라. 이모지 금지. 격식체.`,
   promo_term_deposit: (days, amt) => `고객 적금이 ${days}일 후 만기 예정이며 수령 예상액은 ${amt}원입니다. 정기예금 AI로서, 이 목돈을 정기예금에 넣으면 얼마나 더 불릴 수 있는지 2문장 이내로 안내하라. 이모지 금지. 격식체.`,
   promo_savings:      () => `비상금 통장 안내 AI로서, 예기치 못한 지출에 대비하는 비상금의 심리적 안도감을 먼저 공감하며 2문장 이내로 말을 걸어라. 이모지 금지. 격식체.`,
