@@ -1242,9 +1242,77 @@ app.post('/api/room-greeting', async (req, res) => {
 })
 
 // ──────────────────────────────────────────────
+// GET /api/contacts — 연락처 목록 반환
+// ──────────────────────────────────────────────
+app.get('/api/contacts', (req, res) => {
+  res.json(contacts)
+})
+
+// ──────────────────────────────────────────────
+// POST /api/quick-transfer — 패널 즉시 이체 개시
+// WebSocket 미발송: 프론트가 응답 데이터로 직접 말풍선+TransferCard 주입
+// ──────────────────────────────────────────────
+app.post('/api/quick-transfer', (req, res) => {
+  const { sessionId = 'default', contactId, amount } = req.body
+
+  if (!amount || amount <= 0) {
+    return res.status(400).json({ error: 'amount는 0보다 커야 합니다.' })
+  }
+
+  const contact = contacts.find((c) => c.id === contactId)
+  if (!contact) {
+    return res.status(404).json({ error: '연락처를 찾을 수 없습니다.' })
+  }
+
+  const session = getSession(sessionId)
+  const checkingAcc = session.accounts.find((a) => a.type === 'checking')
+  if (!checkingAcc) {
+    return res.status(400).json({ error: '입출금 계좌가 없습니다.' })
+  }
+
+  const pendingData = {
+    toolUseId: 'quick_' + Date.now(),
+    to_contact: contact.realName,
+    amount,
+    from_account_id: checkingAcc.id,
+    memo: '',
+    contactInfo: contact,
+  }
+  session.pendingTransfer = pendingData
+
+  const amountFmt = amount.toLocaleString('ko-KR') + '원'
+
+  res.json({
+    userText: `${contact.realName}에게 ${amountFmt} 보내줘`,
+    aiText: `${contact.realName}님께 ${amountFmt} 이체하겠습니다.`,
+    pendingTransfer: {
+      to_contact: contact.realName,
+      amount,
+      amountFormatted: amountFmt,
+      from_account_id: checkingAcc.id,
+      memo: '',
+      contactInfo: contact,
+      availableAccounts: session.accounts
+        .filter((a) => a.type === 'checking' || a.type === 'cma')
+        .map((a) => ({
+          id: a.id,
+          name: a.name,
+          balance: a.balance,
+          balanceFormatted: a.balance.toLocaleString('ko-KR') + '원',
+        })),
+      balance: checkingAcc.balance,
+    },
+  })
+})
+
+// ──────────────────────────────────────────────
 // 서버 시작
 // ──────────────────────────────────────────────
-const PORT = process.env.PORT || 3001
-httpServer.listen(PORT, () => {
-  console.log(`✅ 서버 실행 중: http://localhost:${PORT}`)
-})
+export { app }
+
+if (process.env.NODE_ENV !== 'test') {
+  const PORT = process.env.PORT || 3001
+  httpServer.listen(PORT, () => {
+    console.log(`✅ 서버 실행 중: http://localhost:${PORT}`)
+  })
+}
