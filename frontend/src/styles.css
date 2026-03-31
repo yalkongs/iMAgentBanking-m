@@ -3530,9 +3530,9 @@ input:focus-visible, textarea:focus-visible {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px 14px;
-  background: rgba(20, 22, 39, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: linear-gradient(180deg, rgba(6,8,16,0.85) 0%, rgba(6,8,16,0.5) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
@@ -3556,40 +3556,75 @@ input:focus-visible, textarea:focus-visible {
   overscroll-behavior: contain;
 }
 
+.account-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 8px 4px 4px;
+}
+
+.account-section-label:first-child {
+  padding-top: 4px;
+}
+
 .account-list-item {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: stretch;
   width: 100%;
-  padding: 14px 20px;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--border);
   text-align: left;
   cursor: pointer;
-  transition: background 0.15s;
-  -webkit-tap-highlight-color: transparent;
+  border-radius: 18px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), var(--glass-inset);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  overflow: hidden;
   position: relative;
+  transition: transform 0.12s, box-shadow 0.12s;
+  gap: 0;
+  padding: 0;
+}
+
+.account-list-item::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 1px;
+  background: var(--glass-line);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .account-list-item:active {
-  background: var(--bg-secondary);
+  transform: scale(0.985);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4), var(--glass-inset);
 }
 
-.account-avatar {
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
+.account-list-item-block {
+  width: 54px;
+  align-self: stretch;
+  border-radius: 16px 0 0 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
   flex-shrink: 0;
+  position: relative;
+}
+
+.account-list-item-block::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: 1px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.05), rgba(255,255,255,0.18));
 }
 
 .account-list-item-body {
   flex: 1;
   min-width: 0;
+  padding: 13px 14px;
 }
 
 .account-list-item-top {
