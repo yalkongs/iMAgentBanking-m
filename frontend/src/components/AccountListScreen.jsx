@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect } from 'react'
 
 const BLOCK_COLORS = {
   checking:            ['#3B82F6', '#1D4ED8'],
@@ -211,7 +211,7 @@ export default function AccountListScreen({
   const [menuOpen, setMenuOpen] = useState(false)
   const [shouldAnimate, setShouldAnimate] = useState(false)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isLoading && accounts.length > 0 && !shouldAnimate) {
       setShouldAnimate(true)
     }
@@ -285,7 +285,7 @@ export default function AccountListScreen({
                   lastSection = section
                   const sIdx = animIdx++
                   items.push(
-                    <div key={`section-${section}`} className={`account-section-label${shouldAnimate ? ' list-item-animated' : ''}`} style={shouldAnimate ? { animationDelay: `${sIdx * 45}ms` } : undefined}>
+                    <div key={`section-${section}`} className={`account-section-label${shouldAnimate ? ' list-item-animated' : ''}`} style={shouldAnimate ? { animationDelay: `${sIdx * 60}ms` } : undefined}>
                       {section === 'banking' ? '입출금 · 카드' : '저축 · 투자'}
                     </div>
                   )
@@ -300,7 +300,7 @@ export default function AccountListScreen({
                   <button
                     key={acc.id}
                     className={`account-list-item${isPromo ? ' account-list-item--promo' : ''}${shouldAnimate ? ' list-item-animated' : ''}`}
-                    style={shouldAnimate ? { animationDelay: `${bIdx * 45}ms` } : undefined}
+                    style={shouldAnimate ? { animationDelay: `${bIdx * 60}ms` } : undefined}
                     onClick={() => onEnterRoom(acc.id)}
                   >
                     <div
@@ -361,7 +361,7 @@ export default function AccountListScreen({
                     <button
                       key="product-hint"
                       className={`product-hint-card${shouldAnimate ? ' list-item-animated' : ''}`}
-                      style={{ borderColor: hint.accentColor + '26', backgroundColor: hint.accentColor + '0D', ...(shouldAnimate ? { animationDelay: `${hIdx * 45}ms` } : {}) }}
+                      style={{ borderColor: hint.accentColor + '26', backgroundColor: hint.accentColor + '0D', ...(shouldAnimate ? { animationDelay: `${hIdx * 60}ms` } : {}) }}
                       onClick={() => onEnterRoom(hint.promoAccountId)}
                     >
                       <span className="product-hint-dot" style={{ background: hint.accentColor, boxShadow: `0 0 5px ${hint.accentColor}` }} />
