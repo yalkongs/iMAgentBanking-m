@@ -3742,11 +3742,12 @@ input:focus-visible, textarea:focus-visible {
 
 /* unread-badge-slot: 항상 같은 폭 예약 → balance 우측 정렬 통일 */
 .unread-badge-slot {
-  width: 28px;
+  width: 36px;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   flex-shrink: 0;
+  padding-right: 4px;
 }
 
 .unread-badge {
