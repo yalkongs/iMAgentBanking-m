@@ -1538,11 +1538,40 @@ input:focus-visible, textarea:focus-visible {
 /* ── 지출 분석 카드 ── */
 .spending-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 14px 14px 10px;
+  gap: 8px;
 }
+
+.spending-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.spending-header-right {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.spending-total-amount {
+  font-size: 18px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #F87171 0%, #FCA5A5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.6px;
+}
+
+.spending-vs {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.spending-vs.up { color: #F87171; }
+.spending-vs.down { color: #34D399; }
 
 .spending-title {
   font-size: 12px;
@@ -1555,25 +1584,6 @@ input:focus-visible, textarea:focus-visible {
 .spending-period {
   font-size: 11px;
   color: var(--text-muted);
-}
-
-.spending-hero {
-  padding: 14px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.spending-hero-label {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-bottom: 4px;
-}
-
-.spending-hero-amount {
-  font-size: 24px;
-  font-weight: 700;
-  color: rgba(241, 245, 249, 0.95);
-  font-family: var(--font-mono);
-  letter-spacing: -1px;
 }
 
 .spending-list {

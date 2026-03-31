@@ -29,16 +29,22 @@ export default function SpendingCard({ data, onQuickAction }) {
   return (
     <div className="ui-card spending-card">
       <div className="spending-header">
-        <span className="spending-title">지출 분석</span>
-        {data.period && (
-          <span className="spending-period">
-            {data.period.start?.slice(5)} ~ {data.period.end?.slice(5)}
-          </span>
-        )}
-      </div>
-      <div className="spending-hero">
-        <div className="spending-hero-label">총 지출</div>
-        <div className="spending-hero-amount">{data.totalFormatted}</div>
+        <div className="spending-header-left">
+          <span className="spending-title">지출 분석</span>
+          {data.period && (
+            <span className="spending-period">
+              {data.period.start?.slice(5)} ~ {data.period.end?.slice(5)}
+            </span>
+          )}
+        </div>
+        <div className="spending-header-right">
+          <div className="spending-total-amount">{data.totalFormatted || `${(data.total || 0).toLocaleString('ko-KR')}원`}</div>
+          {data.vsLastMonth !== undefined && (
+            <div className={`spending-vs ${data.vsLastMonth >= 0 ? 'up' : 'down'}`}>
+              전월 대비 {data.vsLastMonth >= 0 ? '+' : ''}{data.vsLastMonth}%
+            </div>
+          )}
+        </div>
       </div>
       <div className="spending-list">
         {items.slice(0, 6).map((item) => {
