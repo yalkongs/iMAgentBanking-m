@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import Message from './Message.jsx'
 import { useVoiceInput } from '../hooks/useVoiceInput.js'
+import QuickTransferPanel from './QuickTransferPanel.jsx'
 
 function MicIcon({ active }) {
   return active ? (
@@ -377,6 +378,7 @@ function buildTxList(transactions) {
 
 export default function AccountRoom({
   account,
+  contacts,
   transactions,
   messages,
   isLoading,
@@ -392,6 +394,7 @@ export default function AccountRoom({
   // 페이지네이션 (TODO-9에서 활성화)
   txMeta,
   onLoadMoreTxs,
+  onTransferReady,
 }) {
   const [activeTab, setActiveTab] = useState('chat')
   const [input, setInput] = useState('')
@@ -815,6 +818,15 @@ export default function AccountRoom({
           </>
         )}
       </div>
+
+      {/* 빠른 송금 패널 — 주계좌 + 대화 탭에서만 표시 */}
+      {activeTab === 'chat' && account?.type === 'checking' && (
+        <QuickTransferPanel
+          contacts={contacts || []}
+          transactions={transactions || []}
+          onTransferReady={onTransferReady}
+        />
+      )}
 
       {/* 채팅 입력창 (대화 탭에서만 표시) */}
       {activeTab === 'chat' && (
