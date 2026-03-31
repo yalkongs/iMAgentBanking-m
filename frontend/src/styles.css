@@ -1136,24 +1136,26 @@ input:focus-visible, textarea:focus-visible {
 
 /* ── 잔액 카드 ── */
 .balance-hero {
-  padding: 18px 18px 14px;
-  border-bottom: 1px solid rgba(0, 201, 167, 0.10);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid var(--border);
 }
 
 .balance-hero-label {
-  font-size: 11px;
-  color: rgba(0, 201, 167, 0.60);
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  margin-bottom: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 
 .balance-hero-amount {
-  font-size: 26px;
-  font-weight: 700;
-  color: rgba(0, 229, 190, 0.95);
-  font-family: var(--font-mono);
-  letter-spacing: -1px;
+  font-size: 24px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #FFFFFF 0%, #CBD5E1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.8px;
 }
 
 /* ── 계좌 카드 그리드 ── */
@@ -1240,12 +1242,14 @@ input:focus-visible, textarea:focus-visible {
 }
 
 .acct-obj-balance {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
-  color: var(--acct-accent);
-  font-family: var(--font-mono);
-  letter-spacing: -0.5px;
-  margin-top: 6px;
+  background: linear-gradient(135deg, #FFFFFF 0%, #CBD5E1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.4px;
+  margin-top: 4px;
 }
 
 .acct-obj-rate {
@@ -1728,6 +1732,16 @@ input:focus-visible, textarea:focus-visible {
   color: var(--text-secondary);
   padding: 8px 16px 14px;
   line-height: 1.55;
+}
+
+.insight-highlight {
+  display: inline;
+  background: rgba(251,191,36,0.12);
+  border: 1px solid rgba(251,191,36,0.2);
+  border-radius: 4px;
+  padding: 0 4px;
+  color: #FBBF24;
+  font-weight: 600;
 }
 
 /* ── cqa primary ── */
@@ -2311,7 +2325,7 @@ input:focus-visible, textarea:focus-visible {
 .acct-obj-balance {
   font-size: 16px !important;
   font-weight: 700 !important;
-  margin-top: 8px !important;
+  margin-top: 4px !important;
 }
 
 .acct-obj-name {
@@ -2320,7 +2334,10 @@ input:focus-visible, textarea:focus-visible {
 
 /* 잔액 합계 — 골드 포인트 */
 .balance-hero-amount {
-  color: var(--gold) !important;
+  background: linear-gradient(135deg, #E5C97A 0%, #C9A84C 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
 }
 
 /* 총 자산 레이블 — 골드 */
