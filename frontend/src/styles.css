@@ -5433,3 +5433,270 @@ input:focus-visible, textarea:focus-visible {
   border-top: 1px solid rgba(255,255,255,0.05);
 }
 
+/* ── EnrollmentModal ──────────────────────── */
+
+.enroll-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 300;
+}
+
+.enroll-modal {
+  background: #1E2138;
+  border-radius: 20px 20px 0 0;
+  padding: 24px 24px 32px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.enroll-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.enroll-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  transition: all 0.25s;
+}
+
+.enroll-dot--active {
+  background: #00C9A7;
+  width: 20px;
+  border-radius: 4px;
+}
+
+.enroll-dot--done {
+  background: rgba(0,201,167,0.4);
+}
+
+.enroll-step {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.enroll-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #E8EAFF;
+  margin: 0 0 4px;
+}
+
+.enroll-sub {
+  font-size: 14px;
+  color: rgba(232,234,255,0.55);
+  margin: 0;
+}
+
+.enroll-phone {
+  font-size: 22px;
+  font-weight: 700;
+  color: #00C9A7;
+  letter-spacing: 2px;
+  text-align: center;
+  padding: 16px 0;
+}
+
+.enroll-field-label {
+  font-size: 12px;
+  color: rgba(232,234,255,0.55);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.enroll-input {
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #E8EAFF;
+  font-size: 16px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.enroll-input:focus {
+  border-color: #00C9A7;
+}
+
+.enroll-input.error {
+  border-color: #FF6B6B;
+}
+
+.enroll-input-hint {
+  font-size: 11px;
+  color: rgba(232,234,255,0.35);
+  margin-top: 4px;
+}
+
+.enroll-error {
+  font-size: 12px;
+  color: #FF6B6B;
+  margin-top: 2px;
+}
+
+.enroll-select {
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #E8EAFF;
+  font-size: 14px;
+  box-sizing: border-box;
+  outline: none;
+  appearance: none;
+}
+
+.enroll-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.enroll-chip {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: transparent;
+  color: rgba(232,234,255,0.7);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.enroll-chip--active {
+  border-color: #00C9A7;
+  background: rgba(0,201,167,0.15);
+  color: #00C9A7;
+}
+
+.enroll-cert {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.enroll-cert-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0,201,167,0.2);
+  border-top-color: #00C9A7;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.enroll-cert-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.enroll-cert-label {
+  font-size: 14px;
+  color: rgba(232,234,255,0.7);
+}
+
+.enroll-footer {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.enroll-btn-cancel {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: transparent;
+  color: rgba(232,234,255,0.6);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.enroll-btn-next {
+  flex: 2;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: #00C9A7;
+  color: #0D0F1A;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.enroll-btn-next:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.enroll-btn-cert {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: #00C9A7;
+  color: #0D0F1A;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.enroll-balance-info {
+  font-size: 12px;
+  color: rgba(232,234,255,0.45);
+  margin-top: 4px;
+}
+
+.enroll-balance-info.insufficient {
+  color: #FF6B6B;
+}
+
+.enroll-skip-btn {
+  background: transparent;
+  border: none;
+  color: rgba(232,234,255,0.4);
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px 0;
+  align-self: flex-start;
+}
+
+.pitch-enroll-btn {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: #00C9A7;
+  color: #0D0F1A;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.pitch-enroll-btn:hover {
+  opacity: 0.88;
+}
