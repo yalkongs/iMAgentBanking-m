@@ -292,7 +292,7 @@ export default function AccountListScreen({
                 items.push(
                   <button
                     key={acc.id}
-                    className={`account-list-item${isPromo ? ' account-list-item--promo' : ''} list-item-animated`}
+                    className={`account-list-item${isPromo ? ' account-list-item--promo' : ''}${['installment_savings', 'term_deposit', 'cma', 'savings'].includes(acc.type) && !acc.isPromo ? ` account-item-glow--${acc.type}` : ''} list-item-animated`}
                     style={{ animationDelay: `${bIdx * 60}ms` }}
                     onClick={() => onEnterRoom(acc.id)}
                   >
@@ -302,7 +302,6 @@ export default function AccountListScreen({
                         background: isPromo
                           ? 'rgba(107,114,128,0.25)'
                           : `linear-gradient(180deg, ${(BLOCK_COLORS[acc.type] || BLOCK_COLORS.checking)[0]} 0%, ${(BLOCK_COLORS[acc.type] || BLOCK_COLORS.checking)[1]} 100%)`,
-                        '--block-color': (BLOCK_COLORS[acc.type] || BLOCK_COLORS.checking)[0],
                       }}
                     >
                       {ICONS[acc.type] || ICONS.checking}

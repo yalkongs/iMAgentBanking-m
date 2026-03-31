@@ -6356,16 +6356,42 @@ input:focus-visible, textarea:focus-visible {
 }
 
 /* ──────────────────────────────────────────────
-   예적금 아이콘 블록 숨쉬는 glow (AccountListScreen)
+   예적금 살아있는 숨쉬는 glow
    ────────────────────────────────────────────── */
+
+/* 아이콘 블록 내부 brightness 맥박 */
 .account-block-breathing {
-  animation: account-breathing 3s ease-in-out infinite;
+  animation: account-block-bright 3s ease-in-out infinite;
+  will-change: filter;
+  overflow: visible;
 }
 
-@keyframes account-breathing {
-  0%   { filter: brightness(1)    drop-shadow(0 0 0px transparent); }
-  45%  { filter: brightness(1.22) drop-shadow(0 0 10px var(--block-color, #10B981)); }
-  100% { filter: brightness(1)    drop-shadow(0 0 0px transparent); }
+@keyframes account-block-bright {
+  0%, 100% { filter: brightness(1); }
+  45%      { filter: brightness(1.35) saturate(1.1); }
+}
+
+/* 버튼 전체 box-shadow glow — 타입별 고정 색상 (overflow:hidden 밖에 표시됨) */
+.account-item-glow--installment_savings { animation: account-glow-green  3s ease-in-out infinite; }
+.account-item-glow--term_deposit        { animation: account-glow-purple 3s ease-in-out infinite; }
+.account-item-glow--cma                 { animation: account-glow-red    3s ease-in-out infinite; }
+.account-item-glow--savings             { animation: account-glow-amber  3s ease-in-out infinite; }
+
+@keyframes account-glow-green {
+  0%, 100% { box-shadow: var(--glass-shadow), var(--glass-inset); }
+  45%      { box-shadow: var(--glass-shadow), var(--glass-inset), 0 0 18px 3px rgba(16,185,129,0.35); }
+}
+@keyframes account-glow-purple {
+  0%, 100% { box-shadow: var(--glass-shadow), var(--glass-inset); }
+  45%      { box-shadow: var(--glass-shadow), var(--glass-inset), 0 0 18px 3px rgba(139,92,246,0.35); }
+}
+@keyframes account-glow-red {
+  0%, 100% { box-shadow: var(--glass-shadow), var(--glass-inset); }
+  45%      { box-shadow: var(--glass-shadow), var(--glass-inset), 0 0 18px 3px rgba(239,68,68,0.35); }
+}
+@keyframes account-glow-amber {
+  0%, 100% { box-shadow: var(--glass-shadow), var(--glass-inset); }
+  45%      { box-shadow: var(--glass-shadow), var(--glass-inset), 0 0 18px 3px rgba(245,158,11,0.35); }
 }
 
 /* ──────────────────────────────────────────────
