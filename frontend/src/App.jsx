@@ -606,31 +606,11 @@ export default function App() {
     sendMessage(VOICE_DEMO_MESSAGES[0])
   }
 
-  // mock 데이터 리셋
-  async function handleResetMock() {
-    setMenuOpen(false)
-    await fetch(`${API_BASE}/api/reset-mock`, { method: 'POST' })
-    await fetch(`${API_BASE}/api/reset`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId }),
-    })
-    setMessages([])
-    setRoomMessages({})
-    setRoomTransactions({})
-    setRoomTxMeta({})
-    setUnreadCounts({ 'acc001': 3 })
-    setAlert(null)
-    setLastCardType(null)
-    setInsightsLoading(true)
-    setInsightsError(false)
-    setProactiveInsights([])
-    fetch(`${API_BASE}/api/insights`)
-      .then((r) => r.json())
-      .then((d) => { if (Array.isArray(d.insights)) setProactiveInsights(d.insights) })
-      .catch(() => setInsightsError(true))
-      .finally(() => setInsightsLoading(false))
-    fetchAccountList()
+  // 전체 데이터 초기화 (localStorage + mock + 페이지 리로드)
+  async function handleResetAll() {
+    clearAllData()
+    await fetch(`${API_BASE}/api/reset-mock`, { method: 'POST' }).catch(() => {})
+    window.location.reload()
   }
 
   // roomMessages 변경 시 localStorage에 자동 저장
@@ -769,9 +749,21 @@ export default function App() {
         .catch(() => {})
     }
 
-    // Living Accounts: 첫 입장 시만 AI 프로액티브 인사말 생성
+    // Living Accounts: 메시지 없을 때만 처리
     if (!roomMessages[accountId] || roomMessages[accountId].length === 0) {
-      fetchRoomGreeting(accountId)
+      const stored = loadRoomMessages(accountId)
+      if (stored.length > 0) {
+        // 이전 대화 복원 + 서버 컨텍스트 재건 (fire-and-forget)
+        setRoomMessages((prev) => ({ ...prev, [accountId]: stored }))
+        const contextMsgs = stored.slice(-20).map((m) => ({ role: m.role, content: m.text || '' }))
+        fetch(`${API_BASE}/api/rebuild-context`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId, messages: contextMsgs }),
+        }).catch(() => {})
+      } else {
+        fetchRoomGreeting(accountId)
+      }
     }
   }
 
@@ -891,7 +883,7 @@ export default function App() {
           ttsEnabled={ttsEnabled}
           onEnterRoom={enterRoom}
           onTtsToggle={() => setTtsEnabled((t) => !t)}
-          onReset={handleResetMock}
+          onReset={handleResetAll}
           onShowOnboarding={showOnboardingAgain}
           onProductSuggest={handleProductSuggest}
         />
