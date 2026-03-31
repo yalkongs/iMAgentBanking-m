@@ -108,31 +108,62 @@ function SkeletonItem() {
   )
 }
 
-const PRODUCT_SUGGESTIONS = {
-  installment_savings: {
-    label: '정기적금',
-    color: '#10B981',
-    desc: '매달 꾸준히 모아서 목돈 만들기',
-    query: '정기적금 상품 추천해줘',
-  },
-  term_deposit: {
-    label: '정기예금',
-    color: '#8B5CF6',
-    desc: '목돈을 안전하게 불려보세요',
-    query: '정기예금 상품 알려줘',
-  },
-  savings: {
-    label: '비상금 통장',
-    color: '#F59E0B',
-    desc: '언제든 꺼내 쓸 수 있는 안전망',
-    query: '비상금 통장 추천해줘',
-  },
-  cma: {
-    label: 'CMA',
-    color: '#EF4444',
-    desc: '하루만 맡겨도 이자가 붙는 통장',
-    query: 'CMA 계좌에 대해 알려줘',
-  },
+function computeProductHints(accounts) {
+  const ownedTypes = new Set(accounts.filter((a) => !a.isPromo).map((a) => a.type))
+  const hints = []
+
+  // CMA: 입출금 잔액 1,000,000원 이상이고 CMA 미보유
+  if (!ownedTypes.has('cma')) {
+    const checking = accounts.find((a) => a.type === 'checking' && !a.isPromo)
+    const promoAcc = accounts.find((a) => a.type === 'cma' && a.isPromo)
+    if (checking && promoAcc && checking.balance >= 1000000) {
+      const dailyInterest = Math.round(checking.balance * 0.0475 / 365)
+      hints.push({
+        productType: 'cma',
+        promoAccountId: promoAcc.id,
+        hint: `주계좌에 ${checking.balance.toLocaleString('ko-KR')}원이 쉬고 있어요. CMA에 두면 오늘부터 +${dailyInterest.toLocaleString('ko-KR')}원/일.`,
+        accentColor: '#EF4444',
+        score: checking.balance,
+      })
+    }
+  }
+
+  // 정기예금: 적금 만기 180일 이하이고 예금 미보유
+  if (!ownedTypes.has('term_deposit')) {
+    const installment = accounts.find((a) => a.type === 'installment_savings' && !a.isPromo)
+    const promoAcc = accounts.find((a) => a.type === 'term_deposit' && a.isPromo)
+    if (installment && promoAcc && installment.maturityDate) {
+      const daysToMaturity = Math.ceil((new Date(installment.maturityDate) - new Date()) / 86400000)
+      if (daysToMaturity > 0 && daysToMaturity <= 180) {
+        const projected = installment.balance + (installment.monthlyDeposit || 0) * Math.ceil(daysToMaturity / 30)
+        const annualInterest = Math.round(projected * 0.042)
+        hints.push({
+          productType: 'term_deposit',
+          promoAccountId: promoAcc.id,
+          hint: `적금 만기 ${daysToMaturity}일 후 수령 예정 ${projected.toLocaleString('ko-KR')}원. 정기예금 넣으면 연 +${annualInterest.toLocaleString('ko-KR')}원.`,
+          accentColor: '#8B5CF6',
+          score: projected,
+        })
+      }
+    }
+  }
+
+  // 비상금: savings 미보유 (무조건, 단 입출금 계좌 보유 전제)
+  if (!ownedTypes.has('savings') && ownedTypes.has('checking')) {
+    const promoAcc = accounts.find((a) => a.type === 'savings' && a.isPromo)
+    if (promoAcc) {
+      hints.push({
+        productType: 'savings',
+        promoAccountId: promoAcc.id,
+        hint: '비상금 전용 통장이 없어요. 3개월치 생활비를 따로 모아두면 든든합니다.',
+        accentColor: '#F59E0B',
+        score: 500000,
+      })
+    }
+  }
+
+  // 콜드스타트 방지: 스코어 높은 것 1개만 반환
+  return hints.sort((a, b) => b.score - a.score).slice(0, 1)
 }
 
 function BalanceDisplay({ value, animate, prefix, suffix }) {
@@ -186,10 +217,12 @@ export default function AccountListScreen({
     }
   }, [isLoading, accounts.length])
 
-  // 미보유 상품 타입 (계좌가 4개 미만일 때 표시)
-  const ownedTypes = new Set(accounts.map((a) => a.type))
-  const suggestedTypes = Object.keys(PRODUCT_SUGGESTIONS).filter((t) => !ownedTypes.has(t))
-  const showSuggestions = !isLoading && accounts.length > 0 && suggestedTypes.length > 0 && accounts.length < 4
+  // 콜드스타트 가드: 저축·투자 계좌 1개 이상 보유 시에만 프로모 방 표시
+  const SAVINGS_TYPES = new Set(['installment_savings', 'term_deposit', 'savings', 'cma'])
+  const ownedSavingsCount = accounts.filter((a) => !a.isPromo && SAVINGS_TYPES.has(a.type)).length
+  const showPromoRooms = ownedSavingsCount >= 1
+
+  const productHints = computeProductHints(accounts)
 
   return (
     <div className="account-list-screen" onClick={() => menuOpen && setMenuOpen(false)}>
@@ -243,6 +276,9 @@ export default function AccountListScreen({
               let lastSection = null
 
               accounts.forEach((acc, idx) => {
+                // showPromoRooms가 false이면 프로모 계좌는 목록에서 숨김 (콜드스타트)
+                if (acc.isPromo && !showPromoRooms) return
+
                 const section = BANKING_TYPES.has(acc.type) ? 'banking' : 'savings'
                 if (section !== lastSection) {
                   lastSection = section
@@ -306,40 +342,35 @@ export default function AccountListScreen({
                     </div>
                   </button>
                 )
+
+                // 저축·투자 섹션 마지막 비-프로모 계좌 뒤에 힌트 카드 삽입
+                const isLastOwnedSavings =
+                  section === 'savings' &&
+                  !acc.isPromo &&
+                  (() => {
+                    const remaining = accounts.slice(idx + 1)
+                    return !remaining.some((a) => !a.isPromo && SAVINGS_TYPES.has(a.type))
+                  })()
+
+                if (isLastOwnedSavings && productHints.length > 0) {
+                  const hint = productHints[0]
+                  items.push(
+                    <button
+                      key="product-hint"
+                      className="product-hint-card"
+                      style={{ borderColor: hint.accentColor + '26', backgroundColor: hint.accentColor + '0D' }}
+                      onClick={() => onEnterRoom(hint.promoAccountId)}
+                    >
+                      <span className="product-hint-dot" style={{ background: hint.accentColor, boxShadow: `0 0 5px ${hint.accentColor}` }} />
+                      <span className="product-hint-text">{hint.hint}</span>
+                      <span className="product-hint-arrow" style={{ color: hint.accentColor }}>›</span>
+                    </button>
+                  )
+                }
               })
               return items
             })()}
 
-        {/* 상품 추천 섹션 (콜드 스타트 / 계좌 4개 미만) */}
-        {showSuggestions && (
-          <div className="product-suggestion-section">
-            <div className="product-suggestion-header">
-              <span>더 열어볼 수 있어요</span>
-            </div>
-            {suggestedTypes.map((type) => {
-              const sg = PRODUCT_SUGGESTIONS[type]
-              return (
-                <button
-                  key={type}
-                  className="product-suggestion-item"
-                  onClick={() => onProductSuggest?.(sg.query)}
-                >
-                  <div
-                    className="product-suggestion-icon"
-                    style={{ background: sg.color }}
-                  >
-                    {ICONS[type] || ICONS.checking}
-                  </div>
-                  <div className="product-suggestion-body">
-                    <div className="product-suggestion-label">{sg.label}</div>
-                    <div className="product-suggestion-desc">{sg.desc}</div>
-                  </div>
-                  <div className="product-suggestion-cta">AI에게 물어보기</div>
-                </button>
-              )
-            })}
-          </div>
-        )}
       </div>
     </div>
   )
