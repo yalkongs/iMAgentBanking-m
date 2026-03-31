@@ -965,6 +965,12 @@ export default function App() {
             >
               시작하기
             </button>
+            <button
+              className="onboarding-reset-btn"
+              onClick={handleResetAll}
+            >
+              데이터 초기화
+            </button>
           </div>
         </div>
       )}
