@@ -314,9 +314,7 @@ export default function AccountListScreen({
                       <div className="account-list-item-top">
                         <span className="account-list-name">{acc.name}</span>
                         <span className="account-list-balance">
-                          {acc.isPromo ? (
-                            <span className="balance-promo-badge">발급 가능</span>
-                          ) : acc.type === 'debit_card' ? (
+                          {acc.isPromo ? null : acc.type === 'debit_card' ? (
                             <BalanceDisplay value={acc.balance} animate={shouldAnimate} prefix="이번달 " suffix="원 사용" />
                           ) : (
                             <BalanceDisplay value={acc.balance} animate={shouldAnimate} />
@@ -326,7 +324,7 @@ export default function AccountListScreen({
                       <div className="account-list-item-bottom">
                         <span className="account-list-preview">
                           {isPromo
-                            ? '혜택을 가져가세요 →'
+                            ? (acc.promoHook || cfg.label)
                             : last
                             ? `${last.counterpart} ${last.amountFormatted}`
                             : cfg.label}
