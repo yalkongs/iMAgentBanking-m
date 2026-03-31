@@ -265,11 +265,57 @@ function CertStep({ onComplete }) {
   )
 }
 
+// ── Step 3c: 소득 확인 (신용카드) ──────────────────
+function IncomeStep({ onComplete }) {
+  const EMPLOYMENT_TYPES = ['직장인', '자영업자', '프리랜서', '학생·무직']
+  const [employment, setEmployment] = useState('직장인')
+  const [annualStr, setAnnualStr] = useState('')
+
+  const annual = Number(annualStr.replace(/[^\d]/g, ''))
+
+  return (
+    <div className="enroll-step">
+      <p className="enroll-step-desc">간단한 소득 정보를 입력해주세요.</p>
+      <label className="enroll-field-label">직업 유형</label>
+      <div className="enroll-chip-group">
+        {EMPLOYMENT_TYPES.map((t) => (
+          <button
+            key={t}
+            className={`enroll-chip${employment === t ? ' enroll-chip--active' : ''}`}
+            onClick={() => setEmployment(t)}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+      <label htmlFor="income-annual" className="enroll-field-label">연소득 (만원)</label>
+      <input
+        id="income-annual"
+        className="enroll-amount-input"
+        type="tel"
+        inputMode="numeric"
+        placeholder="예: 4000"
+        value={annualStr}
+        onChange={(e) => setAnnualStr(e.target.value.replace(/[^\d]/g, ''))}
+      />
+      <p className="enroll-step-hint">심사에 활용되며 외부에 공유되지 않습니다.</p>
+      <button
+        className="enroll-btn-primary"
+        disabled={annual === 0}
+        onClick={() => onComplete({ employment, annualIncome: annual })}
+      >
+        신청하기
+      </button>
+    </div>
+  )
+}
+
 // ── 메인 EnrollmentModal ─────────────────────────────────
 const TOTAL_STEPS = {
   promo_cma: 3,
   promo_term_deposit: 4,
   promo_savings: 3,
+  acc007: 3,
 }
 
 export default function EnrollmentModal({ state, accounts, onStepComplete, onDismiss }) {
@@ -285,6 +331,9 @@ export default function EnrollmentModal({ state, accounts, onStepComplete, onDis
     if (step === 2) return <SmsVerifyStep onComplete={onStepComplete} />
 
     // Step 3: 상품별 분기
+    if (step === 3 && productId === 'acc007') {
+      return <IncomeStep onComplete={onStepComplete} />
+    }
     if (step === 3 && productId === 'promo_term_deposit') {
       return <TermStep accounts={accounts} onComplete={onStepComplete} />
     }

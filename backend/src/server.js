@@ -483,6 +483,14 @@ app.post('/api/enroll', (req, res) => {
     return res.status(409).json({ ok: false, error: '이미 가입되었거나 존재하지 않는 상품입니다.' })
   }
 
+  // 신용카드: 신청 접수 처리 (실계좌 생성 없음)
+  if (promoAcc.type === 'credit_card') {
+    session.accounts = session.accounts.filter((a) => a.id !== productId)
+    const appliedCard = { ...promoAcc, isPromo: false, status: 'pending_approval', applicationDate: new Date().toISOString().slice(0, 10) }
+    session.accounts.push(appliedCard)
+    return res.json({ ok: true, account: appliedCard })
+  }
+
   // 신규 계좌 생성
   const newAccount = createAccount(productId, enrollData)
   if (!newAccount) return res.status(400).json({ ok: false, error: '지원하지 않는 상품입니다.' })
@@ -1044,6 +1052,25 @@ function buildProductPitchData(acc, ctx) {
     }
     compareCurrentRate = 0.1
     compareCurrentLabel = '입출금 보관 (0.1%)'
+  }
+
+  // 신용카드는 별도 데이터 구조
+  if (acc.type === 'credit_card') {
+    const ccProducts = PRODUCTS.credit_card || []
+    const ccProduct = ccProducts.find((p) => p.id === acc.promoProductId) || ccProducts[0]
+    return {
+      productId: acc.id,
+      product: {
+        id: ccProduct?.id,
+        name: ccProduct?.name || acc.name,
+        type: 'credit_card',
+        annualFee: ccProduct?.annualFee ?? 0,
+        benefits: ccProduct?.benefits || [],
+        highlights: (ccProduct?.highlights || []).slice(0, 4),
+        conditions: ccProduct?.conditions || '',
+        tags: (ccProduct?.tags || []).slice(0, 4),
+      },
+    }
   }
 
   const productRate = product?.baseRate || 3.0

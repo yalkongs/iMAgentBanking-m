@@ -5886,3 +5886,153 @@ input:focus-visible, textarea:focus-visible {
   align-items: center;
   padding: 8px 0;
 }
+
+/* ── CreditCardPitchCard ───────────────────── */
+
+.cc-pitch-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cc-pitch-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cc-pitch-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(107,114,128,0.15);
+  color: rgba(232,234,255,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cc-pitch-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cc-pitch-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #E8EAFF;
+}
+
+.cc-fee-free {
+  font-size: 12px;
+  color: #00C9A7;
+  font-weight: 500;
+}
+
+.cc-fee-amount {
+  font-size: 12px;
+  color: rgba(232,234,255,0.5);
+}
+
+.cc-benefits-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.cc-benefit-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.cc-benefit-row:last-child {
+  border-bottom: none;
+}
+
+.cc-benefit-category {
+  font-size: 13px;
+  color: rgba(232,234,255,0.6);
+}
+
+.cc-benefit-rate {
+  font-size: 13px;
+  font-weight: 600;
+  color: #00C9A7;
+}
+
+.cc-highlights {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cc-highlight-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: rgba(232,234,255,0.7);
+  line-height: 1.5;
+}
+
+.cc-highlight-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #00C9A7;
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.cc-conditions {
+  font-size: 11px;
+  color: rgba(232,234,255,0.35);
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 6px;
+}
+
+.cc-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.cc-tag {
+  font-size: 11px;
+  color: rgba(232,234,255,0.4);
+  background: rgba(255,255,255,0.05);
+  border-radius: 20px;
+  padding: 3px 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.cc-pitch-apply-btn {
+  display: block;
+  width: 100%;
+  padding: 13px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #1E3A5F 0%, #2D4F7C 100%);
+  color: #E8EAFF;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.cc-pitch-apply-btn:hover {
+  opacity: 0.88;
+}

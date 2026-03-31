@@ -206,9 +206,15 @@ export default function App() {
       complete: '비상금통장이 생겼어요. 쓸 일이 없는 게 제일 좋지만, 있다는 게 중요해요.',
       nudge: '비상금통장 개설 중이었어요. 3분이면 돼요, 이어서 할까요?',
     },
+    acc007: {
+      afterPhone: '인증번호 보냈어요.',
+      afterSms: '본인 확인 완료됐어요! 마지막으로 간단한 정보만 확인할게요.',
+      complete: '신용카드 신청이 완료됐어요. 심사 결과는 영업일 기준 3-5일 내 문자로 안내드립니다.',
+      nudge: '신용카드 신청 중이었어요. 2분이면 완료돼요, 이어서 할까요?',
+    },
   }
 
-  const ENROLL_TOTAL_STEPS = { promo_cma: 3, promo_term_deposit: 4, promo_savings: 3 }
+  const ENROLL_TOTAL_STEPS = { promo_cma: 3, promo_term_deposit: 4, promo_savings: 3, acc007: 3 }
 
   // 신규 계좌에 AccountLifeCard 표시용 enriched 필드 계산
   function enrichAccountForLifeCard(acc) {

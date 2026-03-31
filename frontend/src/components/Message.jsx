@@ -15,6 +15,7 @@ import ProductCompareCard from './ProductCompareCard.jsx'
 import ProductListCard from './ProductListCard.jsx'
 import ProductDetailCard from './ProductDetailCard.jsx'
 import ProductPitchCard from './ProductPitchCard.jsx'
+import CreditCardPitchCard from './CreditCardPitchCard.jsx'
 
 export default function Message({ msg, sessionId, onTransferDone, onQuickAction, onClearScope, onGuiContextChange, voiceMode, onStartEnrollment, promoIds }) {
   // 이체 확인 카드
@@ -84,7 +85,12 @@ export default function Message({ msg, sessionId, onTransferDone, onQuickAction,
     if (cardType === 'get_product_detail') {
       return <ProductDetailCard data={data} onQuickAction={onQuickAction} />
     }
-    if (cardType === 'product_pitch') return <ProductPitchCard data={data} onStartEnrollment={onStartEnrollment} promoIds={promoIds} />
+    if (cardType === 'product_pitch') {
+      if (data.product?.type === 'credit_card') {
+        return <CreditCardPitchCard data={data} onStartEnrollment={onStartEnrollment} promoIds={promoIds} />
+      }
+      return <ProductPitchCard data={data} onStartEnrollment={onStartEnrollment} promoIds={promoIds} />
+    }
     return null
   }
 

@@ -31,6 +31,7 @@ export const accounts = [
     accountNo: null,
     isPromo: true,
     promoHook: '적립·캐시백·할인 혜택을 한 장에',
+    promoProductId: 'cc_001',
   },
   // ── 저축 · 투자 ──
   {
