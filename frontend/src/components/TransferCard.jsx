@@ -144,7 +144,18 @@ export default function TransferCard({ data, sessionId, onDone, voiceMode }) {
     <div className="transfer-card">
       <div className="transfer-card-label">이체 확인</div>
       {voiceHint && <div className="transfer-voice-hint">{voiceHint}</div>}
-      <div className="transfer-amount-hero">{amountFormatted}</div>
+      <div className="transfer-amount-row">
+        <span className="transfer-amount-label">이체 금액</span>
+        <span className="transfer-amount-value">{amountFormatted || `${(data.amount || 0).toLocaleString('ko-KR')}원`}</span>
+      </div>
+
+      {/* 이체 후 잔액 */}
+      {data.balanceAfter !== undefined && (
+        <div className="transfer-detail-row">
+          <span className="transfer-detail-key">이체 후 잔액</span>
+          <span className="transfer-detail-val">{data.balanceAfter.toLocaleString('ko-KR')}원</span>
+        </div>
+      )}
 
       {/* 수신자 정보 */}
       <div className="transfer-details">
