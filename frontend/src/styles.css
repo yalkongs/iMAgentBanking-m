@@ -5893,6 +5893,7 @@ input:focus-visible, textarea:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  padding: 16px;
 }
 
 .cc-pitch-header {
