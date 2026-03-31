@@ -33,6 +33,14 @@
 
   --font-sans: 'Pretendard', -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
+
+  /* ── Glass Layer Tokens ── */
+  --glass-bg:     linear-gradient(135deg, rgba(28,31,53,0.88) 0%, rgba(14,16,34,0.92) 100%);
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --glass-inset:  inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --glass-blur:   blur(16px);
+  --glass-line:   linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
 }
 
 /* ──────────────────────────────────────────────
@@ -98,7 +106,11 @@ input:focus-visible, textarea:focus-visible {
   height: var(--vvh, 100dvh);
   width: min(100%, 480px);
   margin: 0 auto;
-  background: var(--bg-primary);
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 20%, rgba(0,201,167,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 80% 70%, rgba(59,130,246,0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 60% 10%, rgba(139,92,246,0.08) 0%, transparent 50%),
+    #060810;
   overflow: hidden;
   /* iOS safe area */
   padding-top: env(safe-area-inset-top, 0px);
