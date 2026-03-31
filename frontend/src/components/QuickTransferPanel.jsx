@@ -123,7 +123,7 @@ export default function QuickTransferPanel({ contacts, transactions, onTransferR
   return (
     <div className="qtp-panel">
       {/* 헤더 (항상 표시) */}
-      <div className="qtp-header" onClick={toggle} role="button" tabIndex={0}>
+      <div className="qtp-header" onClick={toggle} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } }} role="button" tabIndex={0}>
         <div className="qtp-header-left">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"/>
