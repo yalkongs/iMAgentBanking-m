@@ -456,6 +456,18 @@ app.get('/api/insights', async (req, res) => {
   }
 })
 
+// POST /api/rebuild-context — 페이지 리로드 후 서버 세션 컨텍스트 복원
+// ──────────────────────────────────────────────
+app.post('/api/rebuild-context', (req, res) => {
+  const { sessionId, messages } = req.body
+  if (!sessionId || !Array.isArray(messages)) return res.json({ ok: false })
+  const session = getSession(sessionId)
+  if (session.messages.length === 0) {
+    session.messages = messages.filter((m) => m.role && m.content).slice(-20)
+  }
+  res.json({ ok: true, rebuilt: session.messages.length })
+})
+
 // ──────────────────────────────────────────────
 // POST /api/reset-mock — 특정 세션 데이터 초기화
 // ──────────────────────────────────────────────
@@ -1110,10 +1122,17 @@ app.post('/api/room-greeting', async (req, res) => {
       messages: [{ role: 'user', content: `${context}\n\n${prompt}` }],
     })
 
+    let fullText = ''
     for await (const event of stream) {
       if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+        fullText += event.delta.text
         res.write(`data: ${JSON.stringify({ type: 'text', delta: event.delta.text })}\n\n`)
       }
+    }
+
+    // 인사말을 session.messages에 저장 → 이후 "응" 같은 짧은 답변에도 맥락 유지
+    if (fullText) {
+      session.messages.push({ role: 'assistant', content: fullText })
     }
 
     // 프로모 계좌이면 product_pitch 카드 추가 발송
