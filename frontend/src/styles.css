@@ -2286,6 +2286,16 @@ input:focus-visible, textarea:focus-visible {
 
 .tx-notif-amount.income { color: rgba(52, 211, 153, 0.95); }
 .tx-notif-amount.expense { color: rgba(248, 113, 113, 0.95); }
+.tx-notif-amount.moment { color: rgba(251, 191, 36, 0.95); }
+
+.tx-notif-inner.moment {
+  background: rgba(14, 12, 4, 0.96);
+  border-bottom-color: rgba(251, 191, 36, 0.28);
+}
+.tx-notif-badge.moment {
+  background: rgba(251, 191, 36, 0.15);
+  color: rgba(251, 191, 36, 0.95);
+}
 
 .tx-notif-comment {
   font-size: 11px;
@@ -5253,5 +5263,143 @@ input:focus-visible, textarea:focus-visible {
   font-weight: 600;
   opacity: 0.75;
   letter-spacing: 0;
+}
+
+/* ──────────────────────────────────────────────
+   Product Hint Card (맥락 기반 상품 가치 소구)
+   ────────────────────────────────────────────── */
+.product-hint-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: opacity 0.15s ease;
+}
+.product-hint-card:active { opacity: 0.7; }
+
+.product-hint-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.product-hint-text {
+  flex: 1;
+  font-size: 11px;
+  color: #94A3B8;
+  line-height: 1.5;
+}
+
+.product-hint-arrow {
+  font-size: 14px;
+  flex-shrink: 0;
+  opacity: 0.7;
+  margin-top: -1px;
+}
+
+/* ──────────────────────────────────────────────
+   ProductPitchCard
+   ────────────────────────────────────────────── */
+.pitch-card { padding: 16px; }
+
+.pitch-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.pitch-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.pitch-name { font-size: 13px; font-weight: 700; color: #F1F5F9; }
+.pitch-rate { font-size: 12px; font-weight: 700; margin-top: 1px; }
+
+.pitch-highlights {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pitch-highlight-item {
+  font-size: 11px;
+  color: #94A3B8;
+  padding-left: 12px;
+  position: relative;
+  line-height: 1.4;
+}
+.pitch-highlight-item::before {
+  content: '·';
+  position: absolute;
+  left: 2px;
+  color: #475569;
+}
+
+.pitch-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 0 0 12px; }
+
+.pitch-personal {
+  border: 1px solid;
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.pitch-personal-label { font-size: 10px; color: #64748B; }
+.pitch-personal-numbers { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.pitch-personal-daily { font-size: 13px; font-weight: 800; }
+.pitch-personal-annual { font-size: 11px; font-weight: 600; }
+
+.pitch-compare {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+  margin-bottom: 10px;
+}
+.pitch-compare-item {
+  flex: 1;
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pitch-compare-current {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+}
+.pitch-compare-winner {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid;
+}
+.pitch-compare-arrow {
+  display: flex;
+  align-items: center;
+  font-size: 10px;
+  color: #475569;
+  flex-shrink: 0;
+}
+.pitch-compare-label { font-size: 9px; color: #64748B; }
+.pitch-compare-rate { font-size: 14px; font-weight: 800; color: #94A3B8; }
+.pitch-compare-gain { font-size: 10px; font-weight: 600; color: #64748B; }
+
+.pitch-footnote {
+  font-size: 10px;
+  color: #475569;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255,255,255,0.05);
 }
 
