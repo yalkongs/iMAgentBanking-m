@@ -1,19 +1,9 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 const BANKING_TYPES_SET = new Set(['checking', 'debit_card', 'credit_card'])
 
 function getAccountSection(acc) {
   return BANKING_TYPES_SET.has(acc.type) ? 'banking' : 'savings'
-}
-
-function DragHandleIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-      <line x1="3" y1="5" x2="15" y2="5"/>
-      <line x1="3" y1="9" x2="15" y2="9"/>
-      <line x1="3" y1="13" x2="15" y2="13"/>
-    </svg>
-  )
 }
 
 const BLOCK_COLORS = {
@@ -27,7 +17,6 @@ const BLOCK_COLORS = {
 }
 
 const ICONS = {
-  // 입출금: 위아래 화살표 (입금↑ 출금↓)
   checking: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 3v7M9 7l3-4 3 4"/>
@@ -35,7 +24,6 @@ const ICONS = {
       <line x1="5" y1="12" x2="19" y2="12" strokeOpacity="0.4"/>
     </svg>
   ),
-  // 정기적금: 달력 (월납입 스케줄)
   installment_savings: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="4" width="18" height="17" rx="2"/>
@@ -45,7 +33,6 @@ const ICONS = {
       <path d="M12 14v4M10 16l2-2 2 2"/>
     </svg>
   ),
-  // 정기예금: 자물쇠 (만기까지 잠금)
   term_deposit: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="5" y="11" width="14" height="10" rx="2"/>
@@ -53,21 +40,18 @@ const ICONS = {
       <circle cx="12" cy="16" r="1.5" fill="white"/>
     </svg>
   ),
-  // 비상금: 방패 + 체크 (긴급 자금 보호)
   savings: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
       <path d="M9 12l2 2 4-4"/>
     </svg>
   ),
-  // CMA: 우상향 꺾은선 (수익 성장)
   cma: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="3 17 8.5 11 13 14.5 20 7"/>
       <polyline points="15 7 20 7 20 12"/>
     </svg>
   ),
-  // 체크카드: 카드 + EMV 칩
   debit_card: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="2" y="5" width="20" height="14" rx="2"/>
@@ -76,7 +60,6 @@ const ICONS = {
       <line x1="14" y1="16" x2="17" y2="16"/>
     </svg>
   ),
-  // 신용카드: 카드 + 컨택리스 웨이브
   credit_card: (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="2" y="5" width="20" height="14" rx="2"/>
@@ -128,7 +111,6 @@ function computeProductHints(accounts) {
   const ownedTypes = new Set(accounts.filter((a) => !a.isPromo).map((a) => a.type))
   const hints = []
 
-  // CMA: 입출금 잔액 1,000,000원 이상이고 CMA 미보유
   if (!ownedTypes.has('cma')) {
     const checking = accounts.find((a) => a.type === 'checking' && !a.isPromo)
     const promoAcc = accounts.find((a) => a.type === 'cma' && a.isPromo)
@@ -144,7 +126,6 @@ function computeProductHints(accounts) {
     }
   }
 
-  // 정기예금: 적금 만기 180일 이하이고 예금 미보유
   if (!ownedTypes.has('term_deposit')) {
     const installment = accounts.find((a) => a.type === 'installment_savings' && !a.isPromo)
     const promoAcc = accounts.find((a) => a.type === 'term_deposit' && a.isPromo)
@@ -164,7 +145,6 @@ function computeProductHints(accounts) {
     }
   }
 
-  // 비상금: savings 미보유 (무조건, 단 입출금 계좌 보유 전제)
   if (!ownedTypes.has('savings') && ownedTypes.has('checking')) {
     const promoAcc = accounts.find((a) => a.type === 'savings' && a.isPromo)
     if (promoAcc) {
@@ -178,7 +158,6 @@ function computeProductHints(accounts) {
     }
   }
 
-  // 콜드스타트 방지: 스코어 높은 것 1개만 반환
   return hints.sort((a, b) => b.score - a.score).slice(0, 1)
 }
 
@@ -227,16 +206,11 @@ export default function AccountListScreen({
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [sortMode, setSortMode] = useState(false)
-  const [draggingId, setDraggingId] = useState(null)
-  const [dragOverId, setDragOverId] = useState(null)
 
-  const listRef = useRef(null)
   const longPressTimerRef = useRef(null)
   const longPressCancelledRef = useRef(false)
-  const dragActiveRef = useRef(false)
-  const dragInfoRef = useRef({ dragId: null, dragSection: null })
 
-  // Long-press to enter sort mode (500ms)
+  // Long-press 500ms → sort mode
   function handleLongPressStart(e, accId, isPromo) {
     if (sortMode || isPromo) return
     longPressCancelledRef.current = false
@@ -245,6 +219,7 @@ export default function AccountListScreen({
 
     longPressTimerRef.current = setTimeout(() => {
       if (!longPressCancelledRef.current) {
+        e.preventDefault?.()
         setSortMode(true)
         if (navigator.vibrate) navigator.vibrate(40)
       }
@@ -267,99 +242,38 @@ export default function AccountListScreen({
     clearTimeout(longPressTimerRef.current)
   }
 
-  // Drag start (from handle)
-  const handleDragStart = useCallback((e, accId) => {
-    e.stopPropagation()
+  // ↑↓ 버튼으로 섹션 내에서 이동
+  function handleMoveItem(accId, direction) {
     const acc = accounts.find((a) => a.id === accId)
     if (!acc) return
-    dragActiveRef.current = true
-    dragInfoRef.current = { dragId: accId, dragSection: getAccountSection(acc) }
-    setDraggingId(accId)
-    setDragOverId(null)
-  }, [accounts])
+    const section = getAccountSection(acc)
+    const sectionItems = accounts.filter((a) => !a.isPromo && getAccountSection(a) === section)
+    const idx = sectionItems.findIndex((a) => a.id === accId)
+    if (idx === -1) return
+    const newIdx = direction === 'up' ? idx - 1 : idx + 1
+    if (newIdx < 0 || newIdx >= sectionItems.length) return
 
-  const handleDragMove = useCallback((e) => {
-    if (!dragActiveRef.current) return
-    const touch = e.touches ? e.touches[0] : e
-    const { dragId, dragSection } = dragInfoRef.current
-    const list = listRef.current
-    if (!list) return
+    const newSection = [...sectionItems]
+    ;[newSection[idx], newSection[newIdx]] = [newSection[newIdx], newSection[idx]]
 
-    const buttons = Array.from(
-      list.querySelectorAll(`.account-list-item[data-sort-section="${dragSection}"]`)
-    )
-    if (buttons.length === 0) return
-
-    let targetId = null
-    for (let i = 0; i < buttons.length; i++) {
-      const rect = buttons[i].getBoundingClientRect()
-      if (touch.clientY < rect.top + rect.height / 2) {
-        targetId = buttons[i].getAttribute('data-acc-id')
-        break
-      }
-    }
-    if (!targetId) {
-      targetId = buttons[buttons.length - 1].getAttribute('data-acc-id')
-    }
-    setDragOverId(targetId !== dragId ? targetId : null)
-  }, [])
-
-  const handleDragEnd = useCallback(() => {
-    if (!dragActiveRef.current) return
-    const { dragId, dragSection } = dragInfoRef.current
-    dragActiveRef.current = false
-
-    setDraggingId(null)
-    setDragOverId((currentDragOver) => {
-      if (currentDragOver && currentDragOver !== dragId) {
-        // Reorder within section
-        const sectionItems = accounts.filter((a) => !a.isPromo && getAccountSection(a) === dragSection)
-        const fromIdx = sectionItems.findIndex((a) => a.id === dragId)
-        const toIdx = sectionItems.findIndex((a) => a.id === currentDragOver)
-        if (fromIdx !== -1 && toIdx !== -1) {
-          const newSection = [...sectionItems]
-          const [moved] = newSection.splice(fromIdx, 1)
-          newSection.splice(toIdx, 0, moved)
-
-          // Rebuild full account list preserving non-section items
-          let secIdx = 0
-          const newOrder = accounts.map((a) => {
-            if (!a.isPromo && getAccountSection(a) === dragSection) {
-              return newSection[secIdx++]
-            }
-            return a
-          })
-          onReorder?.(newOrder)
-        }
-      }
-      return null
+    let secIdx = 0
+    const newOrder = accounts.map((a) => {
+      if (!a.isPromo && getAccountSection(a) === section) return newSection[secIdx++]
+      return a
     })
-  }, [accounts, onReorder])
+    onReorder?.(newOrder)
+  }
 
-  // Attach drag move/end to document when sort mode is active
-  useEffect(() => {
-    if (!sortMode) return
-    document.addEventListener('touchmove', handleDragMove, { passive: true })
-    document.addEventListener('touchend', handleDragEnd)
-    document.addEventListener('mousemove', handleDragMove)
-    document.addEventListener('mouseup', handleDragEnd)
-    return () => {
-      document.removeEventListener('touchmove', handleDragMove)
-      document.removeEventListener('touchend', handleDragEnd)
-      document.removeEventListener('mousemove', handleDragMove)
-      document.removeEventListener('mouseup', handleDragEnd)
-    }
-  }, [sortMode, handleDragMove, handleDragEnd])
-
-  // 콜드스타트 가드: 저축·투자 계좌 1개 이상 보유 시에만 프로모 방 표시
   const SAVINGS_TYPES = new Set(['installment_savings', 'term_deposit', 'savings', 'cma'])
   const ownedSavingsCount = accounts.filter((a) => !a.isPromo && SAVINGS_TYPES.has(a.type)).length
   const showPromoRooms = ownedSavingsCount >= 1
-
   const productHints = computeProductHints(accounts)
 
   return (
-    <div className="account-list-screen" onClick={() => menuOpen && setMenuOpen(false)}>
+    <div
+      className="account-list-screen"
+      onClick={() => menuOpen && setMenuOpen(false)}
+    >
       <div className="account-list-header">
         <button
           className="account-list-title-btn"
@@ -378,16 +292,10 @@ export default function AccountListScreen({
           </button>
           {menuOpen && (
             <div className="account-list-dropdown" onClick={(e) => e.stopPropagation()}>
-              <button
-                className="dropdown-item"
-                onClick={() => { onTtsToggle?.(); setMenuOpen(false) }}
-              >
+              <button className="dropdown-item" onClick={() => { onTtsToggle?.(); setMenuOpen(false) }}>
                 {ttsEnabled ? '음성 끄기' : '음성 켜기'}
               </button>
-              <button
-                className="dropdown-item"
-                onClick={() => { onReset?.(); setMenuOpen(false) }}
-              >
+              <button className="dropdown-item" onClick={() => { onReset?.(); setMenuOpen(false) }}>
                 초기화
               </button>
             </div>
@@ -397,20 +305,14 @@ export default function AccountListScreen({
 
       {sortMode && (
         <div className="account-sort-mode-bar">
-          <span>핸들을 드래그해서 순서를 바꿔요</span>
-          <button
-            className="account-sort-done-btn"
-            onClick={() => setSortMode(false)}
-          >
+          <span>↑↓ 버튼으로 순서를 바꿔요</span>
+          <button className="account-sort-done-btn" onClick={() => setSortMode(false)}>
             완료
           </button>
         </div>
       )}
 
-      <div
-        ref={listRef}
-        className={`account-list-items${sortMode ? ' account-sort-mode' : ''}`}
-      >
+      <div className={`account-list-items${sortMode ? ' account-sort-mode' : ''}`}>
         {isLoading
           ? Array.from({ length: 5 }, (_, i) => <SkeletonItem key={i} />)
           : accounts.length === 0
@@ -425,7 +327,6 @@ export default function AccountListScreen({
               let animIdx = 0
 
               accounts.forEach((acc, idx) => {
-                // showPromoRooms가 false이면 프로모 계좌는 목록에서 숨김 (콜드스타트)
                 if (acc.isPromo && !showPromoRooms) return
 
                 const section = BANKING_TYPES_SET.has(acc.type) ? 'banking' : 'savings'
@@ -438,27 +339,32 @@ export default function AccountListScreen({
                     </div>
                   )
                 }
+
                 const cfg = TYPE_CONFIG[acc.type] || { color: '#6B7280', label: acc.type }
                 const unread = unreadCounts?.[acc.id] || 0
                 const last = acc.lastTransaction
                 const isPromo = acc.isPromo === true
                 const canSort = sortMode && !isPromo
-                const isDragging = draggingId === acc.id
-                const isDragOver = dragOverId === acc.id
+
+                // 섹션 내 위치 계산 (↑↓ 버튼 disabled 조건)
+                const sectionItems = canSort
+                  ? accounts.filter((a) => !a.isPromo && getAccountSection(a) === section)
+                  : []
+                const sectionIdx = canSort ? sectionItems.findIndex((a) => a.id === acc.id) : -1
+                const isFirst = sectionIdx === 0
+                const isLast = sectionIdx === sectionItems.length - 1
 
                 const bIdx = animIdx++
                 items.push(
                   <button
                     key={acc.id}
-                    data-acc-id={acc.id}
-                    data-sort-section={section}
                     className={[
                       'account-list-item',
                       isPromo ? 'account-list-item--promo' : '',
-                      ['installment_savings', 'term_deposit', 'cma', 'savings'].includes(acc.type) && !acc.isPromo ? `account-item-glow--${acc.type}` : '',
+                      ['installment_savings', 'term_deposit', 'cma', 'savings'].includes(acc.type) && !acc.isPromo
+                        ? `account-item-glow--${acc.type}` : '',
                       'list-item-animated',
-                      isDragging ? 'account-list-item--dragging' : '',
-                      isDragOver ? 'account-list-item--drag-over' : '',
+                      canSort ? 'account-list-item--sorting' : '',
                     ].filter(Boolean).join(' ')}
                     style={{ animationDelay: `${bIdx * 60}ms` }}
                     onClick={() => { if (!sortMode) onEnterRoom(acc.id) }}
@@ -515,13 +421,23 @@ export default function AccountListScreen({
                     </div>
 
                     {canSort ? (
-                      <div
-                        className="account-sort-handle"
-                        onTouchStart={(e) => { e.stopPropagation(); handleDragStart(e, acc.id) }}
-                        onMouseDown={(e) => { e.stopPropagation(); handleDragStart(e, acc.id) }}
-                        aria-label="순서 변경"
-                      >
-                        <DragHandleIcon />
+                      <div className="account-sort-arrows">
+                        <button
+                          className="account-sort-arrow-btn"
+                          disabled={isFirst}
+                          onClick={(e) => { e.stopPropagation(); handleMoveItem(acc.id, 'up') }}
+                          aria-label="위로 이동"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          className="account-sort-arrow-btn"
+                          disabled={isLast}
+                          onClick={(e) => { e.stopPropagation(); handleMoveItem(acc.id, 'down') }}
+                          aria-label="아래로 이동"
+                        >
+                          ↓
+                        </button>
                       </div>
                     ) : (
                       <div className="unread-badge-slot">
@@ -531,7 +447,6 @@ export default function AccountListScreen({
                   </button>
                 )
 
-                // 저축·투자 섹션 마지막 비-프로모 계좌 뒤에 힌트 카드 삽입
                 const isLastOwnedSavings =
                   section === 'savings' &&
                   !acc.isPromo &&
@@ -559,7 +474,6 @@ export default function AccountListScreen({
               })
               return items
             })()}
-
       </div>
     </div>
   )

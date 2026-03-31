@@ -3686,7 +3686,7 @@ input:focus-visible, textarea:focus-visible {
   display: flex;
   align-items: stretch;
   width: 100%;
-  height: auto;
+  min-height: 72px;
   text-align: left;
   cursor: pointer;
   border-radius: 18px;
@@ -3701,6 +3701,7 @@ input:focus-visible, textarea:focus-visible {
   transition: transform 0.12s, box-shadow 0.12s;
   gap: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
 .account-list-item::before {
@@ -3754,7 +3755,10 @@ input:focus-visible, textarea:focus-visible {
 .account-list-item-body {
   flex: 1;
   min-width: 0;
-  padding: 13px 14px;
+  padding: 14px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .account-list-item-top {
@@ -6630,39 +6634,48 @@ input:focus-visible, textarea:focus-visible {
   font-family: inherit;
 }
 
-.account-sort-handle {
+.account-sort-arrows {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 10px 0 6px;
+  flex-shrink: 0;
+}
+
+.account-sort-arrow-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  color: rgba(255,255,255,0.4);
-  touch-action: none;
-  cursor: grab;
-  margin-left: 4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.7);
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  -webkit-appearance: none;
 }
 
-.account-sort-handle:active {
-  cursor: grabbing;
-  color: rgba(255,255,255,0.75);
+.account-sort-arrow-btn:active {
+  background: rgba(255,255,255,0.18);
+  color: #fff;
 }
 
-.account-sort-handle svg {
-  pointer-events: none;
-}
-
-.account-list-item--dragging {
-  opacity: 0.45;
+.account-sort-arrow-btn:disabled {
+  opacity: 0.2;
+  cursor: default;
 }
 
 .account-sort-mode .account-list-item {
   cursor: default;
   user-select: none;
   -webkit-user-select: none;
-  transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
-.account-sort-mode .account-list-item--drag-over {
-  transform: translateY(6px);
+.account-list-item--sorting {
+  border-color: rgba(0,201,167,0.3);
 }

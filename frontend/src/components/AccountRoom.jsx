@@ -417,14 +417,11 @@ export default function AccountRoom({
     onMarkRead?.()
   }, [account?.id])
 
-  // 대화 탭: 새 메시지 시 스크롤
+  // 대화 탭: 새 메시지/카드 발생 시 무조건 끝으로 스크롤
   useEffect(() => {
     if (activeTab !== 'chat') return
     const el = chatContainerRef.current
-    if (el) {
-      const near = el.scrollHeight - el.scrollTop - el.clientHeight < 150
-      if (near) el.scrollTop = el.scrollHeight
-    }
+    if (el) el.scrollTop = el.scrollHeight
   }, [messages, activeTab])
 
   // iOS 키보드 대응 — visualViewport
