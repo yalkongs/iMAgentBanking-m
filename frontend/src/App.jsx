@@ -240,6 +240,7 @@ export default function App() {
   const [screen, setScreen] = useState('home')           // 'home' | 'room'
   const [activeAccountId, setActiveAccountId] = useState(null)
   const [accountList, setAccountList] = useState([])
+  const [contacts, setContacts] = useState([])
   const [isAccountsLoading, setIsAccountsLoading] = useState(true)
   const [roomTransactions, setRoomTransactions] = useState({})
   const [roomMessages, setRoomMessages] = useState({})   // { [accountId]: Message[] }
@@ -375,6 +376,14 @@ export default function App() {
     fetch(`${API_BASE}/api/health-score`)
       .then((r) => r.json())
       .then((d) => { if (d.score !== undefined) setHealthScore(d.score) })
+      .catch(() => {})
+  }, [])
+
+  // contacts 로드
+  useEffect(() => {
+    fetch(`${API_BASE}/api/contacts`)
+      .then((r) => r.json())
+      .then((data) => setContacts(Array.isArray(data) ? data : []))
       .catch(() => {})
   }, [])
 
@@ -894,6 +903,51 @@ export default function App() {
     }))
   }
 
+  async function handleTransferReady(contactId, amount) {
+    const accountId = activeAccountId
+    if (!accountId) return
+    try {
+      const res = await fetch(`${API_BASE}/api/quick-transfer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, contactId, amount }),
+      })
+      if (!res.ok) return
+      const { userText, aiText, pendingTransfer } = await res.json()
+
+      // 1. 사용자 말풍선
+      setRoomMessages((prev) => ({
+        ...prev,
+        [accountId]: [
+          ...(prev[accountId] || []),
+          { id: 'qt_user_' + Date.now(), role: 'user', text: userText },
+        ],
+      }))
+
+      // 2. AI 말풍선 (300ms 후)
+      await new Promise((r) => setTimeout(r, 300))
+      setRoomMessages((prev) => ({
+        ...prev,
+        [accountId]: [
+          ...(prev[accountId] || []),
+          { id: 'qt_ai_' + Date.now(), role: 'assistant', text: aiText },
+        ],
+      }))
+
+      // 3. TransferCard (300ms 후)
+      await new Promise((r) => setTimeout(r, 300))
+      setRoomMessages((prev) => ({
+        ...prev,
+        [accountId]: [
+          ...(prev[accountId] || []),
+          { id: 'qt_card_' + Date.now(), type: 'transfer_pending', data: pendingTransfer },
+        ],
+      }))
+    } catch (err) {
+      console.error('quick-transfer failed:', err)
+    }
+  }
+
   function startEnrollment(productId) {
     if (enrollNudgeTimeoutRef.current) {
       clearTimeout(enrollNudgeTimeoutRef.current)
@@ -1104,6 +1158,7 @@ export default function App() {
       {screen === 'room' ? (
         <AccountRoom
           account={accountList.find((a) => a.id === activeAccountId)}
+          contacts={contacts}
           transactions={roomTransactions[activeAccountId] || []}
           messages={roomMessages[activeAccountId] || []}
           isLoading={isLoading}
@@ -1118,6 +1173,7 @@ export default function App() {
           onLoadMoreTxs={handleLoadMoreTxs}
           onStartEnrollment={startEnrollment}
           promoIds={new Set(accountList.filter((a) => a.isPromo).map((a) => a.id))}
+          onTransferReady={handleTransferReady}
         />
       ) : (
         <AccountListScreen
