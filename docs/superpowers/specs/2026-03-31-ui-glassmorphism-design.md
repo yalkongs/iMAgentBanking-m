@@ -225,13 +225,24 @@ Ring SVG glow:
 }
 ```
 
+### 금액 정렬 원칙
+
+카드 내 **금액 수치는 항상 우측 정렬**. 레이블(항목명)은 좌측, 금액은 우측으로 배치해 스캔 속도를 높인다.
+
+```
+[항목명 / 설명]          [금액]
+카테고리 바   ────────   82,000원
+```
+
+SpendingCard의 총액, TransferCard의 이체 금액, BalanceCard의 입출금 통계 모두 동일하게 적용.
+
 ### 카드별 accent 처리
 
 | 카드 | Accent |
 |---|---|
-| BalanceCard | 계좌 타입 컬러 dot + 금액 gradient 텍스트 |
-| SpendingCard | 지출 총액 빨간 gradient + 카테고리 컬러 바 |
-| TransferCard | accent green 금액 박스 + confirm 버튼 glow |
+| BalanceCard | 계좌 타입 컬러 dot + 금액 gradient 텍스트 (우측 정렬) |
+| SpendingCard | 지출 총액 우측 정렬 + 카테고리 컬러 바 (금액 우측) |
+| TransferCard | 이체 금액 우측 정렬 + accent green 박스 + confirm 버튼 glow |
 | InsightCard | amber 아이콘 배지 + 수치 highlight span |
 | TransactionAlertCard | 거래 타입별 컬러 (입금 green / 출금 default) |
 | FinancialMomentCard | momentType별 컬러 (급여 green / 카드대금 red / 적금 teal) |
