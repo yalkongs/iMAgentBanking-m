@@ -1057,6 +1057,7 @@ export default function App() {
           txMeta={roomTxMeta[activeAccountId]}
           onLoadMoreTxs={handleLoadMoreTxs}
           onStartEnrollment={startEnrollment}
+          promoIds={new Set(accountList.filter((a) => a.isPromo).map((a) => a.id))}
         />
       ) : (
         <AccountListScreen

@@ -27,10 +27,11 @@ const TYPE_COLORS = {
   savings: '#F59E0B',
 }
 
-export default function ProductPitchCard({ data, onStartEnrollment }) {
+export default function ProductPitchCard({ data, onStartEnrollment, promoIds }) {
   const { product, personal, compare } = data
   const color = TYPE_COLORS[product.type] || '#00C9A7'
   const Icon = TYPE_ICONS[product.type]
+  const isEnrolled = data.productId && promoIds != null && !promoIds.has(data.productId)
 
   return (
     <div className="pitch-card ui-card">
@@ -90,13 +91,24 @@ export default function ProductPitchCard({ data, onStartEnrollment }) {
         <div className="pitch-footnote">{product.earlyWithdrawal}</div>
       )}
 
-      {onStartEnrollment && data.productId && (
-        <button
-          className="pitch-enroll-btn"
-          onClick={() => onStartEnrollment(data.productId)}
-        >
-          가입하기
-        </button>
+      {data.productId && (
+        isEnrolled ? (
+          <div className="pitch-enrolled-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 6L9 17l-5-5"/>
+            </svg>
+            가입 완료
+          </div>
+        ) : (
+          onStartEnrollment && (
+            <button
+              className="pitch-enroll-btn"
+              onClick={() => onStartEnrollment(data.productId)}
+            >
+              가입하기
+            </button>
+          )
+        )
       )}
     </div>
   )

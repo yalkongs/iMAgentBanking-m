@@ -388,6 +388,7 @@ export default function AccountRoom({
   onTransferDone,
   onMarkRead,
   onStartEnrollment,
+  promoIds,
   // 페이지네이션 (TODO-9에서 활성화)
   txMeta,
   onLoadMoreTxs,
@@ -634,6 +635,7 @@ export default function AccountRoom({
                 onClearScope={() => {}}
                 onGuiContextChange={() => {}}
                 onStartEnrollment={onStartEnrollment}
+                promoIds={promoIds}
               />
             </div>
           )

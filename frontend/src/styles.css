@@ -5701,6 +5701,22 @@ input:focus-visible, textarea:focus-visible {
   opacity: 0.88;
 }
 
+.pitch-enrolled-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,201,167,0.3);
+  background: rgba(0,201,167,0.08);
+  color: #00C9A7;
+  font-size: 15px;
+  font-weight: 600;
+}
+
 /* ── EnrollmentModal 컴포넌트 실제 클래스명 매핑 ── */
 
 .enroll-modal-header {
