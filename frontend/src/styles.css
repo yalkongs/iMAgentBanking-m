@@ -5700,3 +5700,173 @@ input:focus-visible, textarea:focus-visible {
 .pitch-enroll-btn:hover {
   opacity: 0.88;
 }
+
+/* ── EnrollmentModal 컴포넌트 실제 클래스명 매핑 ── */
+
+.enroll-modal-header {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.enroll-close-btn {
+  position: absolute;
+  top: -2px;
+  left: 0;
+  background: transparent;
+  border: none;
+  color: rgba(232,234,255,0.45);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.enroll-close-btn:hover {
+  color: rgba(232,234,255,0.8);
+}
+
+/* 버튼: enroll-btn-primary = 전체 너비 주요 액션 버튼 */
+.enroll-btn-primary {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: #00C9A7;
+  color: #0D0F1A;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.enroll-btn-primary:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* 스킵 버튼 */
+.enroll-btn-skip {
+  background: transparent;
+  border: none;
+  color: rgba(232,234,255,0.4);
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px 0;
+  align-self: center;
+  width: 100%;
+  text-align: center;
+}
+
+/* 텍스트 */
+.enroll-step-desc {
+  font-size: 17px;
+  font-weight: 600;
+  color: #E8EAFF;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.enroll-step-hint {
+  font-size: 12px;
+  color: rgba(232,234,255,0.4);
+  margin: 0;
+}
+
+.enroll-step-error {
+  font-size: 12px;
+  color: #FF6B6B;
+  margin: 0;
+}
+
+/* 전화번호 표시 */
+.enroll-phone-display {
+  font-size: 22px;
+  font-weight: 700;
+  color: #00C9A7;
+  letter-spacing: 2px;
+  padding: 12px 0 4px;
+}
+
+/* 인증번호 입력 */
+.enroll-code-input {
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 14px 16px;
+  color: #E8EAFF;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 4px;
+  text-align: center;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.enroll-code-input:focus {
+  border-color: #00C9A7;
+}
+
+.enroll-code-input--error {
+  border-color: #FF6B6B;
+}
+
+/* 금액 입력 */
+.enroll-amount-input {
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #E8EAFF;
+  font-size: 18px;
+  font-weight: 600;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.enroll-amount-input:focus {
+  border-color: #00C9A7;
+}
+
+/* 칩 그룹 */
+.enroll-chip-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 만기 예상액 */
+.enroll-maturity-preview {
+  font-size: 13px;
+  color: rgba(232,234,255,0.55);
+  margin: 0;
+  padding: 8px 12px;
+  background: rgba(0,201,167,0.08);
+  border-radius: 8px;
+}
+
+.enroll-maturity-preview strong {
+  color: #00C9A7;
+}
+
+/* 인증서 로딩 */
+.enroll-cert-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 24px 0;
+  color: rgba(232,234,255,0.55);
+  font-size: 14px;
+}
+
+.enroll-step--cert {
+  align-items: center;
+  padding: 8px 0;
+}
