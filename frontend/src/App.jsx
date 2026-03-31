@@ -210,6 +210,26 @@ export default function App() {
 
   const ENROLL_TOTAL_STEPS = { promo_cma: 3, promo_term_deposit: 4, promo_savings: 3 }
 
+  // 신규 계좌에 AccountLifeCard 표시용 enriched 필드 계산
+  function enrichAccountForLifeCard(acc) {
+    if (acc.type === 'cma') {
+      return { ...acc, accruedInterest: 0, todayInterest: 0 }
+    }
+    if (acc.type === 'term_deposit') {
+      const now = new Date()
+      const open = new Date(acc.openDate || now.toISOString().slice(0, 10))
+      const maturity = new Date(acc.maturityDate)
+      const totalMs = maturity - open
+      const elapsedMs = now - open
+      const progressRatio = totalMs > 0 ? Math.max(0, Math.min(1, elapsedMs / totalMs)) : 0
+      const daysRemaining = Math.max(0, Math.ceil((maturity - now) / 86400000))
+      const expectedInterest = Math.floor(acc.balance * (acc.interestRate / 100) * ((acc.term || 12) / 12))
+      const finalAmount = acc.balance + expectedInterest
+      return { ...acc, progressRatio, daysRemaining, expectedInterest, finalAmount, accruedInterest: 0 }
+    }
+    return null  // savings 등 life card 없는 타입
+  }
+
   // ── 메신저 UI 상태 ──
   const [screen, setScreen] = useState('home')           // 'home' | 'room'
   const [activeAccountId, setActiveAccountId] = useState(null)
@@ -945,11 +965,17 @@ export default function App() {
         return updated
       })
 
-      // Migrate roomTransactions to new account id
+      // Clear promo transactions cache, force fresh fetch for new account
       setRoomTransactions((prev) => {
         const updated = { ...prev }
-        updated[newAccount.id] = prev[productId] || []
         delete updated[productId]
+        delete updated[newAccount.id]
+        return updated
+      })
+      setRoomTxMeta((prev) => {
+        const updated = { ...prev }
+        delete updated[productId]
+        delete updated[newAccount.id]
         return updated
       })
 
@@ -961,9 +987,37 @@ export default function App() {
         productId: null, step: 0, data: {}, isOpen: false, status: 'completed',
       })
 
+      // Fetch fresh transactions for new account (enrollment transfer included)
+      fetch(`${API_BASE}/api/account/${newAccount.id}?sessionId=${sessionId}&page=1&limit=20`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.recentTransactions) {
+            setRoomTransactions((prev) => ({ ...prev, [newAccount.id]: d.recentTransactions }))
+            setRoomTxMeta((prev) => ({
+              ...prev,
+              [newAccount.id]: { page: 1, hasMore: d.pagination?.hasMore ?? false, isLoadingMore: false },
+            }))
+          }
+        })
+        .catch(() => {})
+
       // Inject completion message after a brief delay
       await new Promise((r) => setTimeout(r, 400))
       injectAiMessage(newAccount.id, msgs.complete)
+
+      // Inject AccountLifeCard as final chat message
+      await new Promise((r) => setTimeout(r, 600))
+      const enriched = enrichAccountForLifeCard(newAccount)
+      if (enriched) {
+        setRoomMessages((prev) => ({
+          ...prev,
+          [newAccount.id]: [...(prev[newAccount.id] || []), {
+            id: 'life_card_' + Date.now(),
+            type: 'account_life_card',
+            data: enriched,
+          }],
+        }))
+      }
 
     } catch (err) {
       console.error('Enroll failed:', err)

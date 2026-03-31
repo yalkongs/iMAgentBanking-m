@@ -624,6 +624,14 @@ export default function AccountRoom({
             )
           }
 
+          if (msg.type === 'account_life_card') {
+            return (
+              <div key={msg.id} className="room-card-wrapper">
+                <AccountLifeCard account={msg.data} />
+              </div>
+            )
+          }
+
           return (
             <div key={msg.id} className="room-card-wrapper">
               <Message
