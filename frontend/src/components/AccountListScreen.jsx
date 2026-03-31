@@ -274,6 +274,7 @@ export default function AccountListScreen({
               const BANKING_TYPES = new Set(['checking', 'debit_card', 'credit_card'])
               const items = []
               let lastSection = null
+              let animIdx = 0
 
               accounts.forEach((acc, idx) => {
                 // showPromoRooms가 false이면 프로모 계좌는 목록에서 숨김 (콜드스타트)
@@ -282,8 +283,9 @@ export default function AccountListScreen({
                 const section = BANKING_TYPES.has(acc.type) ? 'banking' : 'savings'
                 if (section !== lastSection) {
                   lastSection = section
+                  const sIdx = animIdx++
                   items.push(
-                    <div key={`section-${section}`} className="account-section-label">
+                    <div key={`section-${section}`} className={`account-section-label${shouldAnimate ? ' list-item-animated' : ''}`} style={shouldAnimate ? { animationDelay: `${sIdx * 45}ms` } : undefined}>
                       {section === 'banking' ? '입출금 · 카드' : '저축 · 투자'}
                     </div>
                   )
@@ -293,10 +295,12 @@ export default function AccountListScreen({
                 const last = acc.lastTransaction
                 const isPromo = acc.isPromo === true
 
+                const bIdx = animIdx++
                 items.push(
                   <button
                     key={acc.id}
-                    className={`account-list-item${isPromo ? ' account-list-item--promo' : ''}`}
+                    className={`account-list-item${isPromo ? ' account-list-item--promo' : ''}${shouldAnimate ? ' list-item-animated' : ''}`}
+                    style={shouldAnimate ? { animationDelay: `${bIdx * 45}ms` } : undefined}
                     onClick={() => onEnterRoom(acc.id)}
                   >
                     <div
@@ -352,11 +356,12 @@ export default function AccountListScreen({
 
                 if (isLastOwnedSavings && productHints.length > 0) {
                   const hint = productHints[0]
+                  const hIdx = animIdx++
                   items.push(
                     <button
                       key="product-hint"
-                      className="product-hint-card"
-                      style={{ borderColor: hint.accentColor + '26', backgroundColor: hint.accentColor + '0D' }}
+                      className={`product-hint-card${shouldAnimate ? ' list-item-animated' : ''}`}
+                      style={{ borderColor: hint.accentColor + '26', backgroundColor: hint.accentColor + '0D', ...(shouldAnimate ? { animationDelay: `${hIdx * 45}ms` } : {}) }}
                       onClick={() => onEnterRoom(hint.promoAccountId)}
                     >
                       <span className="product-hint-dot" style={{ background: hint.accentColor, boxShadow: `0 0 5px ${hint.accentColor}` }} />
