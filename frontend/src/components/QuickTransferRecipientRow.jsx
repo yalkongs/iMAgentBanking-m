@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function QuickTransferRecipientRow({
   contact,
@@ -37,10 +37,18 @@ export default function QuickTransferRecipientRow({
     onExpand()
   }
 
+  useEffect(() => {
+    if (!isExpanded) {
+      setSelectedAmount(frequentAmount || recentAmount || null)
+      setDirectInput('')
+      setShowDirect(false)
+    }
+  }, [isExpanded, frequentAmount, recentAmount])
+
   return (
     <div className={`qtp-row${isExpanded ? ' qtp-row--expanded' : ''}`}>
       {/* 행 헤더 (항상 표시) */}
-      <div className="qtp-row-main" onClick={handleRowClick} role="button" tabIndex={0}>
+      <button className="qtp-row-main" type="button" onClick={handleRowClick}>
         <div className="qtp-row-info">
           <span className="qtp-row-name">{contact.realName}</span>
           <span className="qtp-row-bank">{contact.bank}</span>
@@ -57,7 +65,7 @@ export default function QuickTransferRecipientRow({
         >
           <polyline points="6 9 12 15 18 9"/>
         </svg>
-      </div>
+      </button>
 
       {/* 인라인 확장 영역 */}
       {isExpanded && (
@@ -69,7 +77,7 @@ export default function QuickTransferRecipientRow({
           <div className="qtp-chips">
             {chips.map((c) => (
               <button
-                key={c.value}
+                key={`${c.sub}-${c.value}`}
                 className={`qtp-chip${selectedAmount === c.value && !showDirect ? ' qtp-chip--active' : ''}`}
                 onClick={() => { setSelectedAmount(c.value); setShowDirect(false) }}
               >
