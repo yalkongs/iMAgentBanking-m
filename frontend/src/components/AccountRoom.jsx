@@ -637,7 +637,7 @@ export default function AccountRoom({
           )
         })}
 
-        {isLoading && (
+        {isLoading && !messages.some(m => m.streaming) && (
           <div className="ai-bubble ai-bubble--typing">
             <div className="ai-bubble-icon">
               <img src="/imbank-mark.png" alt="iM" />
