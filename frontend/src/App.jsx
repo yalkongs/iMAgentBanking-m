@@ -457,32 +457,14 @@ export default function App() {
         )
         return { ...prev, [targetAccountId]: [...cleaned, { id: msgId, type: 'transfer_pending', data: event.data }] }
       })
-    // #8 TRANSFER_COMPLETE/CANCELLED/FAILED: onTransferDone 콜백에서 처리하므로 WS는 무시
-    // (WS가 먼저 올 경우에 대비해 onTransferDone이 호출 안 된 경우만 처리)
-    } else if (event.type === 'TRANSFER_COMPLETE') {
-      // onTransferDone이 이미 호출됐으면 pendingTransferAccountIdRef가 null
-      // null이 아니면 WS로만 온 경우 (드문 엣지케이스) — 여기서도 처리
-      const aid = pendingTransferAccountIdRef.current
-      if (aid) {
-        pendingTransferAccountIdRef.current = null
-        const r = event.data
-        setRoomMessages((prev) => ({
-          ...prev,
-          [aid]: [...(prev[aid] || []), { id: 'tr_done_' + Date.now(), type: 'transfer_receipt', data: r }],
-        }))
-        setLastCardType('transfer_receipt')
-      }
-    } else if (event.type === 'TRANSFER_CANCELLED') {
-      pendingTransferAccountIdRef.current = null
-    } else if (event.type === 'TRANSFER_FAILED') {
-      const aid = pendingTransferAccountIdRef.current
-      if (aid) {
-        pendingTransferAccountIdRef.current = null
-        setRoomMessages((prev) => ({
-          ...prev,
-          [aid]: [...(prev[aid] || []), { id: 'tr_fail_' + Date.now(), type: 'transfer_result', success: false, text: `이체 실패: ${event.error}` }],
-        }))
-      }
+    // TRANSFER_COMPLETE/CANCELLED: handleTransferDone(REST 응답)에서 처리 — WS는 무시
+    // TRANSFER_FAILED: 서버측 오류는 TransferCard 인라인 에러로 표시되므로 WS도 무시
+    } else if (
+      event.type === 'TRANSFER_COMPLETE' ||
+      event.type === 'TRANSFER_CANCELLED' ||
+      event.type === 'TRANSFER_FAILED'
+    ) {
+      // no-op: handleTransferDone 콜백이 REST 응답으로 처리
     } else if (event.type === 'TRANSACTION_ALERT') {
       const data = event.data
       const inMatchingRoom =
@@ -1009,11 +991,17 @@ export default function App() {
     }
   }
 
-  // #8 WS 없이도 영수증/결과 메시지 처리
+  // #8 WS 없이 REST 응답으로 영수증/결과 처리
   // #3 금액 미입력 취소: 조용히 사라짐 / 금액 입력 후 취소: 메시지 표시
   function handleTransferDone(confirmed, json, meta) {
     const accountId = pendingTransferAccountIdRef.current || activeAccountId
     pendingTransferAccountIdRef.current = null
+
+    // transfer_pending 카드를 roomMessages에서 제거 (hasPendingTransfer 해제)
+    setRoomMessages((prev) => ({
+      ...prev,
+      [accountId]: (prev[accountId] || []).filter((m) => m.type !== 'transfer_pending'),
+    }))
 
     if (!confirmed) {
       if (meta?.hadAmount) {
@@ -1029,7 +1017,7 @@ export default function App() {
       return
     }
 
-    // 이체 성공: REST 응답으로 바로 영수증 주입 (WS fallback 중복 방지용 flag는 WS 핸들러의 ref로 관리)
+    // 이체 성공: REST 응답으로 바로 영수증 주입
     if (json.success && json.result) {
       setRoomMessages((prev) => ({
         ...prev,
@@ -1039,7 +1027,6 @@ export default function App() {
         ],
       }))
       setLastCardType('transfer_receipt')
-      // 잔액 갱신
       fetchAccountList()
     }
   }
