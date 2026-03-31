@@ -233,6 +233,7 @@ export default function App() {
   const messagesContainerRef = useRef(null)
   const textareaRef = useRef(null)
   const enrollNudgeTimeoutRef = useRef(null)
+  const enrollStepInFlightRef = useRef(false)
   const streamingIdRef = useRef(null)
   const prevMsgCountRef = useRef(0)
   // GUI 드릴-다운에서 발생한 메시지를 scope별로 제거하기 위한 ref
@@ -301,6 +302,9 @@ export default function App() {
 
   useEffect(() => () => txNotifTimersRef.current.forEach(clearTimeout), [])
   useEffect(() => () => momentNotifTimersRef.current.forEach(clearTimeout), [])
+  useEffect(() => () => {
+    if (enrollNudgeTimeoutRef.current) clearTimeout(enrollNudgeTimeoutRef.current)
+  }, [])
 
   // visualViewport → CSS 변수 동기화
   // resize: Android Chrome 키보드 (viewport 높이 변화)
@@ -879,38 +883,44 @@ export default function App() {
   }
 
   async function handleEnrollStep(stepData) {
+    if (enrollStepInFlightRef.current) return
+    enrollStepInFlightRef.current = true
+
     const { productId, step } = enrollmentState
     const msgs = ENROLL_MESSAGES[productId]
     const totalSteps = ENROLL_TOTAL_STEPS[productId] || 3
 
-    // Merge step data
-    const newData = { ...enrollmentState.data, ...stepData }
+    try {
+      // Merge step data
+      const newData = { ...enrollmentState.data, ...stepData }
 
-    // Close modal first
-    setEnrollmentState((prev) => ({ ...prev, isOpen: false, data: newData }))
+      // Close modal first
+      setEnrollmentState((prev) => ({ ...prev, isOpen: false, data: newData }))
 
-    // Determine AI message for this step
-    let aiText = null
-    if (step === 1) aiText = msgs.afterPhone
-    else if (step === 2) aiText = msgs.afterSms
-    else if (step === 3 && productId === 'promo_term_deposit') aiText = msgs.afterTerm
+      // Determine AI message for this step
+      let aiText = null
+      if (step === 1) aiText = msgs.afterPhone
+      else if (step === 2) aiText = msgs.afterSms
+      else if (step === 3 && productId === 'promo_term_deposit') aiText = msgs.afterTerm
 
-    if (aiText && activeAccountId) {
-      await new Promise((r) => setTimeout(r, 500))
-      injectAiMessage(activeAccountId, aiText)
-      await new Promise((r) => setTimeout(r, 1200))
-    }
+      if (aiText && activeAccountId) {
+        await new Promise((r) => setTimeout(r, 500))
+        injectAiMessage(activeAccountId, aiText)
+        await new Promise((r) => setTimeout(r, 1200))
+      }
 
-    const nextStep = step + 1
-    if (nextStep > totalSteps) {
-      handleEnrollComplete(newData)
-    } else {
-      setEnrollmentState((prev) => ({ ...prev, step: nextStep, isOpen: true }))
+      const nextStep = step + 1
+      if (nextStep > totalSteps) {
+        handleEnrollComplete(newData, productId)
+      } else {
+        setEnrollmentState((prev) => ({ ...prev, step: nextStep, isOpen: true }))
+      }
+    } finally {
+      enrollStepInFlightRef.current = false
     }
   }
 
-  async function handleEnrollComplete(data) {
-    const { productId } = enrollmentState
+  async function handleEnrollComplete(data, productId) {
     const msgs = ENROLL_MESSAGES[productId]
 
     try {
@@ -997,6 +1007,11 @@ export default function App() {
     setLastCardType(null)
     setIsAccountsLoading(true)
     if (window.speechSynthesis) window.speechSynthesis.cancel()
+    if (enrollNudgeTimeoutRef.current) {
+      clearTimeout(enrollNudgeTimeoutRef.current)
+      enrollNudgeTimeoutRef.current = null
+    }
+    setEnrollmentState({ productId: null, step: 0, data: {}, isOpen: false, status: 'idle' })
     showOnboardingAgain()
     fetchAccountList()
   }
