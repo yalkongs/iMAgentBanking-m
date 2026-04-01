@@ -222,9 +222,15 @@ export default function App() {
       complete: '신용카드 신청이 완료됐어요. 심사 결과는 영업일 기준 3-5일 내 문자로 안내드립니다.',
       nudge: '신용카드 신청 중이었어요. 2분이면 완료돼요, 이어서 할까요?',
     },
+    partner_hyundai: {
+      afterPhone: '인증번호 보냈어요.',
+      afterSms: '본인 확인 완료됐어요! 마지막으로 소득 정보만 입력해주세요.',
+      complete: '현대카드 × iM뱅크 신청이 접수됐어요. 심사 결과는 영업일 기준 3-5일 내 문자로 안내드립니다.',
+      nudge: '현대카드 신청 중이었어요. 2분이면 완료돼요, 이어서 할까요?',
+    },
   }
 
-  const ENROLL_TOTAL_STEPS = { promo_cma: 3, promo_term_deposit: 4, promo_savings: 3, acc007: 3 }
+  const ENROLL_TOTAL_STEPS = { promo_cma: 3, promo_term_deposit: 4, promo_savings: 3, acc007: 3, partner_hyundai: 3 }
 
   // 신규 계좌에 AccountLifeCard 표시용 enriched 필드 계산
   function enrichAccountForLifeCard(acc) {
@@ -1191,7 +1197,7 @@ export default function App() {
       data: {},
       isOpen: true,
       status: 'in_progress',
-      sourceRoomId: activeAccountId, // 가입 시작 시점의 방 ID 기억
+      sourceRoomId: null,
     })
   }
 
@@ -1235,10 +1241,20 @@ export default function App() {
 
   async function handleEnrollComplete(data, productId) {
     const msgs = ENROLL_MESSAGES[productId]
-    const sourceRoomId = enrollmentState.sourceRoomId
-    // 파트너 방(partner_hyundai)에서 가입을 시작한 경우: productId와 sourceRoomId가 다름
-    const fromPartnerRoom = sourceRoomId && sourceRoomId !== productId
 
+    // ── partner_hyundai 전용 흐름: 백엔드 없이 mock 처리 ──────────────────
+    if (productId === 'partner_hyundai') {
+      // 파트너 프로모 아이템을 "발급 대기 중" 상태로 전환 (자리 유지)
+      setAccountList((prev) => prev.map((a) =>
+        a.id === 'partner_hyundai' ? { ...a, applicationStatus: 'pending' } : a
+      ))
+      setEnrollmentState({ productId: null, step: 0, data: {}, isOpen: false, status: 'completed', sourceRoomId: null })
+      await new Promise((r) => setTimeout(r, 400))
+      injectAiMessage('partner_hyundai', msgs.complete)
+      return
+    }
+
+    // ── 일반 가입 흐름 (acc007, promo_* 등) ───────────────────────────────
     try {
       const res = await fetch(`${API_BASE}/api/enroll`, {
         method: 'POST',
@@ -1279,56 +1295,42 @@ export default function App() {
         return updated
       })
 
-      if (fromPartnerRoom) {
-        // 파트너 방에서 신청한 경우: 파트너 방에 그대로 머무름 (activeAccountId 변경 안 함)
-      } else {
-        // 일반 가입: 새 계좌 방으로 이동
-        setActiveAccountId(newAccount.id)
-      }
+      // 새 계좌 방으로 이동
+      setActiveAccountId(newAccount.id)
 
       // Mark enrollment complete
       setEnrollmentState({
-        productId: null, step: 0, data: {}, isOpen: false, status: 'completed',
+        productId: null, step: 0, data: {}, isOpen: false, status: 'completed', sourceRoomId: null,
       })
 
-      if (fromPartnerRoom) {
-        // 파트너 방 흐름: 파트너 방에 신청 완료/처리 중 메시지 주입
-        await new Promise((r) => setTimeout(r, 400))
-        injectAiMessage(sourceRoomId,
-          '현대카드 × iM뱅크 신용카드 신청이 접수되었습니다.\n\n심사 결과는 영업일 기준 3-5일 이내에 등록된 연락처로 안내드립니다. 카드가 발급되면 계좌 목록에 자동으로 추가돼요.'
-        )
-      } else {
-        // 일반 가입 흐름: 새 계좌 거래내역 조회 및 메시지 주입
-        fetch(`${API_BASE}/api/account/${newAccount.id}?sessionId=${sessionId}&page=1&limit=20`)
-          .then((r) => r.json())
-          .then((d) => {
-            if (d.recentTransactions) {
-              setRoomTransactions((prev) => ({ ...prev, [newAccount.id]: d.recentTransactions }))
-              setRoomTxMeta((prev) => ({
-                ...prev,
-                [newAccount.id]: { page: 1, hasMore: d.pagination?.hasMore ?? false, isLoadingMore: false },
-              }))
-            }
-          })
-          .catch(() => {})
+      // 새 계좌 거래내역 조회 및 메시지 주입
+      fetch(`${API_BASE}/api/account/${newAccount.id}?sessionId=${sessionId}&page=1&limit=20`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.recentTransactions) {
+            setRoomTransactions((prev) => ({ ...prev, [newAccount.id]: d.recentTransactions }))
+            setRoomTxMeta((prev) => ({
+              ...prev,
+              [newAccount.id]: { page: 1, hasMore: d.pagination?.hasMore ?? false, isLoadingMore: false },
+            }))
+          }
+        })
+        .catch(() => {})
 
-        // Inject completion message after a brief delay
-        await new Promise((r) => setTimeout(r, 400))
-        injectAiMessage(newAccount.id, msgs.complete)
+      await new Promise((r) => setTimeout(r, 400))
+      injectAiMessage(newAccount.id, msgs.complete)
 
-        // Inject AccountLifeCard as final chat message
-        await new Promise((r) => setTimeout(r, 600))
-        const enriched = enrichAccountForLifeCard(newAccount)
-        if (enriched) {
-          setRoomMessages((prev) => ({
-            ...prev,
-            [newAccount.id]: [...(prev[newAccount.id] || []), {
-              id: 'life_card_' + Date.now(),
-              type: 'account_life_card',
-              data: enriched,
-            }],
-          }))
-        }
+      await new Promise((r) => setTimeout(r, 600))
+      const enriched = enrichAccountForLifeCard(newAccount)
+      if (enriched) {
+        setRoomMessages((prev) => ({
+          ...prev,
+          [newAccount.id]: [...(prev[newAccount.id] || []), {
+            id: 'life_card_' + Date.now(),
+            type: 'account_life_card',
+            data: enriched,
+          }],
+        }))
       }
 
     } catch (err) {

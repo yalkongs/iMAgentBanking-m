@@ -441,7 +441,9 @@ export default function AccountListScreen({
                             <span className="typing-dots inline" aria-label="AI 응답 중">
                               <span /><span /><span />
                             </span>
-                          ) : isPartnerPromo
+                          ) : isPartnerPromo && acc.applicationStatus === 'pending'
+                            ? '심사 중 · 영업일 3~5일 소요'
+                            : isPartnerPromo
                             ? (acc.promoHook || 'iM뱅크 × 현대카드 제휴 혜택')
                             : isPromo
                             ? (acc.promoHook || cfg.label)
@@ -478,7 +480,12 @@ export default function AccountListScreen({
                       </div>
                     ) : (
                       <div className="unread-badge-slot">
-                        {unread > 0 && <div className="unread-badge">{unread}</div>}
+                        {isPartnerPromo && acc.applicationStatus === 'pending'
+                          ? <div className="partner-pending-badge">발급 대기</div>
+                          : unread > 0
+                            ? <div className="unread-badge">{unread}</div>
+                            : null
+                        }
                       </div>
                     )}
                   </button>

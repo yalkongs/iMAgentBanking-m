@@ -316,6 +316,7 @@ const TOTAL_STEPS = {
   promo_term_deposit: 4,
   promo_savings: 3,
   acc007: 3,
+  partner_hyundai: 3,
 }
 
 export default function EnrollmentModal({ state, accounts, onStepComplete, onDismiss, isClosing }) {
@@ -331,7 +332,7 @@ export default function EnrollmentModal({ state, accounts, onStepComplete, onDis
     if (step === 2) return <SmsVerifyStep onComplete={onStepComplete} />
 
     // Step 3: 상품별 분기
-    if (step === 3 && productId === 'acc007') {
+    if (step === 3 && (productId === 'acc007' || productId === 'partner_hyundai')) {
       return <IncomeStep onComplete={onStepComplete} />
     }
     if (step === 3 && productId === 'promo_term_deposit') {

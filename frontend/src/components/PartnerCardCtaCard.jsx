@@ -35,7 +35,7 @@ export default function PartnerCardCtaCard({ data, onStartEnrollment }) {
       </ul>
       <button
         className="partner-cta-btn"
-        onClick={() => onStartEnrollment?.('acc007')}
+        onClick={() => onStartEnrollment?.('partner_hyundai')}
       >
         카드 신청하기
       </button>
