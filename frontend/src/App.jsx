@@ -967,13 +967,32 @@ export default function App() {
               id: 'partner_greeting_' + Date.now(),
               role: 'assistant',
               type: 'text',
-              text: 'iM뱅크 고객을 위해 현대카드와 함께 특별 혜택을 준비했습니다.\n\n국내외 최대 1.5% 캐시백, 스타벅스·편의점 10% 즉시 할인, 첫 해 연회비 무료 혜택을 제공합니다.',
+              text: 'iM뱅크 고객을 위해 현대카드와 함께 특별히 준비한 제휴 카드입니다.\n일상 소비 전반에서 혜택을 드리는 특판 상품으로, iM뱅크 앱에서만 신청 가능합니다.',
             },
             {
               id: 'partner_card_' + Date.now(),
               type: 'ui_card',
-              cardType: 'partner_card_cta',
-              data: { title: 'iM뱅크 고객 전용 현대카드' },
+              cardType: 'product_pitch',
+              data: {
+                productId: 'partner_hyundai',
+                product: {
+                  name: '현대카드 × iM뱅크 Special Edition',
+                  annualFee: 0,
+                  benefits: [
+                    { category: '국내외 가맹점', rate: '최대 1.5% 캐시백' },
+                    { category: '스타벅스·편의점', rate: '10% 즉시 할인' },
+                    { category: 'iM뱅크 자동이체', rate: '+0.5% 추가 캐시백' },
+                    { category: '해외 결제', rate: '환전 수수료 면제' },
+                  ],
+                  highlights: [
+                    '첫 해 연회비 무료 (이후 연 15,000원)',
+                    'iM뱅크 앱 전용 특판 — 일반 신청 불가',
+                    '발급 즉시 iM뱅크 계좌 자동 연결',
+                  ],
+                  conditions: '신청 대상: iM뱅크 앱 가입 고객 (연소득 1,200만원 이상)',
+                  tags: ['iM뱅크 전용', '현대카드', '캐시백', '특판'],
+                },
+              },
             },
           ],
         }))
@@ -1465,7 +1484,7 @@ export default function App() {
             txMeta={roomTxMeta[activeAccountId]}
             onLoadMoreTxs={handleLoadMoreTxs}
             onStartEnrollment={startEnrollment}
-            promoIds={new Set(accountList.filter((a) => a.isPromo).map((a) => a.id))}
+            promoIds={new Set(accountList.filter((a) => a.isPromo || (a.type === 'partner_promo' && !a.applicationStatus)).map((a) => a.id))}
             onTransferReady={handleTransferReady}
           />
         </div>
