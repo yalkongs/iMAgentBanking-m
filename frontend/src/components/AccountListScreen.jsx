@@ -428,7 +428,7 @@ export default function AccountListScreen({
                           )}
                         </span>
                         <span className="account-list-balance">
-                          {acc.isPromo ? null : acc.applicationStatus === 'pending' ? null : (
+                          {acc.isPromo || isPartnerPromo || acc.applicationStatus === 'pending' ? null : (
                             <BalanceDisplay value={acc.balance} animate={true} />
                           )}
                         </span>
