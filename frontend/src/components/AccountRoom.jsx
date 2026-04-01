@@ -668,7 +668,7 @@ export default function AccountRoom({
               <span className="card-pending-lamp-ring" />
             </div>
             <div className="card-pending-content">
-              <div className="card-pending-title">카드 심사가 진행 중이에요</div>
+              <div className="card-pending-title">{account.name} 심사가 진행 중이에요</div>
               <div className="card-pending-sub">
                 심사 결과는 영업일 기준 3~5일 내 문자로 안내드려요.<br />
                 신청일 {account.applicationDate?.replace(/-/g, '.')}

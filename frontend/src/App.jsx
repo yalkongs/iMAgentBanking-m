@@ -1246,7 +1246,9 @@ export default function App() {
     if (productId === 'partner_hyundai') {
       // 파트너 프로모 아이템을 "발급 대기 중" 상태로 전환 (자리 유지)
       setAccountList((prev) => prev.map((a) =>
-        a.id === 'partner_hyundai' ? { ...a, applicationStatus: 'pending' } : a
+        a.id === 'partner_hyundai'
+          ? { ...a, applicationStatus: 'pending', applicationDate: new Date().toISOString().slice(0, 10) }
+          : a
       ))
       setEnrollmentState({ productId: null, step: 0, data: {}, isOpen: false, status: 'completed', sourceRoomId: null })
       await new Promise((r) => setTimeout(r, 400))
