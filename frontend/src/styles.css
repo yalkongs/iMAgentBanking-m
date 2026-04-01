@@ -94,6 +94,31 @@ input:focus-visible, textarea:focus-visible {
 /* ──────────────────────────────────────────────
    App Layout
    ────────────────────────────────────────────── */
+/* ── 화면 슬라이드 전환 ───────────────────────── */
+.screen-stack {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.screen-panel {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  background: var(--bg-primary);
+}
+
+/* 기본(홈): 홈 중앙, 방 오른쪽 대기 */
+.screen-panel--home { transform: translateX(0); z-index: 1; }
+.screen-panel--room { transform: translateX(100%); z-index: 2; }
+
+/* 방 화면: 홈 왼쪽으로 물러남(패럴렉스), 방 중앙 */
+.screen-stack--room .screen-panel--home { transform: translateX(-28%); }
+.screen-stack--room .screen-panel--room { transform: translateX(0); }
+
 .app {
   display: flex;
   flex-direction: column;
@@ -1181,6 +1206,7 @@ input:focus-visible, textarea:focus-visible {
   overflow: hidden;
   box-shadow: var(--glass-shadow), var(--glass-inset);
   position: relative;
+  animation: card-enter 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .ui-card::before {
@@ -4025,8 +4051,17 @@ input:focus-visible, textarea:focus-visible {
 }
 
 /* Timeline */
-.room-timeline {
+/* ── 탭 패널 컨테이너 ─────────────────────────── */
+.room-panels-wrap {
   flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.room-timeline {
+  position: absolute;
+  inset: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
@@ -4034,6 +4069,20 @@ input:focus-visible, textarea:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  /* 탭 전환 페이드 */
+  transition: opacity 0.22s ease, visibility 0.22s ease;
+}
+
+.room-timeline.tab-active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.room-timeline.tab-inactive {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .date-separator {
@@ -4105,12 +4154,27 @@ input:focus-visible, textarea:focus-visible {
 }
 
 /* AI 버블 (좌측 정렬) */
+/* ── 메시지/카드 등장 애니메이션 ───────────────── */
+@keyframes msg-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes msg-enter-user {
+  from { opacity: 0; transform: translateX(10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .ai-bubble {
   display: flex;
   align-items: flex-start;
   gap: 8px;
   align-self: flex-start;
   max-width: 88%;
+  animation: msg-enter 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .ai-bubble-icon {
@@ -4165,6 +4229,7 @@ input:focus-visible, textarea:focus-visible {
 .account-room .message.user {
   display: flex;
   justify-content: flex-end;
+  animation: msg-enter-user 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .account-room .message.user .message-bubble {
@@ -5603,6 +5668,12 @@ input:focus-visible, textarea:focus-visible {
   align-items: flex-end;
   justify-content: center;
   z-index: 300;
+  animation: overlay-fade-in 0.22s ease both;
+}
+
+@keyframes overlay-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .enroll-modal {
@@ -5613,6 +5684,12 @@ input:focus-visible, textarea:focus-visible {
   max-width: 480px;
   max-height: calc(var(--vvh, 100dvh) * 0.85);
   overflow-y: auto;
+  animation: modal-slide-up 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes modal-slide-up {
+  from { transform: translateY(100%); opacity: 0.5; }
+  to   { transform: translateY(0); opacity: 1; }
 }
 
 .enroll-dots {

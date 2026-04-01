@@ -589,13 +589,15 @@ export default function AccountRoom({
         </button>
       </div>
 
+      {/* 탭 패널 컨테이너 */}
+      <div className="room-panels-wrap">
+
       {/* 대화 탭 패널 */}
       <div
         id="panel-chat"
         role="tabpanel"
-        className="room-timeline"
+        className={`room-timeline${activeTab === 'chat' ? ' tab-active' : ' tab-inactive'}`}
         ref={chatContainerRef}
-        style={{ display: activeTab === 'chat' ? 'flex' : 'none' }}
       >
         {account?.isPromo && (() => {
           const PROMO_BANNER = {
@@ -758,9 +760,8 @@ export default function AccountRoom({
       <div
         id="panel-txlist"
         role="tabpanel"
-        className="room-timeline room-txlist"
+        className={`room-timeline room-txlist${activeTab === 'txlist' ? ' tab-active' : ' tab-inactive'}`}
         ref={txContainerRef}
-        style={{ display: activeTab === 'txlist' ? 'flex' : 'none' }}
       >
         {account?.isPromo && account?.type === 'credit_card' ? (
           <div className="txlist-promo">
@@ -906,6 +907,8 @@ export default function AccountRoom({
           </>
         )}
       </div>
+
+      </div>{/* /room-panels-wrap */}
 
       {/* 빠른 송금 패널 — 주계좌 + 대화 탭에서만 표시 */}
       {activeTab === 'chat' && account?.type === 'checking' && (

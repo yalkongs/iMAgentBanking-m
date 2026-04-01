@@ -945,10 +945,10 @@ export default function App() {
 
   function exitRoom() {
     currentGuiContextRef.current = null
-    setActiveAccountId(null)
     setScreen('home')
-    // 방 퇴장 시 계좌 목록 갱신 (잔액 변동 반영)
     fetchAccountList()
+    // 슬라이드 아웃 애니메이션(320ms)이 끝난 후 activeAccountId 클리어
+    setTimeout(() => setActiveAccountId(null), 350)
   }
 
   // 거래내역 다음 페이지 로드
@@ -1321,42 +1321,45 @@ export default function App() {
     <div className="app">
       <AnimatedBackground />
 
-      {screen === 'room' ? (
-        <AccountRoom
-          account={accountList.find((a) => a.id === activeAccountId)}
-          contacts={contacts}
-          transactions={roomTransactions[activeAccountId] || []}
-          messages={roomMessages[activeAccountId] || []}
-          isLoading={isLoading}
-          isLoadingTxs={roomTransactions[activeAccountId] === undefined}
-          sessionId={sessionId}
-          voiceMode={voiceMode}
-          onBack={exitRoom}
-          onSendMessage={(text) => sendMessage(text)}
-          onTransferDone={handleTransferDone}
-          onMarkRead={() => setUnreadCounts((prev) => ({ ...prev, [activeAccountId]: 0 }))}
-          txMeta={roomTxMeta[activeAccountId]}
-          onLoadMoreTxs={handleLoadMoreTxs}
-          onStartEnrollment={startEnrollment}
-          promoIds={new Set(accountList.filter((a) => a.isPromo).map((a) => a.id))}
-          onTransferReady={handleTransferReady}
-        />
-      ) : (
-        <AccountListScreen
-          accounts={accountList}
-          unreadCounts={unreadCounts}
-          typingAccountIds={typingAccountIds}
-          isLoading={isAccountsLoading}
-          ttsEnabled={ttsEnabled}
-          onEnterRoom={enterRoom}
-          onTtsToggle={() => setTtsEnabled((t) => !t)}
-          onReset={handleResetAll}
-          onShowOnboarding={showOnboardingAgain}
-          onProductSuggest={handleProductSuggest}
-          onReorder={handleAccountReorder}
-          onLogoTap={handleLogoTap}
-        />
-      )}
+      <div className={`screen-stack${screen === 'room' ? ' screen-stack--room' : ''}`}>
+        <div className="screen-panel screen-panel--home">
+          <AccountListScreen
+            accounts={accountList}
+            unreadCounts={unreadCounts}
+            typingAccountIds={typingAccountIds}
+            isLoading={isAccountsLoading}
+            ttsEnabled={ttsEnabled}
+            onEnterRoom={enterRoom}
+            onTtsToggle={() => setTtsEnabled((t) => !t)}
+            onReset={handleResetAll}
+            onShowOnboarding={showOnboardingAgain}
+            onProductSuggest={handleProductSuggest}
+            onReorder={handleAccountReorder}
+            onLogoTap={handleLogoTap}
+          />
+        </div>
+        <div className="screen-panel screen-panel--room">
+          <AccountRoom
+            account={accountList.find((a) => a.id === activeAccountId)}
+            contacts={contacts}
+            transactions={roomTransactions[activeAccountId] || []}
+            messages={roomMessages[activeAccountId] || []}
+            isLoading={isLoading}
+            isLoadingTxs={roomTransactions[activeAccountId] === undefined}
+            sessionId={sessionId}
+            voiceMode={voiceMode}
+            onBack={exitRoom}
+            onSendMessage={(text) => sendMessage(text)}
+            onTransferDone={handleTransferDone}
+            onMarkRead={() => setUnreadCounts((prev) => ({ ...prev, [activeAccountId]: 0 }))}
+            txMeta={roomTxMeta[activeAccountId]}
+            onLoadMoreTxs={handleLoadMoreTxs}
+            onStartEnrollment={startEnrollment}
+            promoIds={new Set(accountList.filter((a) => a.isPromo).map((a) => a.id))}
+            onTransferReady={handleTransferReady}
+          />
+        </div>
+      </div>
 
       {/* 입출금 알림 오버레이 */}
       {txNotif && (
