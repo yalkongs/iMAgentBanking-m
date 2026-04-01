@@ -6730,3 +6730,15 @@ input:focus-visible, textarea:focus-visible {
 .account-list-item--sorting {
   border-color: rgba(0,201,167,0.3);
 }
+
+/* Living Accounts: AI 타이핑 중 계좌 강조 */
+.account-list-item--typing {
+  border-color: rgba(0,201,167,0.4);
+  background: rgba(0,201,167,0.04);
+}
+
+.account-list-item--typing .account-list-preview {
+  display: flex;
+  align-items: center;
+  height: 16px;
+}

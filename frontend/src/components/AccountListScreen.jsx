@@ -195,6 +195,7 @@ function BalanceDisplay({ value, animate, prefix, suffix }) {
 export default function AccountListScreen({
   accounts,
   unreadCounts,
+  typingAccountIds,
   isLoading,
   ttsEnabled,
   onEnterRoom,
@@ -203,6 +204,7 @@ export default function AccountListScreen({
   onShowOnboarding,
   onProductSuggest,
   onReorder,
+  onLogoTap,
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [sortMode, setSortMode] = useState(false)
@@ -277,7 +279,7 @@ export default function AccountListScreen({
       <div className="account-list-header">
         <button
           className="account-list-title-btn"
-          onClick={() => onShowOnboarding?.()}
+          onClick={() => { onLogoTap?.(); onShowOnboarding?.() }}
           aria-label="앱 소개 보기"
         >
           iM뱅크
@@ -345,6 +347,7 @@ export default function AccountListScreen({
                 const last = acc.lastTransaction
                 const isPromo = acc.isPromo === true
                 const canSort = sortMode && !isPromo
+                const isTyping = !!(typingAccountIds?.has(acc.id))
 
                 // 섹션 내 위치 계산 (↑↓ 버튼 disabled 조건)
                 const sectionItems = canSort
@@ -365,6 +368,7 @@ export default function AccountListScreen({
                         ? `account-item-glow--${acc.type}` : '',
                       'list-item-animated',
                       canSort ? 'account-list-item--sorting' : '',
+                      isTyping ? 'account-list-item--typing' : '',
                     ].filter(Boolean).join(' ')}
                     style={{ animationDelay: `${bIdx * 60}ms` }}
                     onClick={() => { if (!sortMode) onEnterRoom(acc.id) }}
@@ -406,7 +410,11 @@ export default function AccountListScreen({
                       </div>
                       <div className="account-list-item-bottom">
                         <span className="account-list-preview">
-                          {isPromo
+                          {isTyping ? (
+                            <span className="typing-dots inline" aria-label="AI 응답 중">
+                              <span /><span /><span />
+                            </span>
+                          ) : isPromo
                             ? (acc.promoHook || cfg.label)
                             : acc.applicationStatus === 'pending'
                             ? '심사 중 · 영업일 3~5일 소요'
@@ -415,7 +423,7 @@ export default function AccountListScreen({
                             : cfg.label}
                         </span>
                         <span className="account-list-time">
-                          {last ? formatDateShort(last.date) : ''}
+                          {isTyping ? '방금' : last ? formatDateShort(last.date) : ''}
                         </span>
                       </div>
                     </div>

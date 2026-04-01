@@ -269,6 +269,8 @@ export default function App() {
   const [roomMessages, setRoomMessages] = useState({})   // { [accountId]: Message[] }
   const [roomTxMeta, setRoomTxMeta] = useState({})       // { [accountId]: { page, hasMore, isLoadingMore } }
   const [unreadCounts, setUnreadCounts] = useState({ 'acc001': 3 })   // { [accountId]: number }
+  const [typingAccountIds, setTypingAccountIds] = useState(new Set()) // Living Accounts: 타이핑 중인 계좌
+  const typingTimeoutsRef = useRef(new Map())                          // 3s 안전망 타이머
 
   // ── 가입 상태 머신 ──
   const [enrollmentState, setEnrollmentState] = useState({
@@ -518,6 +520,25 @@ export default function App() {
       const mt2 = setTimeout(() => setMomentNotifVisible(false), 6000)
       const mt3 = setTimeout(() => setMomentNotif(null), 6350)
       momentNotifTimersRef.current = [mt1, mt2, mt3]
+    } else if (event.type === 'TYPING_START') {
+      // Living Accounts: 계좌 타이핑 시작 — AccountListScreen에 점 애니메이션 표시
+      const { accountId } = event.data
+      setTypingAccountIds((prev) => { const n = new Set(prev); n.add(accountId); return n })
+      // 3s 안전망: TYPING_END가 안 오면 자동 제거
+      if (typingTimeoutsRef.current.has(accountId)) clearTimeout(typingTimeoutsRef.current.get(accountId))
+      const t = setTimeout(() => {
+        setTypingAccountIds((prev) => { const n = new Set(prev); n.delete(accountId); return n })
+        typingTimeoutsRef.current.delete(accountId)
+      }, 3000)
+      typingTimeoutsRef.current.set(accountId, t)
+    } else if (event.type === 'TYPING_END') {
+      // Living Accounts: 계좌 타이핑 종료
+      const { accountId } = event.data
+      if (typingTimeoutsRef.current.has(accountId)) {
+        clearTimeout(typingTimeoutsRef.current.get(accountId))
+        typingTimeoutsRef.current.delete(accountId)
+      }
+      setTypingAccountIds((prev) => { const n = new Set(prev); n.delete(accountId); return n })
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appendToActiveStore]))
@@ -688,6 +709,24 @@ export default function App() {
       setDemoMode(false)
     }
   }, [messages, demoMode, sendMessage])
+
+  // Living Accounts 데모 시퀀스 트리거 (로고 5번 탭)
+  const logoTapRef = useRef({ count: 0, timer: null })
+  function handleLogoTap() {
+    const tap = logoTapRef.current
+    tap.count++
+    if (tap.timer) clearTimeout(tap.timer)
+    if (tap.count >= 5) {
+      tap.count = 0
+      fetch(`${API_BASE}/api/demo-start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId }),
+      }).catch(() => {})
+    } else {
+      tap.timer = setTimeout(() => { tap.count = 0 }, 1500)
+    }
+  }
 
   // 데모 시작
   function startDemo() {
@@ -1262,6 +1301,7 @@ export default function App() {
         <AccountListScreen
           accounts={accountList}
           unreadCounts={unreadCounts}
+          typingAccountIds={typingAccountIds}
           isLoading={isAccountsLoading}
           ttsEnabled={ttsEnabled}
           onEnterRoom={enterRoom}
@@ -1270,6 +1310,7 @@ export default function App() {
           onShowOnboarding={showOnboardingAgain}
           onProductSuggest={handleProductSuggest}
           onReorder={handleAccountReorder}
+          onLogoTap={handleLogoTap}
         />
       )}
 
