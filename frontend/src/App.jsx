@@ -917,7 +917,24 @@ export default function App() {
     setIsAccountsLoading(true)
     fetch(`${API_BASE}/api/accounts?sessionId=${sessionId}`)
       .then((r) => r.json())
-      .then((d) => { if (Array.isArray(d.accounts)) setAccountList(applyStoredOrder(d.accounts)) })
+      .then((d) => {
+        if (!Array.isArray(d.accounts)) return
+        setAccountList((prev) => {
+          const ordered = applyStoredOrder(d.accounts)
+          // partner_promo 항목은 백엔드가 모르는 프론트 전용 합성 계좌
+          // 이전 목록에 있던 것을 저장된 순서 위치에 다시 삽입해 유지
+          const synthetics = prev.filter((a) => a.type === 'partner_promo')
+          if (!synthetics.length) return ordered
+          const savedOrder = loadAccountOrder() || []
+          const result = [...ordered]
+          synthetics.forEach((s) => {
+            const pos = savedOrder.indexOf(s.id)
+            const insertAt = pos >= 0 ? Math.min(pos, result.length) : result.length
+            result.splice(insertAt, 0, s)
+          })
+          return result
+        })
+      })
       .catch(() => {})
       .finally(() => setIsAccountsLoading(false))
   }, [sessionId])
