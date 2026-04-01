@@ -976,6 +976,7 @@ export default function App() {
               data: {
                 productId: 'partner_hyundai',
                 product: {
+                  type: 'credit_card',
                   name: '현대카드 × iM뱅크 Special Edition',
                   annualFee: 0,
                   benefits: [
