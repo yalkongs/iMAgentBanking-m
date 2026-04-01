@@ -472,6 +472,33 @@ export default function App() {
       const inMatchingRoom =
         screenRef.current === 'room' &&
         activeAccountIdRef.current === data.accountId
+
+      // 거래내역 탭 반영: 이미 로드된 계좌면 맨 앞에 삽입
+      if (data.accountId) {
+        const today = new Date().toISOString().split('T')[0]
+        const newTx = {
+          id: 'alert_' + data.alertId,
+          date: today,
+          amount: data.amount,
+          category: data.category,
+          counterpart: data.counterpart,
+          accountId: data.accountId,
+          source: data.source || 'account',
+          memo: data.memo || '',
+          amountFormatted: data.amountFormatted,
+        }
+        setRoomTransactions((prev) => {
+          if (!prev[data.accountId]) return prev // 아직 로드 안 된 계좌면 스킵
+          return { ...prev, [data.accountId]: [newTx, ...prev[data.accountId]] }
+        })
+        // 계좌 목록 잔액 업데이트
+        setAccountList((prev) =>
+          prev.map((a) =>
+            a.id === data.accountId ? { ...a, balance: (a.balance || 0) + data.amount } : a
+          )
+        )
+      }
+
       if (inMatchingRoom) {
         // 현재 계좌 채팅방에 있으면 방 메시지로 추가
         const aid = activeAccountIdRef.current
@@ -1067,6 +1094,23 @@ export default function App() {
       }))
       setLastCardType('transfer_receipt')
       fetchAccountList()
+      // 거래내역 탭에도 이체 항목 삽입
+      const r = json.result
+      const newTx = {
+        id: r.transactionId || ('tr_' + Date.now()),
+        date: new Date().toISOString().split('T')[0],
+        amount: -r.amount,
+        category: '송금',
+        counterpart: r.to?.name || '',
+        accountId,
+        source: 'account',
+        memo: r.memo || '',
+        amountFormatted: '-' + r.amountFormatted,
+      }
+      setRoomTransactions((prev) => {
+        if (!prev[accountId]) return prev
+        return { ...prev, [accountId]: [newTx, ...prev[accountId]] }
+      })
     }
   }
 
