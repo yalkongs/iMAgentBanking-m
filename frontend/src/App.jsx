@@ -398,6 +398,7 @@ export default function App() {
         const insertAt = idx >= 0 ? idx + 1 : prev.length
         const next = [...prev]
         next.splice(insertAt, 0, PARTNER_PROMO_ACCOUNT)
+        saveAccountOrder(next)  // 위치 즉시 저장
         return next
       })
     }, 40000)
@@ -929,7 +930,14 @@ export default function App() {
           const result = [...ordered]
           synthetics.forEach((s) => {
             const pos = savedOrder.indexOf(s.id)
-            const insertAt = pos >= 0 ? Math.min(pos, result.length) : result.length
+            let insertAt
+            if (pos >= 0) {
+              insertAt = Math.min(pos, result.length)
+            } else {
+              // 저장된 위치 없으면 acc007 바로 뒤 (원래 삽입 위치)
+              const acc007Idx = result.findIndex((a) => a.id === 'acc007')
+              insertAt = acc007Idx >= 0 ? acc007Idx + 1 : result.length
+            }
             result.splice(insertAt, 0, s)
           })
           return result
@@ -1436,6 +1444,7 @@ export default function App() {
         const insertAt = idx >= 0 ? idx + 1 : prev.length
         const next = [...prev]
         next.splice(insertAt, 0, PARTNER_PROMO_ACCOUNT)
+        saveAccountOrder(next)  // 위치 즉시 저장
         return next
       })
     }, 40000)
