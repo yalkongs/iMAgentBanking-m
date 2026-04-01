@@ -404,10 +404,10 @@ export default function AccountListScreen({
                     onMouseLeave={handleLongPressEnd}
                   >
                     <div
-                      className={`account-list-item-block${['installment_savings', 'term_deposit', 'cma', 'savings'].includes(acc.type) && !acc.isPromo ? ' account-block-breathing' : ''}`}
+                      className={`account-list-item-block${['installment_savings', 'term_deposit', 'cma', 'savings'].includes(acc.type) && !acc.isPromo ? ' account-block-breathing' : ''}${isPartnerPromo ? ' account-list-item-block--partner' : ''}`}
                       style={{
                         background: isPartnerPromo
-                          ? 'linear-gradient(135deg, #1e2148 0%, #12142e 100%)'
+                          ? 'linear-gradient(135deg, #2a1f0e 0%, #1a1208 100%)'
                           : isPromo
                           ? 'rgba(107,114,128,0.25)'
                           : `linear-gradient(180deg, ${(BLOCK_COLORS[acc.type] || BLOCK_COLORS.checking)[0]} 0%, ${(BLOCK_COLORS[acc.type] || BLOCK_COLORS.checking)[1]} 100%)`,
@@ -419,6 +419,9 @@ export default function AccountListScreen({
                     <div className="account-list-item-body">
                       <div className="account-list-item-top">
                         <span className="account-list-name">
+                          {isPartnerPromo && !acc.applicationStatus && (
+                            <span className="partner-special-badge">특판</span>
+                          )}
                           {acc.name}
                           {['installment_savings', 'term_deposit', 'cma', 'savings'].includes(acc.type) && !acc.isPromo && (
                             <span className="account-pulse-dot" aria-label="이자 발생 중" />
