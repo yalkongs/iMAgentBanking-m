@@ -305,7 +305,7 @@ export default function AccountListScreen({
           onClick={() => { onLogoTap?.(); onShowOnboarding?.() }}
           aria-label="앱 소개 보기"
         >
-          iM뱅크
+          iM AI Banking
         </button>
         <div className="account-list-menu-wrap">
           <button
