@@ -289,6 +289,7 @@ export default function App() {
     data: {},
     isOpen: false,
     status: 'idle', // 'idle' | 'in_progress' | 'completed' | 'abandoned'
+    sourceRoomId: null,
   })
   const [enrollmentClosing, setEnrollmentClosing] = useState(false)
   const enrollmentClosingTimerRef = useRef(null)
@@ -1190,6 +1191,7 @@ export default function App() {
       data: {},
       isOpen: true,
       status: 'in_progress',
+      sourceRoomId: activeAccountId, // 가입 시작 시점의 방 ID 기억
     })
   }
 
@@ -1233,6 +1235,9 @@ export default function App() {
 
   async function handleEnrollComplete(data, productId) {
     const msgs = ENROLL_MESSAGES[productId]
+    const sourceRoomId = enrollmentState.sourceRoomId
+    // 파트너 방(partner_hyundai)에서 가입을 시작한 경우: productId와 sourceRoomId가 다름
+    const fromPartnerRoom = sourceRoomId && sourceRoomId !== productId
 
     try {
       const res = await fetch(`${API_BASE}/api/enroll`, {
@@ -1245,8 +1250,12 @@ export default function App() {
 
       const newAccount = json.account
 
-      // Update accounts list — replace promo with real account
-      setAccountList((prev) => prev.map((a) => (a.id === productId ? newAccount : a)))
+      // Update accounts list — replace promo with real account AND preserve position
+      setAccountList((prev) => {
+        const updated = prev.map((a) => (a.id === productId ? newAccount : a))
+        saveAccountOrder(updated)  // 새 계좌 ID로 순서 저장 → 목록 재조회 시 위치 유지
+        return updated
+      })
 
       // Migrate room messages to new account id
       setRoomMessages((prev) => {
@@ -1270,44 +1279,56 @@ export default function App() {
         return updated
       })
 
-      // Switch active room to new account
-      setActiveAccountId(newAccount.id)
+      if (fromPartnerRoom) {
+        // 파트너 방에서 신청한 경우: 파트너 방에 그대로 머무름 (activeAccountId 변경 안 함)
+      } else {
+        // 일반 가입: 새 계좌 방으로 이동
+        setActiveAccountId(newAccount.id)
+      }
 
       // Mark enrollment complete
       setEnrollmentState({
         productId: null, step: 0, data: {}, isOpen: false, status: 'completed',
       })
 
-      // Fetch fresh transactions for new account (enrollment transfer included)
-      fetch(`${API_BASE}/api/account/${newAccount.id}?sessionId=${sessionId}&page=1&limit=20`)
-        .then((r) => r.json())
-        .then((d) => {
-          if (d.recentTransactions) {
-            setRoomTransactions((prev) => ({ ...prev, [newAccount.id]: d.recentTransactions }))
-            setRoomTxMeta((prev) => ({
-              ...prev,
-              [newAccount.id]: { page: 1, hasMore: d.pagination?.hasMore ?? false, isLoadingMore: false },
-            }))
-          }
-        })
-        .catch(() => {})
+      if (fromPartnerRoom) {
+        // 파트너 방 흐름: 파트너 방에 신청 완료/처리 중 메시지 주입
+        await new Promise((r) => setTimeout(r, 400))
+        injectAiMessage(sourceRoomId,
+          '현대카드 × iM뱅크 신용카드 신청이 접수되었습니다.\n\n심사 결과는 영업일 기준 3-5일 이내에 등록된 연락처로 안내드립니다. 카드가 발급되면 계좌 목록에 자동으로 추가돼요.'
+        )
+      } else {
+        // 일반 가입 흐름: 새 계좌 거래내역 조회 및 메시지 주입
+        fetch(`${API_BASE}/api/account/${newAccount.id}?sessionId=${sessionId}&page=1&limit=20`)
+          .then((r) => r.json())
+          .then((d) => {
+            if (d.recentTransactions) {
+              setRoomTransactions((prev) => ({ ...prev, [newAccount.id]: d.recentTransactions }))
+              setRoomTxMeta((prev) => ({
+                ...prev,
+                [newAccount.id]: { page: 1, hasMore: d.pagination?.hasMore ?? false, isLoadingMore: false },
+              }))
+            }
+          })
+          .catch(() => {})
 
-      // Inject completion message after a brief delay
-      await new Promise((r) => setTimeout(r, 400))
-      injectAiMessage(newAccount.id, msgs.complete)
+        // Inject completion message after a brief delay
+        await new Promise((r) => setTimeout(r, 400))
+        injectAiMessage(newAccount.id, msgs.complete)
 
-      // Inject AccountLifeCard as final chat message
-      await new Promise((r) => setTimeout(r, 600))
-      const enriched = enrichAccountForLifeCard(newAccount)
-      if (enriched) {
-        setRoomMessages((prev) => ({
-          ...prev,
-          [newAccount.id]: [...(prev[newAccount.id] || []), {
-            id: 'life_card_' + Date.now(),
-            type: 'account_life_card',
-            data: enriched,
-          }],
-        }))
+        // Inject AccountLifeCard as final chat message
+        await new Promise((r) => setTimeout(r, 600))
+        const enriched = enrichAccountForLifeCard(newAccount)
+        if (enriched) {
+          setRoomMessages((prev) => ({
+            ...prev,
+            [newAccount.id]: [...(prev[newAccount.id] || []), {
+              id: 'life_card_' + Date.now(),
+              type: 'account_life_card',
+              data: enriched,
+            }],
+          }))
+        }
       }
 
     } catch (err) {
@@ -1360,7 +1381,7 @@ export default function App() {
       clearTimeout(enrollNudgeTimeoutRef.current)
       enrollNudgeTimeoutRef.current = null
     }
-    setEnrollmentState({ productId: null, step: 0, data: {}, isOpen: false, status: 'idle' })
+    setEnrollmentState({ productId: null, step: 0, data: {}, isOpen: false, status: 'idle', sourceRoomId: null })
     // 파트너 프로모 초기화
     localStorage.removeItem('zb-m-partner-promo-seen')
     partnerPromoInjectedRef.current = false
