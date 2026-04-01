@@ -428,9 +428,7 @@ export default function AccountListScreen({
                           )}
                         </span>
                         <span className="account-list-balance">
-                          {acc.isPromo ? null : acc.applicationStatus === 'pending' ? null : acc.type === 'debit_card' ? (
-                            <BalanceDisplay value={acc.balance} animate={true} prefix="이번달 " suffix="원 사용" />
-                          ) : (
+                          {acc.isPromo ? null : acc.applicationStatus === 'pending' ? null : (
                             <BalanceDisplay value={acc.balance} animate={true} />
                           )}
                         </span>
