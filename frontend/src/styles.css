@@ -4988,6 +4988,73 @@ input:focus-visible, textarea:focus-visible {
   line-height: 1.5;
 }
 
+/* 신용카드 프로모 배너 확장 */
+.promo-banner--cc {
+  background: linear-gradient(135deg, rgba(107,114,128,0.12) 0%, rgba(107,114,128,0.05) 100%);
+  border-color: rgba(107,114,128,0.22);
+  gap: 8px;
+}
+
+.promo-banner-benefits {
+  list-style: none;
+  padding: 0;
+  margin: 2px 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.promo-banner-benefit-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.75);
+}
+
+.promo-banner-benefit-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #00C9A7;
+  flex-shrink: 0;
+}
+
+.promo-banner-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.promo-banner-apply-btn {
+  flex: 1;
+  padding: 10px 0;
+  background: linear-gradient(135deg, #6B7280 0%, #4B5563 100%);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  letter-spacing: 0.2px;
+  transition: opacity 0.15s;
+}
+.promo-banner-apply-btn:active { opacity: 0.8; }
+
+.promo-banner-detail-btn {
+  padding: 10px 14px;
+  background: rgba(107,114,128,0.18);
+  color: rgba(255,255,255,0.7);
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid rgba(107,114,128,0.25);
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.promo-banner-detail-btn:active { opacity: 0.8; }
+
 /* ──────────────────────────────────────────────
    SavingsLifeCard — 예금/적금 살아있는 진행 카드
    ────────────────────────────────────────────── */
