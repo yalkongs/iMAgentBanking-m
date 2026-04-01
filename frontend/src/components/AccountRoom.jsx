@@ -30,6 +30,7 @@ const BLOCK_COLORS = {
   cma:                 ['#EF4444', '#B91C1C'],
   debit_card:          ['#0EA5E9', '#0369A1'],
   credit_card:         ['rgba(107,114,128,0.35)', 'rgba(107,114,128,0.2)'],
+  partner_promo:       ['#1a1c3a', '#0f1124'],
 }
 
 const ICONS = {
@@ -94,6 +95,15 @@ const ICONS = {
       <line x1="6" y1="15.5" x2="10" y2="15.5" strokeOpacity="0.5" strokeWidth="1.5"/>
       <line x1="6" y1="18" x2="9" y2="18" strokeOpacity="0.35" strokeWidth="1.5"/>
       <path d="M17 13.5L17.6 14.9 19 15.5 17.6 16.1 17 17.5 16.4 16.1 15 15.5 16.4 14.9Z" fill="white" fillOpacity="0.85" stroke="none"/>
+    </svg>
+  ),
+  // 제휴 프로모: 카드 + 링크 아이콘
+  partner_promo: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="6" width="20" height="13" rx="2"/>
+      <line x1="2" y1="11" x2="22" y2="11"/>
+      <path d="M10 15.5C10 14.4 10.9 13.5 12 13.5C13.1 13.5 14 14.4 14 15.5C14 16.6 13.1 17.5 12 17.5C10.9 17.5 10 16.6 10 15.5Z" fill="white" fillOpacity="0.7" stroke="none"/>
+      <path d="M15.5 13.5L17.5 11.5" strokeOpacity="0.5" strokeWidth="1.5"/>
     </svg>
   ),
 }
@@ -344,6 +354,7 @@ const TYPE_CONFIG = {
   cma:                 { color: '#EF4444', label: 'CMA' },
   debit_card:          { color: '#0EA5E9', label: '체크카드' },
   credit_card:         { color: '#6B7280', label: '신용카드' },
+  partner_promo:       { color: '#00C9A7', label: '제휴 카드' },
 }
 
 function TxSkeleton() {

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 
-const BANKING_TYPES_SET = new Set(['checking', 'debit_card', 'credit_card'])
+const BANKING_TYPES_SET = new Set(['checking', 'debit_card', 'credit_card', 'partner_promo'])
 
 function getAccountSection(acc) {
   return BANKING_TYPES_SET.has(acc.type) ? 'banking' : 'savings'
@@ -14,6 +14,7 @@ const BLOCK_COLORS = {
   cma:                 ['#EF4444', '#B91C1C'],
   debit_card:          ['#0EA5E9', '#0369A1'],
   credit_card:         ['rgba(107,114,128,0.35)', 'rgba(107,114,128,0.2)'],
+  partner_promo:       ['#1a1c3a', '#0f1124'],
 }
 
 const ICONS = {
@@ -80,6 +81,15 @@ const ICONS = {
       <path d="M17 13.5L17.6 14.9 19 15.5 17.6 16.1 17 17.5 16.4 16.1 15 15.5 16.4 14.9Z" fill="white" fillOpacity="0.85" stroke="none"/>
     </svg>
   ),
+  // 제휴 프로모: 카드 + 링크 연결
+  partner_promo: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="6" width="20" height="13" rx="2"/>
+      <line x1="2" y1="11" x2="22" y2="11"/>
+      <path d="M10 15.5C10 14.4 10.9 13.5 12 13.5C13.1 13.5 14 14.4 14 15.5C14 16.6 13.1 17.5 12 17.5C10.9 17.5 10 16.6 10 15.5Z" fill="white" fillOpacity="0.7" stroke="none"/>
+      <path d="M15.5 13.5L17.5 11.5" strokeOpacity="0.5" strokeWidth="1.5"/>
+    </svg>
+  ),
 }
 
 const TYPE_CONFIG = {
@@ -90,6 +100,7 @@ const TYPE_CONFIG = {
   cma:                 { color: '#EF4444', label: 'CMA' },
   debit_card:          { color: '#0EA5E9', label: '체크카드' },
   credit_card:         { color: '#6B7280', label: '신용카드' },
+  partner_promo:       { color: '#00C9A7', label: '제휴 카드' },
 }
 
 function formatDateShort(dateStr) {
@@ -358,7 +369,8 @@ export default function AccountListScreen({
                 const unread = unreadCounts?.[acc.id] || 0
                 const last = acc.lastTransaction
                 const isPromo = acc.isPromo === true
-                const canSort = sortMode && !isPromo
+                const isPartnerPromo = acc.type === 'partner_promo'
+                const canSort = sortMode && !isPromo && !isPartnerPromo
                 const isTyping = !!(typingAccountIds?.has(acc.id))
 
                 // 섹션 내 위치 계산 (↑↓ 버튼 disabled 조건)
@@ -376,13 +388,14 @@ export default function AccountListScreen({
                     className={[
                       'account-list-item',
                       isPromo ? 'account-list-item--promo' : '',
+                      isPartnerPromo ? 'account-list-item--partner-promo' : '',
                       ['installment_savings', 'term_deposit', 'cma', 'savings'].includes(acc.type) && !acc.isPromo
                         ? `account-item-glow--${acc.type}` : '',
-                      'list-item-animated',
+                      isPartnerPromo ? '' : 'list-item-animated',
                       canSort ? 'account-list-item--sorting' : '',
                       isTyping ? 'account-list-item--typing' : '',
                     ].filter(Boolean).join(' ')}
-                    style={{ animationDelay: `${bIdx * 60}ms` }}
+                    style={isPartnerPromo ? undefined : { animationDelay: `${bIdx * 60}ms` }}
                     onClick={() => { if (!sortMode) onEnterRoom(acc.id) }}
                     onTouchStart={(e) => handleLongPressStart(e, acc.id, isPromo)}
                     onTouchEnd={handleLongPressEnd}
@@ -393,7 +406,9 @@ export default function AccountListScreen({
                     <div
                       className={`account-list-item-block${['installment_savings', 'term_deposit', 'cma', 'savings'].includes(acc.type) && !acc.isPromo ? ' account-block-breathing' : ''}`}
                       style={{
-                        background: isPromo
+                        background: isPartnerPromo
+                          ? 'linear-gradient(135deg, #1e2148 0%, #12142e 100%)'
+                          : isPromo
                           ? 'rgba(107,114,128,0.25)'
                           : `linear-gradient(180deg, ${(BLOCK_COLORS[acc.type] || BLOCK_COLORS.checking)[0]} 0%, ${(BLOCK_COLORS[acc.type] || BLOCK_COLORS.checking)[1]} 100%)`,
                       }}
@@ -426,7 +441,9 @@ export default function AccountListScreen({
                             <span className="typing-dots inline" aria-label="AI 응답 중">
                               <span /><span /><span />
                             </span>
-                          ) : isPromo
+                          ) : isPartnerPromo
+                            ? (acc.promoHook || 'iM뱅크 × 현대카드 제휴 혜택')
+                            : isPromo
                             ? (acc.promoHook || cfg.label)
                             : acc.applicationStatus === 'pending'
                             ? '심사 중 · 영업일 3~5일 소요'

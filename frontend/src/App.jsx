@@ -92,6 +92,16 @@ const DEMO_MESSAGES = [
   '엄마한테 5만원 보내줘',
 ]
 
+// 제휴 프로모 합성 계좌 (고정 객체)
+const PARTNER_PROMO_ACCOUNT = {
+  id: 'partner_hyundai',
+  name: '현대카드 × iM뱅크',
+  type: 'partner_promo',
+  bank: '현대카드',
+  balance: 0,
+  promoHook: 'iM뱅크 고객을 위해 함께 준비했습니다',
+}
+
 // 음성 데모 시나리오
 const VOICE_DEMO_MESSAGES = [
   '엄마한테 5만원 보내줘',
@@ -281,10 +291,9 @@ export default function App() {
     status: 'idle', // 'idle' | 'in_progress' | 'completed' | 'abandoned'
   })
 
-  // ── 제휴사 신용카드 프로모 배너 ──
-  const [partnerPromoVisible, setPartnerPromoVisible] = useState(false)
-  const [partnerPromoMounted, setPartnerPromoMounted] = useState(false)
+  // ── 제휴사 신용카드 프로모 계좌 아이템 ──
   const partnerPromoTimerRef = useRef(null)
+  const partnerPromoInjectedRef = useRef(false)
 
   const messagesEndRef = useRef(null)
   const messagesContainerRef = useRef(null)
@@ -365,29 +374,25 @@ export default function App() {
     if (enrollNudgeTimeoutRef.current) clearTimeout(enrollNudgeTimeoutRef.current)
   }, [])
 
-  // 제휴사 프로모: 40초 후 한 번만 표시 (이미 봤거나 신용카드 방에 있으면 스킵)
+  // 제휴사 프로모: 40초 후 acc007 바로 뒤에 계좌 항목 삽입
   useEffect(() => {
     const seen = localStorage.getItem('zb-m-partner-promo-seen')
     if (seen) return
     partnerPromoTimerRef.current = setTimeout(() => {
-      if (screenRef.current === 'room' && activeAccountIdRef.current === 'acc007') return
-      setPartnerPromoMounted(true)
-      requestAnimationFrame(() => requestAnimationFrame(() => setPartnerPromoVisible(true)))
+      if (partnerPromoInjectedRef.current) return
+      partnerPromoInjectedRef.current = true
+      setAccountList((prev) => {
+        if (prev.some((a) => a.id === 'partner_hyundai')) return prev
+        const idx = prev.findIndex((a) => a.id === 'acc007')
+        const insertAt = idx >= 0 ? idx + 1 : prev.length
+        const next = [...prev]
+        next.splice(insertAt, 0, PARTNER_PROMO_ACCOUNT)
+        return next
+      })
     }, 40000)
     return () => clearTimeout(partnerPromoTimerRef.current)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  function dismissPartnerPromo() {
-    setPartnerPromoVisible(false)
-    localStorage.setItem('zb-m-partner-promo-seen', '1')
-    setTimeout(() => setPartnerPromoMounted(false), 400)
-  }
-
-  function handlePartnerPromoCta() {
-    dismissPartnerPromo()
-    setTimeout(() => enterRoom('acc007'), 100)
-  }
 
   // visualViewport → CSS 변수 동기화
   // resize: Android Chrome 키보드 (viewport 높이 변화)
@@ -938,6 +943,33 @@ export default function App() {
     setScreen('room')
     setUnreadCounts((prev) => ({ ...prev, [accountId]: 0 }))
 
+    // 제휴 프로모 계좌: 거래내역 API 없음, 사전 정의 메시지 주입
+    if (accountId === 'partner_hyundai') {
+      if (!roomTransactions[accountId]) {
+        setRoomTransactions((prev) => ({ ...prev, [accountId]: [] }))
+      }
+      if (!roomMessages[accountId] || roomMessages[accountId].length === 0) {
+        setRoomMessages((prev) => ({
+          ...prev,
+          [accountId]: [
+            {
+              id: 'partner_greeting_' + Date.now(),
+              role: 'assistant',
+              type: 'text',
+              text: 'iM뱅크 고객을 위해 현대카드와 함께 특별 혜택을 준비했습니다.\n\n국내외 최대 1.5% 캐시백, 스타벅스·편의점 10% 즉시 할인, 첫 해 연회비 무료 혜택을 제공합니다.',
+            },
+            {
+              id: 'partner_card_' + Date.now(),
+              type: 'ui_card',
+              cardType: 'partner_card_cta',
+              data: { title: 'iM뱅크 고객 전용 현대카드' },
+            },
+          ],
+        }))
+      }
+      return
+    }
+
     // 거래 내역 로드 (캐시 없을 때만)
     if (!roomTransactions[accountId]) {
       fetch(`${API_BASE}/api/account/${accountId}?sessionId=${sessionId}&page=1&limit=20`)
@@ -1323,12 +1355,19 @@ export default function App() {
     setEnrollmentState({ productId: null, step: 0, data: {}, isOpen: false, status: 'idle' })
     // 파트너 프로모 초기화
     localStorage.removeItem('zb-m-partner-promo-seen')
-    setPartnerPromoVisible(false)
-    setPartnerPromoMounted(false)
+    partnerPromoInjectedRef.current = false
     clearTimeout(partnerPromoTimerRef.current)
     partnerPromoTimerRef.current = setTimeout(() => {
-      setPartnerPromoMounted(true)
-      requestAnimationFrame(() => requestAnimationFrame(() => setPartnerPromoVisible(true)))
+      if (partnerPromoInjectedRef.current) return
+      partnerPromoInjectedRef.current = true
+      setAccountList((prev) => {
+        if (prev.some((a) => a.id === 'partner_hyundai')) return prev
+        const idx = prev.findIndex((a) => a.id === 'acc007')
+        const insertAt = idx >= 0 ? idx + 1 : prev.length
+        const next = [...prev]
+        next.splice(insertAt, 0, PARTNER_PROMO_ACCOUNT)
+        return next
+      })
     }, 40000)
     showOnboardingAgain()
     fetchAccountList()
@@ -1482,30 +1521,6 @@ export default function App() {
               데이터 초기화
             </button>
           </div>
-        </div>
-      )}
-
-      {/* 제휴사 신용카드 프로모 배너 */}
-      {partnerPromoMounted && (
-        <div className={`partner-promo-wrap${partnerPromoVisible ? ' partner-promo-wrap--visible' : ''}`}>
-          <button className="partner-promo-close" aria-label="닫기" onClick={dismissPartnerPromo}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-          <div className="partner-promo-badge-row">
-            <span className="partner-promo-badge">iM뱅크 × 현대카드</span>
-            <span className="partner-promo-new">NEW</span>
-          </div>
-          <div className="partner-promo-hook">iM뱅크 고객을 위해<br/>현대카드와 함께 준비했습니다</div>
-          <div className="partner-promo-benefits">
-            <span>국내외 최대 1.5% 캐시백</span>
-            <span className="partner-promo-sep">·</span>
-            <span>스타벅스 10% 즉시 할인</span>
-            <span className="partner-promo-sep">·</span>
-            <span>첫 해 연회비 무료</span>
-          </div>
-          <button className="partner-promo-cta" onClick={handlePartnerPromoCta}>
-            지금 신청하기
-          </button>
         </div>
       )}
 
