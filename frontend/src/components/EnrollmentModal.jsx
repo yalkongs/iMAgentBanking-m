@@ -318,7 +318,7 @@ const TOTAL_STEPS = {
   acc007: 3,
 }
 
-export default function EnrollmentModal({ state, accounts, onStepComplete, onDismiss }) {
+export default function EnrollmentModal({ state, accounts, onStepComplete, onDismiss, isClosing }) {
   const { productId, step } = state
   const total = TOTAL_STEPS[productId] || 3
 
@@ -348,8 +348,8 @@ export default function EnrollmentModal({ state, accounts, onStepComplete, onDis
   }
 
   return (
-    <div className="enroll-overlay" onClick={(e) => { if (e.target === e.currentTarget) onDismiss() }}>
-      <div className="enroll-modal">
+    <div className={`enroll-overlay${isClosing ? ' closing' : ''}`} onClick={(e) => { if (e.target === e.currentTarget) onDismiss() }}>
+      <div className={`enroll-modal${isClosing ? ' closing' : ''}`}>
         <div className="enroll-modal-header">
           <StepDots current={step} total={total} />
           <button className="enroll-close-btn" onClick={onDismiss} aria-label="닫기">

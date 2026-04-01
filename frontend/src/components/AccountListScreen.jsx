@@ -315,27 +315,27 @@ export default function AccountListScreen({
           >
             ⋯
           </button>
-          {menuOpen && (
-            <div className="account-list-dropdown" onClick={(e) => e.stopPropagation()}>
-              <button className="dropdown-item" onClick={() => { onTtsToggle?.(); setMenuOpen(false) }}>
-                {ttsEnabled ? '음성 끄기' : '음성 켜기'}
-              </button>
-              <button className="dropdown-item" onClick={() => { onReset?.(); setMenuOpen(false) }}>
-                초기화
-              </button>
-            </div>
-          )}
+          <div
+            className={`account-list-dropdown${menuOpen ? ' account-list-dropdown--visible' : ''}`}
+            aria-hidden={!menuOpen}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button className="dropdown-item" onClick={() => { onTtsToggle?.(); setMenuOpen(false) }}>
+              {ttsEnabled ? '음성 끄기' : '음성 켜기'}
+            </button>
+            <button className="dropdown-item" onClick={() => { onReset?.(); setMenuOpen(false) }}>
+              초기화
+            </button>
+          </div>
         </div>
       </div>
 
-      {sortMode && (
-        <div className="account-sort-mode-bar">
-          <span>↑↓ 버튼으로 순서를 바꿔요</span>
-          <button className="account-sort-done-btn" onClick={() => setSortMode(false)}>
-            완료
-          </button>
-        </div>
-      )}
+      <div className={`account-sort-mode-bar${sortMode ? ' account-sort-mode-bar--visible' : ''}`} aria-hidden={!sortMode}>
+        <span>↑↓ 버튼으로 순서를 바꿔요</span>
+        <button className="account-sort-done-btn" onClick={() => setSortMode(false)}>
+          완료
+        </button>
+      </div>
 
       <div className={`account-list-items${sortMode ? ' account-sort-mode' : ''}`}>
         {isLoading

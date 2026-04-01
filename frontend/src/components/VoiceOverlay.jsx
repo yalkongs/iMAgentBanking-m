@@ -9,7 +9,7 @@ const STATE_LABEL = {
   ERROR:      '인식 실패 — 다시 시도',
 }
 
-export default function VoiceOverlay({ state, onClose, onMicTap }) {
+export default function VoiceOverlay({ state, onClose, onMicTap, isClosing }) {
   // Esc 키로 닫기
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onClose?.() }
@@ -18,7 +18,7 @@ export default function VoiceOverlay({ state, onClose, onMicTap }) {
   }, [onClose])
 
   return (
-    <div className="voice-overlay" role="dialog" aria-modal="true" aria-label="음성 모드">
+    <div className={`voice-overlay${isClosing ? ' voice-overlay--closing' : ''}`} role="dialog" aria-modal="true" aria-label="음성 모드">
       {/* 닫기 버튼 */}
       <button
         className="voice-overlay-close"

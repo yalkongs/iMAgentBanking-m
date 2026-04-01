@@ -2984,6 +2984,18 @@ input:focus-visible, textarea:focus-visible {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  animation: voice-overlay-enter 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes voice-overlay-enter {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.voice-overlay--closing {
+  animation: voice-overlay-exit 0.24s ease both;
+  pointer-events: none;
+}
+@keyframes voice-overlay-exit {
+  to { opacity: 0; transform: scale(0.97); }
 }
 
 .voice-overlay-close {
@@ -3997,7 +4009,7 @@ input:focus-visible, textarea:focus-visible {
 .contact-card {
   overflow: hidden;
   max-height: 0;
-  transition: max-height 0.3s ease;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -4393,6 +4405,18 @@ input:focus-visible, textarea:focus-visible {
   overflow: hidden;
   min-width: 120px;
   z-index: 100;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px) scale(0.95);
+  transform-origin: top right;
+  pointer-events: none;
+  transition: opacity 0.18s ease, visibility 0.18s ease, transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.account-list-dropdown--visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
 }
 
 .dropdown-item {
@@ -5691,6 +5715,19 @@ input:focus-visible, textarea:focus-visible {
   from { transform: translateY(100%); opacity: 0.5; }
   to   { transform: translateY(0); opacity: 1; }
 }
+@keyframes overlay-fade-out {
+  to { opacity: 0; }
+}
+@keyframes modal-slide-down {
+  to { transform: translateY(100%); opacity: 0; }
+}
+.enroll-overlay.closing {
+  animation: overlay-fade-out 0.25s ease both;
+  pointer-events: none;
+}
+.enroll-modal.closing {
+  animation: modal-slide-down 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
 
 .enroll-dots {
   display: flex;
@@ -6805,12 +6842,21 @@ input:focus-visible, textarea:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
+  padding: 0 16px;
   background: rgba(0, 201, 167, 0.12);
   border-bottom: 1px solid rgba(0, 201, 167, 0.25);
   font-size: 13px;
   color: var(--accent);
   flex-shrink: 0;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease, padding 0.28s ease;
+}
+.account-sort-mode-bar--visible {
+  max-height: 50px;
+  opacity: 1;
+  padding: 8px 16px;
 }
 
 .account-sort-mode-bar span {
@@ -6886,6 +6932,33 @@ input:focus-visible, textarea:focus-visible {
   align-items: center;
   height: 16px;
 }
+
+/* ── 공통 fade-in-up (promo-banner, card-pending-banner, life card 등) ── */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.promo-banner,
+.promo-banner--cc {
+  animation: fade-in-up 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.card-pending-banner {
+  animation: fade-in-up 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* SavingsLifeCard */
+.slc-card {
+  animation: fade-in-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* QuickTransferPanel */
+.quick-transfer-panel {
+  animation: fade-in-up 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* partner-cta-card는 ui-card card-enter 애니메이션 상속 */
 
 /* ── 제휴사 프로모 계좌 아이템 슬라이드인 ── */
 @keyframes partner-item-enter {

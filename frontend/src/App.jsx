@@ -290,6 +290,10 @@ export default function App() {
     isOpen: false,
     status: 'idle', // 'idle' | 'in_progress' | 'completed' | 'abandoned'
   })
+  const [enrollmentClosing, setEnrollmentClosing] = useState(false)
+  const enrollmentClosingTimerRef = useRef(null)
+  const [voiceClosing, setVoiceClosing] = useState(false)
+  const voiceClosingTimerRef = useRef(null)
 
   // ── 제휴사 신용카드 프로모 계좌 아이템 ──
   const partnerPromoTimerRef = useRef(null)
@@ -1317,18 +1321,22 @@ export default function App() {
 
   function handleEnrollDismiss() {
     const { productId } = enrollmentState
-    setEnrollmentState((prev) => ({ ...prev, isOpen: false, status: 'abandoned' }))
-
-    // Re-nudge after 10 minutes (once)
-    if (enrollNudgeTimeoutRef.current) clearTimeout(enrollNudgeTimeoutRef.current)
-    enrollNudgeTimeoutRef.current = setTimeout(() => {
-      enrollNudgeTimeoutRef.current = null
-      // Only nudge if still in the same promo room
-      if (activeAccountId === productId) {
-        const msgs = ENROLL_MESSAGES[productId]
-        if (msgs) injectAiMessage(productId, msgs.nudge)
-      }
-    }, 10 * 60 * 1000)
+    // exit 애니메이션 후 실제 닫기
+    setEnrollmentClosing(true)
+    clearTimeout(enrollmentClosingTimerRef.current)
+    enrollmentClosingTimerRef.current = setTimeout(() => {
+      setEnrollmentClosing(false)
+      setEnrollmentState((prev) => ({ ...prev, isOpen: false, status: 'abandoned' }))
+      // Re-nudge after 10 minutes (once)
+      if (enrollNudgeTimeoutRef.current) clearTimeout(enrollNudgeTimeoutRef.current)
+      enrollNudgeTimeoutRef.current = setTimeout(() => {
+        enrollNudgeTimeoutRef.current = null
+        if (activeAccountId === productId) {
+          const msgs = ENROLL_MESSAGES[productId]
+          if (msgs) injectAiMessage(productId, msgs.nudge)
+        }
+      }, 10 * 60 * 1000)
+    }, 290)
   }
 
   // 대화 초기화 (세션만)
@@ -1525,25 +1533,30 @@ export default function App() {
       )}
 
       {/* 가입 모달 */}
-      {enrollmentState.isOpen && (
+      {(enrollmentState.isOpen || enrollmentClosing) && (
         <EnrollmentModal
           state={enrollmentState}
           accounts={accountList}
           onStepComplete={handleEnrollStep}
           onDismiss={handleEnrollDismiss}
+          isClosing={enrollmentClosing}
         />
       )}
 
       {/* 음성 오버레이 */}
-      {voiceMode && (
+      {(voiceMode || voiceClosing) && (
         <VoiceOverlay
           state={isTtsSpeaking ? 'SPEAKING' : isLoading ? 'PROCESSING' : isRecording ? 'RECORDING' : 'IDLE'}
+          isClosing={voiceClosing}
           onClose={() => {
+            setVoiceClosing(true)
             setVoiceMode(false)
             setDemoMode(false)
             demoQueueRef.current = []
             if (window.speechSynthesis) window.speechSynthesis.cancel()
             setIsTtsSpeaking(false)
+            clearTimeout(voiceClosingTimerRef.current)
+            voiceClosingTimerRef.current = setTimeout(() => setVoiceClosing(false), 260)
           }}
           onMicTap={toggleRecording}
         />
