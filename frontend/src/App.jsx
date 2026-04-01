@@ -281,6 +281,11 @@ export default function App() {
     status: 'idle', // 'idle' | 'in_progress' | 'completed' | 'abandoned'
   })
 
+  // ── 제휴사 신용카드 프로모 배너 ──
+  const [partnerPromoVisible, setPartnerPromoVisible] = useState(false)
+  const [partnerPromoMounted, setPartnerPromoMounted] = useState(false)
+  const partnerPromoTimerRef = useRef(null)
+
   const messagesEndRef = useRef(null)
   const messagesContainerRef = useRef(null)
   const textareaRef = useRef(null)
@@ -359,6 +364,30 @@ export default function App() {
   useEffect(() => () => {
     if (enrollNudgeTimeoutRef.current) clearTimeout(enrollNudgeTimeoutRef.current)
   }, [])
+
+  // 제휴사 프로모: 40초 후 한 번만 표시 (이미 봤거나 신용카드 방에 있으면 스킵)
+  useEffect(() => {
+    const seen = localStorage.getItem('zb-m-partner-promo-seen')
+    if (seen) return
+    partnerPromoTimerRef.current = setTimeout(() => {
+      if (screenRef.current === 'room' && activeAccountIdRef.current === 'acc007') return
+      setPartnerPromoMounted(true)
+      requestAnimationFrame(() => requestAnimationFrame(() => setPartnerPromoVisible(true)))
+    }, 40000)
+    return () => clearTimeout(partnerPromoTimerRef.current)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function dismissPartnerPromo() {
+    setPartnerPromoVisible(false)
+    localStorage.setItem('zb-m-partner-promo-seen', '1')
+    setTimeout(() => setPartnerPromoMounted(false), 400)
+  }
+
+  function handlePartnerPromoCta() {
+    dismissPartnerPromo()
+    setTimeout(() => enterRoom('acc007'), 100)
+  }
 
   // visualViewport → CSS 변수 동기화
   // resize: Android Chrome 키보드 (viewport 높이 변화)
@@ -1292,6 +1321,15 @@ export default function App() {
       enrollNudgeTimeoutRef.current = null
     }
     setEnrollmentState({ productId: null, step: 0, data: {}, isOpen: false, status: 'idle' })
+    // 파트너 프로모 초기화
+    localStorage.removeItem('zb-m-partner-promo-seen')
+    setPartnerPromoVisible(false)
+    setPartnerPromoMounted(false)
+    clearTimeout(partnerPromoTimerRef.current)
+    partnerPromoTimerRef.current = setTimeout(() => {
+      setPartnerPromoMounted(true)
+      requestAnimationFrame(() => requestAnimationFrame(() => setPartnerPromoVisible(true)))
+    }, 40000)
     showOnboardingAgain()
     fetchAccountList()
   }
@@ -1444,6 +1482,30 @@ export default function App() {
               데이터 초기화
             </button>
           </div>
+        </div>
+      )}
+
+      {/* 제휴사 신용카드 프로모 배너 */}
+      {partnerPromoMounted && (
+        <div className={`partner-promo-wrap${partnerPromoVisible ? ' partner-promo-wrap--visible' : ''}`}>
+          <button className="partner-promo-close" aria-label="닫기" onClick={dismissPartnerPromo}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <div className="partner-promo-badge-row">
+            <span className="partner-promo-badge">iM뱅크 × 현대카드</span>
+            <span className="partner-promo-new">NEW</span>
+          </div>
+          <div className="partner-promo-hook">iM뱅크 고객을 위해<br/>현대카드와 함께 준비했습니다</div>
+          <div className="partner-promo-benefits">
+            <span>국내외 최대 1.5% 캐시백</span>
+            <span className="partner-promo-sep">·</span>
+            <span>스타벅스 10% 즉시 할인</span>
+            <span className="partner-promo-sep">·</span>
+            <span>첫 해 연회비 무료</span>
+          </div>
+          <button className="partner-promo-cta" onClick={handlePartnerPromoCta}>
+            지금 신청하기
+          </button>
         </div>
       )}
 
