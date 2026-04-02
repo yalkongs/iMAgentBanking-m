@@ -87,17 +87,25 @@ export const toolDefinitions = [
   },
   {
     name: 'save_alias',
-    description: '사용자가 확인한 닉네임 → 계좌 매핑을 저장합니다. resolve_contact가 candidates를 반환하고 사용자가 특정 계좌를 선택했을 때 호출하세요.',
+    description: '사용자가 확인한 닉네임 → 계좌 매핑을 저장합니다.\n- 기존 거래 내역의 계좌 선택 시: nickname + account_no 만 전달\n- 신규 계좌 직접 입력 시: nickname + account_no + real_name + bank 모두 전달\nresolve_contact 결과(candidates 또는 no_history)에서 사용자가 계좌를 확정했을 때 반드시 호출하세요.',
     input_schema: {
       type: 'object',
       properties: {
         nickname: {
           type: 'string',
-          description: '저장할 닉네임. 예: 엄마, 절친',
+          description: '저장할 닉네임. 예: 엄마, 절친, 아버지',
         },
         account_no: {
           type: 'string',
-          description: '연결할 계좌번호. contacts 목록의 accountNo와 일치해야 합니다.',
+          description: '연결할 계좌번호. 예: 110-1234-567890',
+        },
+        real_name: {
+          type: 'string',
+          description: '(신규 계좌 전용) 수취인 실명. 예: 김철수',
+        },
+        bank: {
+          type: 'string',
+          description: '(신규 계좌 전용) 은행명. 예: 신한은행, 카카오뱅크',
         },
       },
       required: ['nickname', 'account_no'],
@@ -469,20 +477,27 @@ function handleResolveContact({ query }, ctx) {
     }
   }
 
-  // 4. 거래 이력도 없음 → 계좌 등록 유도
+  // 4. 거래 이력도 없음 → 직접 입력 UI 카드 표시
   return {
     status: 'no_history',
     query: q,
+    candidates: [],
     message: `'${q}'에 해당하는 계좌가 등록되어 있지 않고, 거래 이력도 없습니다.`,
   }
 }
 
-function handleSaveAlias({ nickname, account_no }, ctx) {
+function handleSaveAlias({ nickname, account_no, real_name, bank }, ctx) {
   const { aliasStore } = ctx
-  const contact = contacts.find((c) => c.accountNo === account_no)
+  let contact = contacts.find((c) => c.accountNo === account_no)
+
+  // 기존 contacts에 없는 신규 계좌 → real_name + bank 로 임시 등록
   if (!contact) {
-    return { success: false, error: `계좌번호 ${account_no}를 찾을 수 없습니다.` }
+    if (!real_name || !bank) {
+      return { success: false, error: `계좌번호 ${account_no}를 찾을 수 없습니다. 실명(real_name)과 은행명(bank)을 함께 전달해 주세요.` }
+    }
+    contact = { realName: real_name, bank, accountNo: account_no }
   }
+
   aliasStore.set(nickname, {
     realName: contact.realName,
     bank: contact.bank,

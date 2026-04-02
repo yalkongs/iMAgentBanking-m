@@ -98,23 +98,26 @@ export const accounts = [
 // 연락처 — 실명+계좌 기반 (닉네임 없음)
 // ──────────────────────────────────────────────
 export const contacts = [
-  { id: 'c001', realName: '김영희',      bank: '국민은행',    accountNo: '110-234-567890' },
-  { id: 'c002', realName: '김철호',      bank: '신한은행',    accountNo: '110-345-678901' },
-  { id: 'c003', realName: '김철수',      bank: '하나은행',    accountNo: '130-456-789012' },
-  { id: 'c004', realName: '이민지',      bank: '카카오뱅크',  accountNo: '333-78-9012345' },
-  { id: 'c005', realName: '(주)ABC테크', bank: '기업은행',    accountNo: '110-567-890123' },
-  { id: 'c006', realName: '김민준',      bank: '토스뱅크',    accountNo: '100-10-123456'  },
-  { id: 'c007', realName: '박지수',      bank: '신한은행',    accountNo: '110-678-901234' },
-  { id: 'c008', realName: '최현우',      bank: '우리은행',    accountNo: '1002-345-678901'},
-  { id: 'c009', realName: '이순자',      bank: '농협은행',    accountNo: '301-1234-5678-01'},
-  { id: 'c010', realName: '파워짐 강남점', bank: '국민은행',  accountNo: '110-789-012345' },
-  { id: 'c011', realName: '박상철',      bank: '신한은행',    accountNo: '110-890-123456' },
-  { id: 'c012', realName: '정세영',      bank: '카카오뱅크',  accountNo: '333-90-1234567' },
-  { id: 'c013', realName: '오승훈',      bank: '토스뱅크',    accountNo: '100-20-234567'  },
-  { id: 'c014', realName: '김수진',      bank: '하나은행',    accountNo: '130-567-890123' },
-  { id: 'c015', realName: '강남영어학원', bank: '기업은행',   accountNo: '110-901-234567' },
-  { id: 'c016', realName: '김순자',      bank: '농협은행',    accountNo: '301-5678-9012-01' },  // 엄마
-  { id: 'c017', realName: '김기준',      bank: '하나은행',    accountNo: '130-789-012345'  },  // 아빠
+  { id: 'c001', realName: '김영희',       bank: '국민은행',    accountNo: '110-234-567890' },
+  { id: 'c002', realName: '김철호',       bank: '신한은행',    accountNo: '110-345-678901' },
+  { id: 'c003', realName: '김철수',       bank: '하나은행',    accountNo: '130-456-789012' },
+  { id: 'c004', realName: '이민지',       bank: '카카오뱅크',  accountNo: '333-78-9012345' },
+  { id: 'c005', realName: '(주)ABC테크',  bank: '기업은행',    accountNo: '110-567-890123' },
+  { id: 'c006', realName: '김민준',       bank: '토스뱅크',    accountNo: '100-10-123456'  },
+  { id: 'c007', realName: '박지수',       bank: '신한은행',    accountNo: '110-678-901234' },
+  { id: 'c008', realName: '최현우',       bank: '우리은행',    accountNo: '1002-345-678901'},
+  { id: 'c009', realName: '이순자',       bank: '농협은행',    accountNo: '301-1234-5678-01'},
+  { id: 'c010', realName: '파워짐 강남점',bank: '국민은행',    accountNo: '110-789-012345' },
+  { id: 'c011', realName: '박상철',       bank: '신한은행',    accountNo: '110-890-123456' },
+  { id: 'c012', realName: '정세영',       bank: '카카오뱅크',  accountNo: '333-90-1234567' },
+  { id: 'c013', realName: '오승훈',       bank: '토스뱅크',    accountNo: '100-20-234567'  },
+  { id: 'c014', realName: '김수진',       bank: '하나은행',    accountNo: '130-567-890123' },
+  { id: 'c015', realName: '강남영어학원', bank: '기업은행',    accountNo: '110-901-234567' },
+  { id: 'c016', realName: '김순자',       bank: '농협은행',    accountNo: '301-5678-9012-01' }, // 엄마
+  { id: 'c017', realName: '김기준',       bank: '하나은행',    accountNo: '130-789-012345'  }, // 아빠
+  { id: 'c018', realName: '이정훈',       bank: '신한은행',    accountNo: '110-234-901234'  },
+  { id: 'c019', realName: '박민서',       bank: '카카오뱅크',  accountNo: '333-12-3456789'  },
+  { id: 'c020', realName: '최동욱',       bank: '국민은행',    accountNo: '110-345-012345'  },
 ]
 
 // ──────────────────────────────────────────────
@@ -142,325 +145,352 @@ export const cards = [
 ]
 
 // ──────────────────────────────────────────────
+// 날짜+시간 헬퍼
+// d(offsetDays, hour, min) → { date, time }
+// 기준: 오늘(실행 시점) 기준 offsetDays 전
+// ──────────────────────────────────────────────
+function d(offsetDays, hour = 9, min = 0) {
+  const dt = new Date()
+  dt.setDate(dt.getDate() - offsetDays)
+  return {
+    date: dt.toISOString().slice(0, 10),
+    time: `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`,
+  }
+}
+
+// ──────────────────────────────────────────────
 // 은행 계좌 거래내역
 // — 카드 개별 구매는 포함하지 않음
 // — 급여·자동이체·송금·이자 등 계좌 직접 거래만 기록
+// — 기준일: 2026-04-03 (금)
+//   d(1) = 04-02 (목) 어제
+//   d(7) = 03-27 (금) 지난 금요일
+//   d(9) = 03-25 (수) 이번 달 급여일
+//   d(37)= 02-25 (수) 지난 달 급여일
 // ──────────────────────────────────────────────
-function d(offsetDays) {
-  const dt = new Date()
-  dt.setDate(dt.getDate() - offsetDays)
-  return dt.toISOString().slice(0, 10)
-}
-
 export let transactions = [
-  // ── 3월 (이번 달) ─────────────────────────────
-  { id: 't001', date: d(5),  amount: 3000000,  category: '급여',    counterpart: '(주)ABC테크',       accountId: 'acc001', source: 'account' },
-  { id: 't001a', date: d(1), amount: 2500000,  category: '이체',    counterpart: '급여계좌',           accountId: 'acc001', source: 'account' },
-  { id: 't002', date: d(5),  amount: -300000,  category: '자동이체', counterpart: 'iM 정기적금',       accountId: 'acc001', source: 'account' },
-  { id: 't003', date: d(5),  amount: -485000,  category: '카드대금', counterpart: 'iM 체크카드 결제 합계', accountId: 'acc001', source: 'account' },
-  { id: 't005', date: d(7),  amount: -320000,  category: '자동이체', counterpart: '아파트 관리비',     accountId: 'acc001', source: 'account' },
-  { id: 't006', date: d(10), amount: -80000,   category: '자동이체', counterpart: '파워짐 강남점',     accountId: 'acc001', source: 'account' },
-  { id: 't007', date: d(12), amount: -52400,   category: '자동이체', counterpart: '한국전력 전기요금', accountId: 'acc001', source: 'account' },
-  { id: 't008', date: d(13), amount: -18700,   category: '자동이체', counterpart: '서울도시가스',      accountId: 'acc001', source: 'account' },
-  { id: 't009', date: d(15), amount: -19800,   category: '자동이체', counterpart: 'SKT 통신요금',      accountId: 'acc001', source: 'account' },
-  { id: 't010', date: d(15), amount: -25000,   category: '자동이체', counterpart: '삼성생명 보험료',   accountId: 'acc001', source: 'account' },
-  { id: 't011', date: d(15), amount: -65000,   category: '자동이체', counterpart: '강남영어학원',      accountId: 'acc001', source: 'account' },
-  { id: 't012', date: d(15), amount: -139230,  category: '자동이체', counterpart: '국민건강보험공단',  accountId: 'acc001', source: 'account' },
-  { id: 't013', date: d(9),  amount: -100000,  category: '송금',    counterpart: '김영희',            accountId: 'acc001', source: 'account' },
-  { id: 't014', date: d(11), amount: -50000,   category: '송금',    counterpart: '박지수',            accountId: 'acc001', source: 'account' },
-  { id: 't015', date: d(16), amount: -30000,   category: '송금',    counterpart: '김민준',            accountId: 'acc001', source: 'account' },
-  { id: 't016', date: d(8),  amount: -200000,  category: '이체',    counterpart: 'ATM 출금',          accountId: 'acc001', source: 'account' },
-  { id: 't017', date: d(14), amount: -200000,  category: '이체',    counterpart: 'ATM 출금',          accountId: 'acc001', source: 'account' },
-  { id: 't018', date: d(3),  amount: 9200,     category: '이자',    counterpart: 'iM뱅크 이자',       accountId: 'acc001', source: 'account' },
-  { id: 't019', date: d(6),  amount: -8900,    category: '자동이체', counterpart: '수도요금 (상수도)',  accountId: 'acc001', source: 'account' },
-  { id: 't020', date: d(4),  amount: 150000,   category: '입금',    counterpart: '이민지 (식비 정산)', accountId: 'acc001', source: 'account' },
-  { id: 't021', date: d(2),  amount: -55000,   category: '자동이체', counterpart: 'LG유플러스 (홈인터넷)', accountId: 'acc001', source: 'account' },
-  { id: 't022', date: d(1),  amount: -45000,   category: '자동이체', counterpart: '쿠팡 로켓와우',     accountId: 'acc001', source: 'account' },
 
-  // ── 2월 ──────────────────────────────────────
-  { id: 't030', date: d(33), amount: 3000000,  category: '급여',    counterpart: '(주)ABC테크',       accountId: 'acc001', source: 'account' },
-  { id: 't030a', date: d(32), amount: 2500000, category: '이체',    counterpart: '급여계좌',           accountId: 'acc001', source: 'account' },
-  { id: 't031', date: d(33), amount: -300000,  category: '자동이체', counterpart: 'iM 정기적금',       accountId: 'acc001', source: 'account' },
-  { id: 't032', date: d(33), amount: -462000,  category: '카드대금', counterpart: 'iM 체크카드 결제 합계', accountId: 'acc001', source: 'account' },
-  { id: 't034', date: d(35), amount: -320000,  category: '자동이체', counterpart: '아파트 관리비',     accountId: 'acc001', source: 'account' },
-  { id: 't035', date: d(38), amount: -80000,   category: '자동이체', counterpart: '파워짐 강남점',     accountId: 'acc001', source: 'account' },
-  { id: 't036', date: d(40), amount: -48600,   category: '자동이체', counterpart: '한국전력 전기요금', accountId: 'acc001', source: 'account' },
-  { id: 't037', date: d(41), amount: -22400,   category: '자동이체', counterpart: '서울도시가스',      accountId: 'acc001', source: 'account' },
-  { id: 't038', date: d(43), amount: -19800,   category: '자동이체', counterpart: 'SKT 통신요금',      accountId: 'acc001', source: 'account' },
-  { id: 't039', date: d(43), amount: -25000,   category: '자동이체', counterpart: '삼성생명 보험료',   accountId: 'acc001', source: 'account' },
-  { id: 't040', date: d(43), amount: -65000,   category: '자동이체', counterpart: '강남영어학원',      accountId: 'acc001', source: 'account' },
-  { id: 't041', date: d(43), amount: -139230,  category: '자동이체', counterpart: '국민건강보험공단',  accountId: 'acc001', source: 'account' },
-  { id: 't042', date: d(37), amount: -50000,   category: '송금',    counterpart: '김영희',            accountId: 'acc001', source: 'account' },
-  { id: 't043', date: d(39), amount: -80000,   category: '송금',    counterpart: '최현우',            accountId: 'acc001', source: 'account' },
-  { id: 't044', date: d(44), amount: -50000,   category: '송금',    counterpart: '김철수',            accountId: 'acc001', source: 'account' },
-  { id: 't045', date: d(36), amount: -300000,  category: '이체',    counterpart: 'ATM 출금',          accountId: 'acc001', source: 'account' },
-  { id: 't046', date: d(46), amount: -200000,  category: '이체',    counterpart: 'ATM 출금',          accountId: 'acc001', source: 'account' },
-  { id: 't047', date: d(31), amount: 8900,     category: '이자',    counterpart: 'iM뱅크 이자',       accountId: 'acc001', source: 'account' },
-  { id: 't048', date: d(34), amount: -8900,    category: '자동이체', counterpart: '수도요금 (상수도)',  accountId: 'acc001', source: 'account' },
-  { id: 't049', date: d(45), amount: -55000,   category: '자동이체', counterpart: 'LG유플러스 (홈인터넷)', accountId: 'acc001', source: 'account' },
-  { id: 't050', date: d(42), amount: -45000,   category: '자동이체', counterpart: '쿠팡 로켓와우',     accountId: 'acc001', source: 'account' },
-  { id: 't051', date: d(47), amount: -120000,  category: '자동이체', counterpart: '현대캐피탈 스마트폰 할부', accountId: 'acc001', source: 'account' },
-  { id: 't052', date: d(32), amount: 200000,   category: '입금',    counterpart: '정세영 (더치페이)',  accountId: 'acc001', source: 'account' },
+  // ══════════════════════════════════════════
+  // 주계좌(acc001) — 4월 초 (이번 주)
+  // ══════════════════════════════════════════
+  // 어제(d1=04-02) 이민지가 식비 정산 입금
+  { id: 't001a', ...d(1,11,32), amount:  150000, category: '입금',    counterpart: '이민지',            counterpartBank: '카카오뱅크', accountId: 'acc001', source: 'account' },
+  // 어제 체크카드 자동결제 출금
+  { id: 't001b', ...d(1, 0, 5), amount:  -45000, category: '자동이체', counterpart: '쿠팡 로켓와우',     counterpartBank: '국민은행',   accountId: 'acc001', source: 'account' },
 
-  // ── 1월 ──────────────────────────────────────
-  { id: 't060', date: d(64), amount: 3000000,  category: '급여',    counterpart: '(주)ABC테크',       accountId: 'acc001', source: 'account' },
-  { id: 't060a', date: d(63), amount: 2500000, category: '이체',    counterpart: '급여계좌',           accountId: 'acc001', source: 'account' },
-  { id: 't061', date: d(64), amount: -300000,  category: '자동이체', counterpart: 'iM 정기적금',       accountId: 'acc001', source: 'account' },
-  { id: 't062', date: d(64), amount: -511000,  category: '카드대금', counterpart: 'iM 체크카드 결제 합계', accountId: 'acc001', source: 'account' },
-  { id: 't064', date: d(64), amount: 500000,   category: '입금',    counterpart: '(주)ABC테크 성과급', accountId: 'acc001', source: 'account' },
-  { id: 't065', date: d(66), amount: -320000,  category: '자동이체', counterpart: '아파트 관리비',     accountId: 'acc001', source: 'account' },
-  { id: 't066', date: d(69), amount: -80000,   category: '자동이체', counterpart: '파워짐 강남점',     accountId: 'acc001', source: 'account' },
-  { id: 't067', date: d(71), amount: -61200,   category: '자동이체', counterpart: '한국전력 전기요금', accountId: 'acc001', source: 'account' },
-  { id: 't068', date: d(72), amount: -24500,   category: '자동이체', counterpart: '서울도시가스',      accountId: 'acc001', source: 'account' },
-  { id: 't069', date: d(74), amount: -19800,   category: '자동이체', counterpart: 'SKT 통신요금',      accountId: 'acc001', source: 'account' },
-  { id: 't070', date: d(74), amount: -25000,   category: '자동이체', counterpart: '삼성생명 보험료',   accountId: 'acc001', source: 'account' },
-  { id: 't071', date: d(74), amount: -65000,   category: '자동이체', counterpart: '강남영어학원',      accountId: 'acc001', source: 'account' },
-  { id: 't072', date: d(74), amount: -139230,  category: '자동이체', counterpart: '국민건강보험공단',  accountId: 'acc001', source: 'account' },
-  { id: 't073', date: d(68), amount: -100000,  category: '송금',    counterpart: '김영희',            accountId: 'acc001', source: 'account' },
-  { id: 't074', date: d(70), amount: -70000,   category: '송금',    counterpart: '이민지',            accountId: 'acc001', source: 'account' },
-  { id: 't075', date: d(75), amount: -30000,   category: '송금',    counterpart: '김민준',            accountId: 'acc001', source: 'account' },
-  { id: 't076', date: d(67), amount: -200000,  category: '이체',    counterpart: 'ATM 출금',          accountId: 'acc001', source: 'account' },
-  { id: 't077', date: d(78), amount: -300000,  category: '이체',    counterpart: 'ATM 출금',          accountId: 'acc001', source: 'account' },
-  { id: 't078', date: d(62), amount: 8600,     category: '이자',    counterpart: 'iM뱅크 이자',       accountId: 'acc001', source: 'account' },
-  { id: 't079', date: d(65), amount: -8900,    category: '자동이체', counterpart: '수도요금 (상수도)',  accountId: 'acc001', source: 'account' },
-  { id: 't080', date: d(76), amount: -55000,   category: '자동이체', counterpart: 'LG유플러스 (홈인터넷)', accountId: 'acc001', source: 'account' },
-  { id: 't081', date: d(73), amount: -120000,  category: '자동이체', counterpart: '현대캐피탈 스마트폰 할부', accountId: 'acc001', source: 'account' },
-  { id: 't082', date: d(63), amount: -45000,   category: '자동이체', counterpart: '쿠팡 로켓와우',     accountId: 'acc001', source: 'account' },
+  // ══════════════════════════════════════════
+  // 주계좌(acc001) — 3월
+  // ══════════════════════════════════════════
+  // 3월 25일 급여
+  { id: 't001', ...d(9, 9,30), amount: 3000000, category: '급여',    counterpart: '(주)ABC테크',           counterpartBank: '기업은행',   accountId: 'acc001', source: 'account' },
+  // 3월 27일 지난 금요일 - 박지수 더치페이 정산 입금
+  { id: 't007y', ...d(7,16,45), amount:   60000, category: '입금',   counterpart: '박지수',               counterpartBank: '신한은행',   accountId: 'acc001', source: 'account' },
+  // 3월 27일 이정훈 저녁 식비 정산 입금
+  { id: 't007z', ...d(7,17,10), amount:   35000, category: '입금',   counterpart: '이정훈',               counterpartBank: '신한은행',   accountId: 'acc001', source: 'account' },
+  // 3월 25일 자동이체
+  { id: 't002', ...d(9, 0,10), amount:  -300000, category: '자동이체', counterpart: 'iM 정기적금',          counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't003', ...d(9, 0,20), amount:  -485000, category: '카드대금', counterpart: 'iM 체크카드 결제 합계', counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  // 3월 22일 아파트 관리비
+  { id: 't005', ...d(12, 6,0), amount:  -320000, category: '자동이체', counterpart: '아파트 관리비',         counterpartBank: '신한은행',   accountId: 'acc001', source: 'account' },
+  // 3월 24일 헬스장
+  { id: 't006', ...d(10, 6,5), amount:   -80000, category: '자동이체', counterpart: '파워짐 강남점',         counterpartBank: '국민은행',   accountId: 'acc001', source: 'account' },
+  // 3월 20일 전기요금
+  { id: 't007', ...d(14, 6,1), amount:   -52400, category: '자동이체', counterpart: '한국전력 전기요금',     counterpartBank: '한국전력',   accountId: 'acc001', source: 'account' },
+  // 3월 19일 도시가스
+  { id: 't008', ...d(15, 6,2), amount:   -18700, category: '자동이체', counterpart: '서울도시가스',          counterpartBank: '신한은행',   accountId: 'acc001', source: 'account' },
+  // 3월 15일 통신·보험·학원·건보
+  { id: 't009', ...d(19, 6,3), amount:   -19800, category: '자동이체', counterpart: 'SKT 통신요금',          counterpartBank: 'SK텔레콤',   accountId: 'acc001', source: 'account' },
+  { id: 't010', ...d(19, 6,5), amount:   -25000, category: '자동이체', counterpart: '삼성생명 보험료',       counterpartBank: '삼성생명',   accountId: 'acc001', source: 'account' },
+  { id: 't011', ...d(19, 6,7), amount:   -65000, category: '자동이체', counterpart: '강남영어학원',          counterpartBank: '기업은행',   accountId: 'acc001', source: 'account' },
+  { id: 't012', ...d(19, 6,9), amount:  -139230, category: '자동이체', counterpart: '국민건강보험공단',      counterpartBank: '국민건강보험공단', accountId: 'acc001', source: 'account' },
+  // 3월 25일 → 3월 26일 김영희 송금
+  { id: 't013', ...d(8,14,22), amount:  -100000, category: '송금',    counterpart: '김영희',               counterpartBank: '국민은행',   accountId: 'acc001', source: 'account' },
+  // 3월 23일 박지수 송금
+  { id: 't014', ...d(11,18,5), amount:   -50000, category: '송금',    counterpart: '박지수',               counterpartBank: '신한은행',   accountId: 'acc001', source: 'account' },
+  // 3월 18일 김민준 송금
+  { id: 't015', ...d(16,12,0), amount:   -30000, category: '송금',    counterpart: '김민준',               counterpartBank: '토스뱅크',   accountId: 'acc001', source: 'account' },
+  // 3월 26일 ATM
+  { id: 't016', ...d(8,15,30), amount:  -200000, category: '이체',    counterpart: 'ATM 출금',             counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  // 3월 20일 ATM
+  { id: 't017', ...d(14,11,0), amount:  -200000, category: '이체',    counterpart: 'ATM 출금',             counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  // 4월 1일 이자
+  { id: 't018', ...d(2, 0,30), amount:     9200, category: '이자',    counterpart: 'iM뱅크 이자',          counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  // 3월 28일 수도요금
+  { id: 't019', ...d(6, 6,4), amount:    -8900, category: '자동이체', counterpart: '수도요금 (상수도)',     counterpartBank: '서울시',     accountId: 'acc001', source: 'account' },
+  // 3월 30일 이민지 입금
+  { id: 't020', ...d(4,13,45), amount:   150000, category: '입금',    counterpart: '이민지 (식비 정산)',   counterpartBank: '카카오뱅크', accountId: 'acc001', source: 'account' },
+  // 3월 2일 LG유플러스
+  { id: 't021', ...d(32, 6,6), amount:   -55000, category: '자동이체', counterpart: 'LG유플러스 (홈인터넷)', counterpartBank: 'LG유플러스', accountId: 'acc001', source: 'account' },
+  // 3월 29일 최동욱 정산 입금
+  { id: 't022x', ...d(5,19,30), amount:   80000, category: '입금',    counterpart: '최동욱',               counterpartBank: '국민은행',   accountId: 'acc001', source: 'account' },
+  // 3월 29일 박민서 정산 입금
+  { id: 't022y', ...d(5,20,10), amount:   45000, category: '입금',    counterpart: '박민서',               counterpartBank: '카카오뱅크', accountId: 'acc001', source: 'account' },
+  // 3월 25일 엄마(김순자) 생활비 송금
+  { id: 't170m', ...d(9,10,30), amount: -300000, category: '송금',    counterpart: '김순자',               counterpartBank: '농협은행',   accountId: 'acc001', source: 'account' },
 
-  // ── 12월 ──────────────────────────────────────
-  { id: 't090', date: d(94),  amount: 3200000, category: '급여',    counterpart: '(주)ABC테크',        accountId: 'acc001', source: 'account' },
-  { id: 't090a', date: d(94), amount: 2500000, category: '이체',    counterpart: '급여계좌',            accountId: 'acc001', source: 'account' },
-  { id: 't091', date: d(94),  amount: -300000, category: '자동이체', counterpart: 'iM 정기적금',        accountId: 'acc001', source: 'account' },
-  { id: 't092', date: d(94),  amount: -538000, category: '카드대금', counterpart: 'iM 체크카드 결제 합계', accountId: 'acc001', source: 'account' },
-  { id: 't094', date: d(96),  amount: -320000, category: '자동이체', counterpart: '아파트 관리비',      accountId: 'acc001', source: 'account' },
-  { id: 't095', date: d(99),  amount: -80000,  category: '자동이체', counterpart: '파워짐 강남점',      accountId: 'acc001', source: 'account' },
-  { id: 't096', date: d(101), amount: -68500,  category: '자동이체', counterpart: '한국전력 전기요금',  accountId: 'acc001', source: 'account' },
-  { id: 't097', date: d(102), amount: -28000,  category: '자동이체', counterpart: '서울도시가스',       accountId: 'acc001', source: 'account' },
-  { id: 't098', date: d(104), amount: -19800,  category: '자동이체', counterpart: 'SKT 통신요금',       accountId: 'acc001', source: 'account' },
-  { id: 't099', date: d(104), amount: -25000,  category: '자동이체', counterpart: '삼성생명 보험료',    accountId: 'acc001', source: 'account' },
-  { id: 't100', date: d(104), amount: -65000,  category: '자동이체', counterpart: '강남영어학원',       accountId: 'acc001', source: 'account' },
-  { id: 't101', date: d(104), amount: -139230, category: '자동이체', counterpart: '국민건강보험공단',   accountId: 'acc001', source: 'account' },
-  { id: 't102', date: d(98),  amount: -100000, category: '송금',    counterpart: '김영희',             accountId: 'acc001', source: 'account' },
-  { id: 't103', date: d(98),  amount: -50000,  category: '송금',    counterpart: '김철호',             accountId: 'acc001', source: 'account' },
-  { id: 't104', date: d(106), amount: -30000,  category: '송금',    counterpart: '박지수',             accountId: 'acc001', source: 'account' },
-  { id: 't105', date: d(97),  amount: -300000, category: '이체',    counterpart: 'ATM 출금',           accountId: 'acc001', source: 'account' },
-  { id: 't106', date: d(92),  amount: 8300,    category: '이자',    counterpart: 'iM뱅크 이자',        accountId: 'acc001', source: 'account' },
-  { id: 't107', date: d(95),  amount: -8900,   category: '자동이체', counterpart: '수도요금 (상수도)',   accountId: 'acc001', source: 'account' },
-  { id: 't108', date: d(105), amount: -55000,  category: '자동이체', counterpart: 'LG유플러스 (홈인터넷)', accountId: 'acc001', source: 'account' },
-  { id: 't109', date: d(103), amount: -120000, category: '자동이체', counterpart: '현대캐피탈 스마트폰 할부', accountId: 'acc001', source: 'account' },
-  { id: 't110', date: d(93),  amount: -45000,  category: '자동이체', counterpart: '쿠팡 로켓와우',      accountId: 'acc001', source: 'account' },
-  { id: 't111', date: d(107), amount: 500000,  category: '입금',    counterpart: '오승훈 (연말 정산 공동 환급)', accountId: 'acc001', source: 'account' },
+  // ══════════════════════════════════════════
+  // 주계좌(acc001) — 2월
+  // ══════════════════════════════════════════
+  { id: 't030', ...d(37, 9,30), amount: 3000000, category: '급여',    counterpart: '(주)ABC테크',           counterpartBank: '기업은행',   accountId: 'acc001', source: 'account' },
+  { id: 't031', ...d(37, 0,10), amount: -300000, category: '자동이체', counterpart: 'iM 정기적금',           counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't032', ...d(37, 0,20), amount: -462000, category: '카드대금', counterpart: 'iM 체크카드 결제 합계', counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't034', ...d(39, 6, 0), amount: -320000, category: '자동이체', counterpart: '아파트 관리비',         counterpartBank: '신한은행',   accountId: 'acc001', source: 'account' },
+  { id: 't035', ...d(42, 6, 5), amount:  -80000, category: '자동이체', counterpart: '파워짐 강남점',         counterpartBank: '국민은행',   accountId: 'acc001', source: 'account' },
+  { id: 't036', ...d(44, 6, 1), amount:  -48600, category: '자동이체', counterpart: '한국전력 전기요금',     counterpartBank: '한국전력',   accountId: 'acc001', source: 'account' },
+  { id: 't037', ...d(45, 6, 2), amount:  -22400, category: '자동이체', counterpart: '서울도시가스',          counterpartBank: '신한은행',   accountId: 'acc001', source: 'account' },
+  { id: 't038', ...d(47, 6, 3), amount:  -19800, category: '자동이체', counterpart: 'SKT 통신요금',          counterpartBank: 'SK텔레콤',   accountId: 'acc001', source: 'account' },
+  { id: 't039', ...d(47, 6, 5), amount:  -25000, category: '자동이체', counterpart: '삼성생명 보험료',       counterpartBank: '삼성생명',   accountId: 'acc001', source: 'account' },
+  { id: 't040', ...d(47, 6, 7), amount:  -65000, category: '자동이체', counterpart: '강남영어학원',          counterpartBank: '기업은행',   accountId: 'acc001', source: 'account' },
+  { id: 't041', ...d(47, 6, 9), amount: -139230, category: '자동이체', counterpart: '국민건강보험공단',      counterpartBank: '국민건강보험공단', accountId: 'acc001', source: 'account' },
+  { id: 't042', ...d(41,14,10), amount:  -50000, category: '송금',    counterpart: '김영희',               counterpartBank: '국민은행',   accountId: 'acc001', source: 'account' },
+  { id: 't043', ...d(43,16,30), amount:  -80000, category: '송금',    counterpart: '최현우',               counterpartBank: '우리은행',   accountId: 'acc001', source: 'account' },
+  { id: 't044', ...d(48,11,15), amount:  -50000, category: '송금',    counterpart: '김철수',               counterpartBank: '하나은행',   accountId: 'acc001', source: 'account' },
+  { id: 't045', ...d(40,10, 0), amount: -300000, category: '이체',    counterpart: 'ATM 출금',             counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't046', ...d(50,14, 0), amount: -200000, category: '이체',    counterpart: 'ATM 출금',             counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't047', ...d(35, 0,30), amount:    8900, category: '이자',    counterpart: 'iM뱅크 이자',          counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't048', ...d(38, 6, 4), amount:   -8900, category: '자동이체', counterpart: '수도요금 (상수도)',     counterpartBank: '서울시',     accountId: 'acc001', source: 'account' },
+  { id: 't049', ...d(61, 6, 6), amount:  -55000, category: '자동이체', counterpart: 'LG유플러스 (홈인터넷)', counterpartBank: 'LG유플러스', accountId: 'acc001', source: 'account' },
+  { id: 't050', ...d(46, 6, 8), amount:  -45000, category: '자동이체', counterpart: '쿠팡 로켓와우',        counterpartBank: '국민은행',   accountId: 'acc001', source: 'account' },
+  { id: 't051', ...d(51, 6,10), amount: -120000, category: '자동이체', counterpart: '현대캐피탈 스마트폰 할부', counterpartBank: '현대캐피탈', accountId: 'acc001', source: 'account' },
+  { id: 't052', ...d(36,19,20), amount:  200000, category: '입금',    counterpart: '정세영 (더치페이)',     counterpartBank: '카카오뱅크', accountId: 'acc001', source: 'account' },
+  { id: 't052b',...d(38,15,40), amount:  120000, category: '입금',    counterpart: '오승훈 (식비 정산)',    counterpartBank: '토스뱅크',   accountId: 'acc001', source: 'account' },
+  { id: 't052c',...d(42,20, 5), amount:   50000, category: '입금',    counterpart: '이정훈 (더치페이)',     counterpartBank: '신한은행',   accountId: 'acc001', source: 'account' },
+  // 2월 엄마 생활비
+  { id: 't171', ...d(37,10,30), amount: -300000, category: '송금',    counterpart: '김순자',               counterpartBank: '농협은행',   accountId: 'acc001', source: 'account' },
 
-  // ── 11월 ──────────────────────────────────────
-  { id: 't120', date: d(124), amount: 3000000, category: '급여',    counterpart: '(주)ABC테크',        accountId: 'acc001', source: 'account' },
-  { id: 't121', date: d(124), amount: -300000, category: '자동이체', counterpart: 'iM 정기적금',        accountId: 'acc001', source: 'account' },
-  { id: 't122', date: d(124), amount: -492000, category: '카드대금', counterpart: 'iM 체크카드 결제 합계', accountId: 'acc001', source: 'account' },
-  { id: 't123', date: d(126), amount: -320000, category: '자동이체', counterpart: '아파트 관리비',      accountId: 'acc001', source: 'account' },
-  { id: 't124', date: d(129), amount: -80000,  category: '자동이체', counterpart: '파워짐 강남점',      accountId: 'acc001', source: 'account' },
-  { id: 't125', date: d(131), amount: -51200,  category: '자동이체', counterpart: '한국전력 전기요금',  accountId: 'acc001', source: 'account' },
-  { id: 't126', date: d(132), amount: -21000,  category: '자동이체', counterpart: '서울도시가스',       accountId: 'acc001', source: 'account' },
-  { id: 't127', date: d(134), amount: -19800,  category: '자동이체', counterpart: 'SKT 통신요금',       accountId: 'acc001', source: 'account' },
-  { id: 't128', date: d(134), amount: -25000,  category: '자동이체', counterpart: '삼성생명 보험료',    accountId: 'acc001', source: 'account' },
-  { id: 't129', date: d(134), amount: -65000,  category: '자동이체', counterpart: '강남영어학원',       accountId: 'acc001', source: 'account' },
-  { id: 't130', date: d(134), amount: -139230, category: '자동이체', counterpart: '국민건강보험공단',   accountId: 'acc001', source: 'account' },
-  { id: 't131', date: d(128), amount: -50000,  category: '송금',    counterpart: '김영희',             accountId: 'acc001', source: 'account' },
-  { id: 't132', date: d(130), amount: -100000, category: '송금',    counterpart: '이순자',             accountId: 'acc001', source: 'account' },
-  { id: 't133', date: d(127), amount: -200000, category: '이체',    counterpart: 'ATM 출금',           accountId: 'acc001', source: 'account' },
-  { id: 't134', date: d(122), amount: 8000,    category: '이자',    counterpart: 'iM뱅크 이자',        accountId: 'acc001', source: 'account' },
-  { id: 't135', date: d(125), amount: -8900,   category: '자동이체', counterpart: '수도요금 (상수도)',   accountId: 'acc001', source: 'account' },
-  { id: 't136', date: d(135), amount: -55000,  category: '자동이체', counterpart: 'LG유플러스 (홈인터넷)', accountId: 'acc001', source: 'account' },
-  { id: 't137', date: d(133), amount: -120000, category: '자동이체', counterpart: '현대캐피탈 스마트폰 할부', accountId: 'acc001', source: 'account' },
-  { id: 't138', date: d(123), amount: -45000,  category: '자동이체', counterpart: '쿠팡 로켓와우',      accountId: 'acc001', source: 'account' },
+  // ══════════════════════════════════════════
+  // 주계좌(acc001) — 1월
+  // ══════════════════════════════════════════
+  { id: 't060', ...d(68, 9,30), amount: 3000000, category: '급여',    counterpart: '(주)ABC테크',           counterpartBank: '기업은행',   accountId: 'acc001', source: 'account' },
+  { id: 't061', ...d(68, 0,10), amount: -300000, category: '자동이체', counterpart: 'iM 정기적금',           counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't062', ...d(68, 0,20), amount: -511000, category: '카드대금', counterpart: 'iM 체크카드 결제 합계', counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't064', ...d(68, 9,45), amount:  500000, category: '입금',    counterpart: '(주)ABC테크 성과급',    counterpartBank: '기업은행',   accountId: 'acc001', source: 'account' },
+  { id: 't065', ...d(70, 6, 0), amount: -320000, category: '자동이체', counterpart: '아파트 관리비',         counterpartBank: '신한은행',   accountId: 'acc001', source: 'account' },
+  { id: 't066', ...d(73, 6, 5), amount:  -80000, category: '자동이체', counterpart: '파워짐 강남점',         counterpartBank: '국민은행',   accountId: 'acc001', source: 'account' },
+  { id: 't067', ...d(75, 6, 1), amount:  -61200, category: '자동이체', counterpart: '한국전력 전기요금',     counterpartBank: '한국전력',   accountId: 'acc001', source: 'account' },
+  { id: 't068', ...d(76, 6, 2), amount:  -24500, category: '자동이체', counterpart: '서울도시가스',          counterpartBank: '신한은행',   accountId: 'acc001', source: 'account' },
+  { id: 't069', ...d(78, 6, 3), amount:  -19800, category: '자동이체', counterpart: 'SKT 통신요금',          counterpartBank: 'SK텔레콤',   accountId: 'acc001', source: 'account' },
+  { id: 't070', ...d(78, 6, 5), amount:  -25000, category: '자동이체', counterpart: '삼성생명 보험료',       counterpartBank: '삼성생명',   accountId: 'acc001', source: 'account' },
+  { id: 't071', ...d(78, 6, 7), amount:  -65000, category: '자동이체', counterpart: '강남영어학원',          counterpartBank: '기업은행',   accountId: 'acc001', source: 'account' },
+  { id: 't072', ...d(78, 6, 9), amount: -139230, category: '자동이체', counterpart: '국민건강보험공단',      counterpartBank: '국민건강보험공단', accountId: 'acc001', source: 'account' },
+  { id: 't073', ...d(72,13,30), amount: -100000, category: '송금',    counterpart: '김영희',               counterpartBank: '국민은행',   accountId: 'acc001', source: 'account' },
+  { id: 't074', ...d(74,17, 0), amount:  -70000, category: '송금',    counterpart: '이민지',               counterpartBank: '카카오뱅크', accountId: 'acc001', source: 'account' },
+  { id: 't075', ...d(79,12,10), amount:  -30000, category: '송금',    counterpart: '김민준',               counterpartBank: '토스뱅크',   accountId: 'acc001', source: 'account' },
+  { id: 't076', ...d(71,10, 0), amount: -200000, category: '이체',    counterpart: 'ATM 출금',             counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't077', ...d(82,15, 0), amount: -300000, category: '이체',    counterpart: 'ATM 출금',             counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't078', ...d(66, 0,30), amount:    8600, category: '이자',    counterpart: 'iM뱅크 이자',          counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't079', ...d(69, 6, 4), amount:   -8900, category: '자동이체', counterpart: '수도요금 (상수도)',     counterpartBank: '서울시',     accountId: 'acc001', source: 'account' },
+  { id: 't080', ...d(80, 6, 6), amount:  -55000, category: '자동이체', counterpart: 'LG유플러스 (홈인터넷)', counterpartBank: 'LG유플러스', accountId: 'acc001', source: 'account' },
+  { id: 't081', ...d(77, 6,10), amount: -120000, category: '자동이체', counterpart: '현대캐피탈 스마트폰 할부', counterpartBank: '현대캐피탈', accountId: 'acc001', source: 'account' },
+  { id: 't082', ...d(67, 6, 8), amount:  -45000, category: '자동이체', counterpart: '쿠팡 로켓와우',        counterpartBank: '국민은행',   accountId: 'acc001', source: 'account' },
+  { id: 't082b',...d(70,18,20), amount:   80000, category: '입금',    counterpart: '박민서 (영화티켓 정산)',counterpartBank: '카카오뱅크', accountId: 'acc001', source: 'account' },
+  { id: 't082c',...d(75,21,30), amount:   30000, category: '입금',    counterpart: '최동욱 (택시비 정산)', counterpartBank: '국민은행',   accountId: 'acc001', source: 'account' },
+  // 1월 엄마 생활비
+  { id: 't172', ...d(68,10,30), amount: -300000, category: '송금',    counterpart: '김순자',               counterpartBank: '농협은행',   accountId: 'acc001', source: 'account' },
 
-  // ── 10월 ──────────────────────────────────────
-  { id: 't150', date: d(155), amount: 3000000, category: '급여',    counterpart: '(주)ABC테크',        accountId: 'acc001', source: 'account' },
-  { id: 't151', date: d(155), amount: -300000, category: '자동이체', counterpart: 'iM 정기적금',        accountId: 'acc001', source: 'account' },
-  { id: 't152', date: d(155), amount: -445000, category: '카드대금', counterpart: 'iM 체크카드 결제 합계', accountId: 'acc001', source: 'account' },
-  { id: 't153', date: d(157), amount: -320000, category: '자동이체', counterpart: '아파트 관리비',      accountId: 'acc001', source: 'account' },
-  { id: 't154', date: d(160), amount: -80000,  category: '자동이체', counterpart: '파워짐 강남점',      accountId: 'acc001', source: 'account' },
-  { id: 't155', date: d(162), amount: -44800,  category: '자동이체', counterpart: '한국전력 전기요금',  accountId: 'acc001', source: 'account' },
-  { id: 't156', date: d(163), amount: -15200,  category: '자동이체', counterpart: '서울도시가스',       accountId: 'acc001', source: 'account' },
-  { id: 't157', date: d(165), amount: -19800,  category: '자동이체', counterpart: 'SKT 통신요금',       accountId: 'acc001', source: 'account' },
-  { id: 't158', date: d(165), amount: -25000,  category: '자동이체', counterpart: '삼성생명 보험료',    accountId: 'acc001', source: 'account' },
-  { id: 't159', date: d(165), amount: -65000,  category: '자동이체', counterpart: '강남영어학원',       accountId: 'acc001', source: 'account' },
-  { id: 't160', date: d(165), amount: -139230, category: '자동이체', counterpart: '국민건강보험공단',   accountId: 'acc001', source: 'account' },
-  { id: 't161', date: d(159), amount: -100000, category: '송금',    counterpart: '김영희',             accountId: 'acc001', source: 'account' },
-  { id: 't162', date: d(161), amount: -30000,  category: '송금',    counterpart: '김민준',             accountId: 'acc001', source: 'account' },
-  { id: 't163', date: d(166), amount: -50000,  category: '송금',    counterpart: '박상철',             accountId: 'acc001', source: 'account' },
-  { id: 't164', date: d(158), amount: -200000, category: '이체',    counterpart: 'ATM 출금',           accountId: 'acc001', source: 'account' },
-  { id: 't165', date: d(153), amount: 7800,    category: '이자',    counterpart: 'iM뱅크 이자',        accountId: 'acc001', source: 'account' },
-  { id: 't166', date: d(156), amount: -8900,   category: '자동이체', counterpart: '수도요금 (상수도)',   accountId: 'acc001', source: 'account' },
-  { id: 't167', date: d(166), amount: -55000,  category: '자동이체', counterpart: 'LG유플러스 (홈인터넷)', accountId: 'acc001', source: 'account' },
-  { id: 't168', date: d(164), amount: -120000, category: '자동이체', counterpart: '현대캐피탈 스마트폰 할부', accountId: 'acc001', source: 'account' },
-  { id: 't169', date: d(154), amount: -45000,  category: '자동이체', counterpart: '쿠팡 로켓와우',      accountId: 'acc001', source: 'account' },
+  // ══════════════════════════════════════════
+  // 주계좌(acc001) — 12월
+  // ══════════════════════════════════════════
+  { id: 't090', ...d(99, 9,30), amount: 3200000, category: '급여',    counterpart: '(주)ABC테크',           counterpartBank: '기업은행',   accountId: 'acc001', source: 'account' },
+  { id: 't091', ...d(99, 0,10), amount: -300000, category: '자동이체', counterpart: 'iM 정기적금',           counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't092', ...d(99, 0,20), amount: -538000, category: '카드대금', counterpart: 'iM 체크카드 결제 합계', counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't094', ...d(101, 6, 0), amount: -320000, category: '자동이체', counterpart: '아파트 관리비',         counterpartBank: '신한은행',   accountId: 'acc001', source: 'account' },
+  { id: 't095', ...d(103, 6, 5), amount:  -80000, category: '자동이체', counterpart: '파워짐 강남점',         counterpartBank: '국민은행',   accountId: 'acc001', source: 'account' },
+  { id: 't096', ...d(105, 6, 1), amount:  -68500, category: '자동이체', counterpart: '한국전력 전기요금',     counterpartBank: '한국전력',   accountId: 'acc001', source: 'account' },
+  { id: 't097', ...d(106, 6, 2), amount:  -28000, category: '자동이체', counterpart: '서울도시가스',          counterpartBank: '신한은행',   accountId: 'acc001', source: 'account' },
+  { id: 't098', ...d(108, 6, 3), amount:  -19800, category: '자동이체', counterpart: 'SKT 통신요금',          counterpartBank: 'SK텔레콤',   accountId: 'acc001', source: 'account' },
+  { id: 't099', ...d(108, 6, 5), amount:  -25000, category: '자동이체', counterpart: '삼성생명 보험료',       counterpartBank: '삼성생명',   accountId: 'acc001', source: 'account' },
+  { id: 't100', ...d(108, 6, 7), amount:  -65000, category: '자동이체', counterpart: '강남영어학원',          counterpartBank: '기업은행',   accountId: 'acc001', source: 'account' },
+  { id: 't101', ...d(108, 6, 9), amount: -139230, category: '자동이체', counterpart: '국민건강보험공단',      counterpartBank: '국민건강보험공단', accountId: 'acc001', source: 'account' },
+  { id: 't102', ...d(102,14, 0), amount: -100000, category: '송금',    counterpart: '김영희',               counterpartBank: '국민은행',   accountId: 'acc001', source: 'account' },
+  { id: 't103', ...d(102,15,20), amount:  -50000, category: '송금',    counterpart: '김철호',               counterpartBank: '신한은행',   accountId: 'acc001', source: 'account' },
+  { id: 't104', ...d(110,11, 0), amount:  -30000, category: '송금',    counterpart: '박지수',               counterpartBank: '신한은행',   accountId: 'acc001', source: 'account' },
+  { id: 't105', ...d(101,10, 0), amount: -300000, category: '이체',    counterpart: 'ATM 출금',             counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't106', ...d(96, 0,30), amount:    8300,  category: '이자',    counterpart: 'iM뱅크 이자',          counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't107', ...d(99, 6, 4), amount:   -8900,  category: '자동이체', counterpart: '수도요금 (상수도)',     counterpartBank: '서울시',     accountId: 'acc001', source: 'account' },
+  { id: 't108', ...d(109, 6, 6), amount:  -55000, category: '자동이체', counterpart: 'LG유플러스 (홈인터넷)', counterpartBank: 'LG유플러스', accountId: 'acc001', source: 'account' },
+  { id: 't109', ...d(107, 6,10), amount: -120000, category: '자동이체', counterpart: '현대캐피탈 스마트폰 할부', counterpartBank: '현대캐피탈', accountId: 'acc001', source: 'account' },
+  { id: 't110', ...d(97, 6, 8), amount:   -45000, category: '자동이체', counterpart: '쿠팡 로켓와우',        counterpartBank: '국민은행',   accountId: 'acc001', source: 'account' },
+  { id: 't111', ...d(111,20, 0), amount:  500000, category: '입금',    counterpart: '오승훈 (연말 정산 공동 환급)', counterpartBank: '토스뱅크', accountId: 'acc001', source: 'account' },
+  // 12월 엄마 생활비
+  { id: 't173', ...d(99,10,30), amount: -300000, category: '송금',    counterpart: '김순자',               counterpartBank: '농협은행',   accountId: 'acc001', source: 'account' },
 
-  // ── 급여계좌(acc008) 거래내역 ────────────────────
-  // 3월
-  { id: 'ts001', date: d(1),  amount: 4200000,  category: '급여',     counterpart: '(주)미래솔루션',       accountId: 'acc008', source: 'account' },
-  { id: 'ts002', date: d(1),  amount: -2500000, category: '이체',     counterpart: '주계좌',               accountId: 'acc008', source: 'account' },
-  { id: 'ts003', date: d(3),  amount: -1200000, category: '자동이체', counterpart: '전세보증금 대출 이자', accountId: 'acc008', source: 'account' },
-  { id: 'ts004', date: d(5),  amount: -350000,  category: '자동이체', counterpart: 'KB국민 신용카드 결제', accountId: 'acc008', source: 'account' },
-  { id: 'ts005', date: d(6),  amount: -300000,  category: '자동이체', counterpart: 'iM 정기적금',          accountId: 'acc008', source: 'account' },
-  { id: 'ts006', date: d(8),  amount: -65000,   category: '자동이체', counterpart: 'SK텔레콤',             accountId: 'acc008', source: 'account' },
-  { id: 'ts007', date: d(9),  amount: -148900,  category: '자동이체', counterpart: '국민건강보험',         accountId: 'acc008', source: 'account' },
-  { id: 'ts008', date: d(11), amount: -45000,   category: '자동이체', counterpart: '삼성생명 실손보험',    accountId: 'acc008', source: 'account' },
-  { id: 'ts009', date: d(13), amount: -180000,  category: '자동이체', counterpart: '아파트 관리비',        accountId: 'acc008', source: 'account' },
-  { id: 'ts00a', date: d(15), amount: -300000,  category: '송금',     counterpart: '김순자',               accountId: 'acc008', source: 'account' },
-  { id: 'ts00b', date: d(17), amount: -50000,   category: '송금',     counterpart: '이민지',               accountId: 'acc008', source: 'account' },
-  { id: 'ts00c', date: d(20), amount: -50000,   category: '송금',     counterpart: '박지수',               accountId: 'acc008', source: 'account' },
-  // 2월
-  { id: 'ts010', date: d(32), amount: 4200000,  category: '급여',     counterpart: '(주)미래솔루션',       accountId: 'acc008', source: 'account' },
-  { id: 'ts011', date: d(32), amount: -2500000, category: '이체',     counterpart: '주계좌',               accountId: 'acc008', source: 'account' },
-  { id: 'ts012', date: d(34), amount: -1200000, category: '자동이체', counterpart: '전세보증금 대출 이자', accountId: 'acc008', source: 'account' },
-  { id: 'ts013', date: d(36), amount: -328000,  category: '자동이체', counterpart: 'KB국민 신용카드 결제', accountId: 'acc008', source: 'account' },
-  { id: 'ts015', date: d(37), amount: -300000,  category: '자동이체', counterpart: 'iM 정기적금',          accountId: 'acc008', source: 'account' },
-  { id: 'ts016', date: d(39), amount: -65000,   category: '자동이체', counterpart: 'SK텔레콤',             accountId: 'acc008', source: 'account' },
-  { id: 'ts017', date: d(40), amount: -148900,  category: '자동이체', counterpart: '국민건강보험',         accountId: 'acc008', source: 'account' },
-  { id: 'ts018', date: d(42), amount: -45000,   category: '자동이체', counterpart: '삼성생명 실손보험',    accountId: 'acc008', source: 'account' },
-  { id: 'ts019', date: d(44), amount: -180000,  category: '자동이체', counterpart: '아파트 관리비',        accountId: 'acc008', source: 'account' },
-  { id: 'ts01a', date: d(46), amount: -300000,  category: '송금',     counterpart: '김순자',               accountId: 'acc008', source: 'account' },
-  { id: 'ts01b', date: d(47), amount: -20000,   category: '송금',     counterpart: '정세영',               accountId: 'acc008', source: 'account' },
-  { id: 'ts01c', date: d(48), amount: 50000,    category: '입금',     counterpart: '오승훈',               accountId: 'acc008', source: 'account' },
-  // 1월
-  { id: 'ts020', date: d(63), amount: 4200000,  category: '급여',     counterpart: '(주)미래솔루션',       accountId: 'acc008', source: 'account' },
-  { id: 'ts021', date: d(63), amount: -2500000, category: '이체',     counterpart: '주계좌',               accountId: 'acc008', source: 'account' },
-  { id: 'ts024', date: d(63), amount: 500000,   category: '입금',     counterpart: '(주)미래솔루션 성과급', accountId: 'acc008', source: 'account' },
-  { id: 'ts022', date: d(65), amount: -1200000, category: '자동이체', counterpart: '전세보증금 대출 이자', accountId: 'acc008', source: 'account' },
-  { id: 'ts023', date: d(67), amount: -412000,  category: '자동이체', counterpart: 'KB국민 신용카드 결제', accountId: 'acc008', source: 'account' },
-  { id: 'ts025', date: d(68), amount: -300000,  category: '자동이체', counterpart: 'iM 정기적금',          accountId: 'acc008', source: 'account' },
-  { id: 'ts026', date: d(70), amount: -65000,   category: '자동이체', counterpart: 'SK텔레콤',             accountId: 'acc008', source: 'account' },
-  { id: 'ts027', date: d(71), amount: -148900,  category: '자동이체', counterpart: '국민건강보험',         accountId: 'acc008', source: 'account' },
-  { id: 'ts028', date: d(73), amount: -45000,   category: '자동이체', counterpart: '삼성생명 실손보험',    accountId: 'acc008', source: 'account' },
-  { id: 'ts029', date: d(75), amount: -180000,  category: '자동이체', counterpart: '아파트 관리비',        accountId: 'acc008', source: 'account' },
-  { id: 'ts02a', date: d(77), amount: -300000,  category: '송금',     counterpart: '김순자',               accountId: 'acc008', source: 'account' },
-  { id: 'ts02b', date: d(80), amount: -100000,  category: '송금',     counterpart: '김기준',               accountId: 'acc008', source: 'account' },
-  { id: 'ts02c', date: d(82), amount: -50000,   category: '송금',     counterpart: '이민지',               accountId: 'acc008', source: 'account' },
-  // 12월
-  { id: 'ts030', date: d(94),  amount: 4200000,  category: '급여',     counterpart: '(주)미래솔루션',       accountId: 'acc008', source: 'account' },
-  { id: 'ts031', date: d(94),  amount: -2500000, category: '이체',     counterpart: '주계좌',               accountId: 'acc008', source: 'account' },
-  { id: 'ts032', date: d(96),  amount: -1200000, category: '자동이체', counterpart: '전세보증금 대출 이자', accountId: 'acc008', source: 'account' },
-  { id: 'ts033', date: d(98),  amount: -380000,  category: '자동이체', counterpart: 'KB국민 신용카드 결제', accountId: 'acc008', source: 'account' },
-  { id: 'ts034', date: d(99),  amount: -300000,  category: '자동이체', counterpart: 'iM 정기적금',          accountId: 'acc008', source: 'account' },
-  { id: 'ts035', date: d(101), amount: -65000,   category: '자동이체', counterpart: 'SK텔레콤',             accountId: 'acc008', source: 'account' },
-  { id: 'ts036', date: d(102), amount: -148900,  category: '자동이체', counterpart: '국민건강보험',         accountId: 'acc008', source: 'account' },
-  { id: 'ts037', date: d(104), amount: -45000,   category: '자동이체', counterpart: '삼성생명 실손보험',    accountId: 'acc008', source: 'account' },
-  { id: 'ts038', date: d(106), amount: -180000,  category: '자동이체', counterpart: '아파트 관리비',        accountId: 'acc008', source: 'account' },
-  { id: 'ts039', date: d(108), amount: -300000,  category: '송금',     counterpart: '김순자',               accountId: 'acc008', source: 'account' },
-  { id: 'ts03a', date: d(112), amount: -100000,  category: '송금',     counterpart: '김기준',               accountId: 'acc008', source: 'account' },
-  { id: 'ts03b', date: d(114), amount: 200000,   category: '입금',     counterpart: '박지수 (경조사비)',    accountId: 'acc008', source: 'account' },
-  { id: 'ts03c', date: d(116), amount: -50000,   category: '송금',     counterpart: '박지수',               accountId: 'acc008', source: 'account' },
-  { id: 'ts03d', date: d(118), amount: -50000,   category: '송금',     counterpart: '오승훈',               accountId: 'acc008', source: 'account' },
+  // ══════════════════════════════════════════
+  // 주계좌(acc001) — 11월
+  // ══════════════════════════════════════════
+  { id: 't120', ...d(129, 9,30), amount: 3000000, category: '급여',    counterpart: '(주)ABC테크',           counterpartBank: '기업은행',   accountId: 'acc001', source: 'account' },
+  { id: 't121', ...d(129, 0,10), amount: -300000, category: '자동이체', counterpart: 'iM 정기적금',           counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't122', ...d(129, 0,20), amount: -492000, category: '카드대금', counterpart: 'iM 체크카드 결제 합계', counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't123', ...d(131, 6, 0), amount: -320000, category: '자동이체', counterpart: '아파트 관리비',         counterpartBank: '신한은행',   accountId: 'acc001', source: 'account' },
+  { id: 't124', ...d(133, 6, 5), amount:  -80000, category: '자동이체', counterpart: '파워짐 강남점',         counterpartBank: '국민은행',   accountId: 'acc001', source: 'account' },
+  { id: 't125', ...d(135, 6, 1), amount:  -51200, category: '자동이체', counterpart: '한국전력 전기요금',     counterpartBank: '한국전력',   accountId: 'acc001', source: 'account' },
+  { id: 't126', ...d(136, 6, 2), amount:  -21000, category: '자동이체', counterpart: '서울도시가스',          counterpartBank: '신한은행',   accountId: 'acc001', source: 'account' },
+  { id: 't127', ...d(138, 6, 3), amount:  -19800, category: '자동이체', counterpart: 'SKT 통신요금',          counterpartBank: 'SK텔레콤',   accountId: 'acc001', source: 'account' },
+  { id: 't128', ...d(138, 6, 5), amount:  -25000, category: '자동이체', counterpart: '삼성생명 보험료',       counterpartBank: '삼성생명',   accountId: 'acc001', source: 'account' },
+  { id: 't129', ...d(138, 6, 7), amount:  -65000, category: '자동이체', counterpart: '강남영어학원',          counterpartBank: '기업은행',   accountId: 'acc001', source: 'account' },
+  { id: 't130', ...d(138, 6, 9), amount: -139230, category: '자동이체', counterpart: '국민건강보험공단',      counterpartBank: '국민건강보험공단', accountId: 'acc001', source: 'account' },
+  { id: 't131', ...d(132,15,10), amount:  -50000, category: '송금',    counterpart: '김영희',               counterpartBank: '국민은행',   accountId: 'acc001', source: 'account' },
+  { id: 't132', ...d(134,18,30), amount: -100000, category: '송금',    counterpart: '이순자',               counterpartBank: '농협은행',   accountId: 'acc001', source: 'account' },
+  { id: 't133', ...d(131,10, 0), amount: -200000, category: '이체',    counterpart: 'ATM 출금',             counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't134', ...d(126, 0,30), amount:    8000, category: '이자',    counterpart: 'iM뱅크 이자',          counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't135', ...d(129, 6, 4), amount:   -8900, category: '자동이체', counterpart: '수도요금 (상수도)',     counterpartBank: '서울시',     accountId: 'acc001', source: 'account' },
+  { id: 't136', ...d(139, 6, 6), amount:  -55000, category: '자동이체', counterpart: 'LG유플러스 (홈인터넷)', counterpartBank: 'LG유플러스', accountId: 'acc001', source: 'account' },
+  { id: 't137', ...d(137, 6,10), amount: -120000, category: '자동이체', counterpart: '현대캐피탈 스마트폰 할부', counterpartBank: '현대캐피탈', accountId: 'acc001', source: 'account' },
+  { id: 't138', ...d(127, 6, 8), amount:  -45000, category: '자동이체', counterpart: '쿠팡 로켓와우',        counterpartBank: '국민은행',   accountId: 'acc001', source: 'account' },
 
-  // ── 추가 송금 이력 (빠른 송금 패널 데모용) ──────────
-  // 엄마(김순자) — 매월 30만원 생활비, 4개월 연속
-  { id: 't170', date: d(3),   amount: -300000, category: '송금', counterpart: '김순자', accountId: 'acc001', source: 'account' },
-  { id: 't171', date: d(33),  amount: -300000, category: '송금', counterpart: '김순자', accountId: 'acc001', source: 'account' },
-  { id: 't172', date: d(64),  amount: -300000, category: '송금', counterpart: '김순자', accountId: 'acc001', source: 'account' },
-  { id: 't173', date: d(95),  amount: -300000, category: '송금', counterpart: '김순자', accountId: 'acc001', source: 'account' },
-  // 아빠(김기준) — 가끔 10만원
-  { id: 't174', date: d(45),  amount: -100000, category: '송금', counterpart: '김기준', accountId: 'acc001', source: 'account' },
-  { id: 't175', date: d(112), amount: -100000, category: '송금', counterpart: '김기준', accountId: 'acc001', source: 'account' },
-  // 박지수 — 정기적으로 5만원 (총 4회)
-  { id: 't176', date: d(50),  amount: -50000,  category: '송금', counterpart: '박지수', accountId: 'acc001', source: 'account' },
-  { id: 't177', date: d(81),  amount: -50000,  category: '송금', counterpart: '박지수', accountId: 'acc001', source: 'account' },
-  // 이민지 — 식비 정산, 5만원 패턴
-  { id: 't178', date: d(42),  amount: -50000,  category: '송금', counterpart: '이민지', accountId: 'acc001', source: 'account' },
-  { id: 't179', date: d(100), amount: -50000,  category: '송금', counterpart: '이민지', accountId: 'acc001', source: 'account' },
-  { id: 't180', date: d(140), amount: -50000,  category: '송금', counterpart: '이민지', accountId: 'acc001', source: 'account' },
-  // 정세영 — 소액 정산 2만원
-  { id: 't181', date: d(20),  amount: -20000,  category: '송금', counterpart: '정세영', accountId: 'acc001', source: 'account' },
-  { id: 't182', date: d(55),  amount: -20000,  category: '송금', counterpart: '정세영', accountId: 'acc001', source: 'account' },
-  // 오승훈 — 가끔 5만원 (t111과 연계)
-  { id: 't183', date: d(88),  amount: -50000,  category: '송금', counterpart: '오승훈', accountId: 'acc001', source: 'account' },
-  // 김수진 — 1회
-  { id: 't184', date: d(60),  amount: -30000,  category: '송금', counterpart: '김수진', accountId: 'acc001', source: 'account' },
+  // ══════════════════════════════════════════
+  // 주계좌(acc001) — 10월
+  // ══════════════════════════════════════════
+  { id: 't150', ...d(160, 9,30), amount: 3000000, category: '급여',    counterpart: '(주)ABC테크',           counterpartBank: '기업은행',   accountId: 'acc001', source: 'account' },
+  { id: 't151', ...d(160, 0,10), amount: -300000, category: '자동이체', counterpart: 'iM 정기적금',           counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't152', ...d(160, 0,20), amount: -445000, category: '카드대금', counterpart: 'iM 체크카드 결제 합계', counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't153', ...d(162, 6, 0), amount: -320000, category: '자동이체', counterpart: '아파트 관리비',         counterpartBank: '신한은행',   accountId: 'acc001', source: 'account' },
+  { id: 't154', ...d(164, 6, 5), amount:  -80000, category: '자동이체', counterpart: '파워짐 강남점',         counterpartBank: '국민은행',   accountId: 'acc001', source: 'account' },
+  { id: 't155', ...d(166, 6, 1), amount:  -44800, category: '자동이체', counterpart: '한국전력 전기요금',     counterpartBank: '한국전력',   accountId: 'acc001', source: 'account' },
+  { id: 't156', ...d(167, 6, 2), amount:  -15200, category: '자동이체', counterpart: '서울도시가스',          counterpartBank: '신한은행',   accountId: 'acc001', source: 'account' },
+  { id: 't157', ...d(169, 6, 3), amount:  -19800, category: '자동이체', counterpart: 'SKT 통신요금',          counterpartBank: 'SK텔레콤',   accountId: 'acc001', source: 'account' },
+  { id: 't158', ...d(169, 6, 5), amount:  -25000, category: '자동이체', counterpart: '삼성생명 보험료',       counterpartBank: '삼성생명',   accountId: 'acc001', source: 'account' },
+  { id: 't159', ...d(169, 6, 7), amount:  -65000, category: '자동이체', counterpart: '강남영어학원',          counterpartBank: '기업은행',   accountId: 'acc001', source: 'account' },
+  { id: 't160', ...d(169, 6, 9), amount: -139230, category: '자동이체', counterpart: '국민건강보험공단',      counterpartBank: '국민건강보험공단', accountId: 'acc001', source: 'account' },
+  { id: 't161', ...d(163,14, 0), amount: -100000, category: '송금',    counterpart: '김영희',               counterpartBank: '국민은행',   accountId: 'acc001', source: 'account' },
+  { id: 't162', ...d(165,17,30), amount:  -30000, category: '송금',    counterpart: '김민준',               counterpartBank: '토스뱅크',   accountId: 'acc001', source: 'account' },
+  { id: 't163', ...d(170,12, 0), amount:  -50000, category: '송금',    counterpart: '박상철',               counterpartBank: '신한은행',   accountId: 'acc001', source: 'account' },
+  { id: 't164', ...d(162,11, 0), amount: -200000, category: '이체',    counterpart: 'ATM 출금',             counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't165', ...d(157, 0,30), amount:    7800, category: '이자',    counterpart: 'iM뱅크 이자',          counterpartBank: 'iM뱅크',     accountId: 'acc001', source: 'account' },
+  { id: 't166', ...d(160, 6, 4), amount:   -8900, category: '자동이체', counterpart: '수도요금 (상수도)',     counterpartBank: '서울시',     accountId: 'acc001', source: 'account' },
+  { id: 't167', ...d(170, 6, 6), amount:  -55000, category: '자동이체', counterpart: 'LG유플러스 (홈인터넷)', counterpartBank: 'LG유플러스', accountId: 'acc001', source: 'account' },
+  { id: 't168', ...d(168, 6,10), amount: -120000, category: '자동이체', counterpart: '현대캐피탈 스마트폰 할부', counterpartBank: '현대캐피탈', accountId: 'acc001', source: 'account' },
+  { id: 't169', ...d(158, 6, 8), amount:  -45000, category: '자동이체', counterpart: '쿠팡 로켓와우',        counterpartBank: '국민은행',   accountId: 'acc001', source: 'account' },
 
-  // ── 정기적금 납입·이자 (2025-04 ~ 2026-03, 12개월) ──
-  { id: 't200', date: d(3),   amount: 1050,    category: '이자',    counterpart: 'iM 정기적금 이자',   accountId: 'acc002', source: 'account' },
-  { id: 't201', date: d(33),  amount: 1050,    category: '이자',    counterpart: 'iM 정기적금 이자',   accountId: 'acc002', source: 'account' },
-  { id: 't202', date: d(64),  amount: 1050,    category: '이자',    counterpart: 'iM 정기적금 이자',   accountId: 'acc002', source: 'account' },
-  { id: 't203', date: d(5),   amount: 300000,  category: '납입',    counterpart: '주계좌 자동이체',    accountId: 'acc002', source: 'account' },
-  { id: 't204', date: d(33),  amount: 300000,  category: '납입',    counterpart: '주계좌 자동이체',    accountId: 'acc002', source: 'account' },
-  { id: 't205', date: d(64),  amount: 300000,  category: '납입',    counterpart: '주계좌 자동이체',    accountId: 'acc002', source: 'account' },
-  { id: 't206', date: d(94),  amount: 300000,  category: '납입',    counterpart: '주계좌 자동이체',    accountId: 'acc002', source: 'account' },
-  { id: 't207', date: d(124), amount: 300000,  category: '납입',    counterpart: '주계좌 자동이체',    accountId: 'acc002', source: 'account' },
-  { id: 't208', date: d(155), amount: 300000,  category: '납입',    counterpart: '주계좌 자동이체',    accountId: 'acc002', source: 'account' },
-  { id: 't209', date: d(184), amount: 300000,  category: '납입',    counterpart: '주계좌 자동이체',    accountId: 'acc002', source: 'account' },
-  { id: 't215', date: d(215), amount: 300000,  category: '납입',    counterpart: '주계좌 자동이체',    accountId: 'acc002', source: 'account' },
-  { id: 't216', date: d(246), amount: 300000,  category: '납입',    counterpart: '주계좌 자동이체',    accountId: 'acc002', source: 'account' },
-  { id: 't217', date: d(276), amount: 300000,  category: '납입',    counterpart: '주계좌 자동이체',    accountId: 'acc002', source: 'account' },
-  { id: 't218', date: d(307), amount: 300000,  category: '납입',    counterpart: '주계좌 자동이체',    accountId: 'acc002', source: 'account' },
-  { id: 't219', date: d(337), amount: 300000,  category: '납입',    counterpart: '주계좌 자동이체',    accountId: 'acc002', source: 'account' },
-  { id: 't230', date: d(337), amount: 300000,  category: '개설입금', counterpart: '적금 개설 첫 납입', accountId: 'acc002', source: 'account' },
+  // ══════════════════════════════════════════
+  // 급여계좌(acc008) — 4월
+  // ══════════════════════════════════════════
+  // 어제(d1=04-02) 급여 입금 — "어제 나한테 입금한 사람" 데모 쿼리 대응
+  { id: 'ts001', ...d(1, 9, 5), amount:  4200000, category: '급여',    counterpart: '(주)미래솔루션',        counterpartBank: '우리은행',   accountId: 'acc008', source: 'account' },
+  { id: 'ts002', ...d(1, 9,30), amount: -2500000, category: '이체',    counterpart: '주계좌',               counterpartBank: 'iM뱅크',     accountId: 'acc008', source: 'account' },
 
-  // ── 정기예금 개설 (2025-09-15) ────────────────────
-  { id: 't240', date: d(191), amount: 10000000, category: '예금개설', counterpart: 'iM 정기예금 개설 입금', accountId: 'acc003', source: 'account' },
+  // ══════════════════════════════════════════
+  // 급여계좌(acc008) — 3월
+  // ══════════════════════════════════════════
+  { id: 'ts003', ...d(3, 6, 5), amount: -1200000, category: '자동이체', counterpart: '전세보증금 대출 이자', counterpartBank: 'iM뱅크',     accountId: 'acc008', source: 'account' },
+  { id: 'ts004', ...d(5, 6, 3), amount:  -350000, category: '자동이체', counterpart: 'KB국민 신용카드 결제', counterpartBank: 'KB국민은행', accountId: 'acc008', source: 'account' },
+  { id: 'ts005', ...d(6, 6, 7), amount:  -300000, category: '자동이체', counterpart: 'iM 정기적금',          counterpartBank: 'iM뱅크',     accountId: 'acc008', source: 'account' },
+  { id: 'ts006', ...d(8, 6, 2), amount:   -65000, category: '자동이체', counterpart: 'SK텔레콤',             counterpartBank: 'SK텔레콤',   accountId: 'acc008', source: 'account' },
+  { id: 'ts007', ...d(9, 6, 4), amount:  -148900, category: '자동이체', counterpart: '국민건강보험',         counterpartBank: '국민건강보험공단', accountId: 'acc008', source: 'account' },
+  { id: 'ts008', ...d(11, 6, 6), amount:  -45000, category: '자동이체', counterpart: '삼성생명 실손보험',    counterpartBank: '삼성생명',   accountId: 'acc008', source: 'account' },
+  { id: 'ts009', ...d(13, 6, 8), amount: -180000, category: '자동이체', counterpart: '아파트 관리비',        counterpartBank: '신한은행',   accountId: 'acc008', source: 'account' },
+  { id: 'ts00a', ...d(15,19,30), amount: -300000, category: '송금',    counterpart: '김순자',               counterpartBank: '농협은행',   accountId: 'acc008', source: 'account' },
+  { id: 'ts00b', ...d(17,12,10), amount:  -50000, category: '송금',    counterpart: '이민지',               counterpartBank: '카카오뱅크', accountId: 'acc008', source: 'account' },
+  { id: 'ts00c', ...d(20,18, 0), amount:  -50000, category: '송금',    counterpart: '박지수',               counterpartBank: '신한은행',   accountId: 'acc008', source: 'account' },
 
-  // ── 비상금통장 이자 ────────────────────────────
-  { id: 't210', date: d(3),   amount: 5000,    category: '이자',    counterpart: 'iM뱅크 이자',        accountId: 'acc004', source: 'account' },
-  { id: 't211', date: d(33),  amount: 5000,    category: '이자',    counterpart: 'iM뱅크 이자',        accountId: 'acc004', source: 'account' },
-  { id: 't212', date: d(64),  amount: 5000,    category: '이자',    counterpart: 'iM뱅크 이자',        accountId: 'acc004', source: 'account' },
-  { id: 't213', date: d(94),  amount: 5000,    category: '이자',    counterpart: 'iM뱅크 이자',        accountId: 'acc004', source: 'account' },
-  { id: 't214', date: d(2),   amount: -500000, category: '이체',    counterpart: '주계좌 인출',        accountId: 'acc004', source: 'account' },
+  // ══════════════════════════════════════════
+  // 급여계좌(acc008) — 2월
+  // ══════════════════════════════════════════
+  { id: 'ts010', ...d(37, 9, 5), amount:  4200000, category: '급여',    counterpart: '(주)미래솔루션',        counterpartBank: '우리은행',   accountId: 'acc008', source: 'account' },
+  { id: 'ts011', ...d(37, 9,30), amount: -2500000, category: '이체',    counterpart: '주계좌',               counterpartBank: 'iM뱅크',     accountId: 'acc008', source: 'account' },
+  { id: 'ts012', ...d(39, 6, 5), amount: -1200000, category: '자동이체', counterpart: '전세보증금 대출 이자', counterpartBank: 'iM뱅크',     accountId: 'acc008', source: 'account' },
+  { id: 'ts013', ...d(41, 6, 3), amount:  -328000, category: '자동이체', counterpart: 'KB국민 신용카드 결제', counterpartBank: 'KB국민은행', accountId: 'acc008', source: 'account' },
+  { id: 'ts015', ...d(42, 6, 7), amount:  -300000, category: '자동이체', counterpart: 'iM 정기적금',          counterpartBank: 'iM뱅크',     accountId: 'acc008', source: 'account' },
+  { id: 'ts016', ...d(44, 6, 2), amount:   -65000, category: '자동이체', counterpart: 'SK텔레콤',             counterpartBank: 'SK텔레콤',   accountId: 'acc008', source: 'account' },
+  { id: 'ts017', ...d(45, 6, 4), amount:  -148900, category: '자동이체', counterpart: '국민건강보험',         counterpartBank: '국민건강보험공단', accountId: 'acc008', source: 'account' },
+  { id: 'ts018', ...d(47, 6, 6), amount:   -45000, category: '자동이체', counterpart: '삼성생명 실손보험',    counterpartBank: '삼성생명',   accountId: 'acc008', source: 'account' },
+  { id: 'ts019', ...d(49, 6, 8), amount:  -180000, category: '자동이체', counterpart: '아파트 관리비',        counterpartBank: '신한은행',   accountId: 'acc008', source: 'account' },
+  { id: 'ts01a', ...d(51,19,30), amount:  -300000, category: '송금',    counterpart: '김순자',               counterpartBank: '농협은행',   accountId: 'acc008', source: 'account' },
+  { id: 'ts01b', ...d(52,13, 0), amount:   -20000, category: '송금',    counterpart: '정세영',               counterpartBank: '카카오뱅크', accountId: 'acc008', source: 'account' },
+  { id: 'ts01c', ...d(53,15,40), amount:    50000, category: '입금',    counterpart: '오승훈',               counterpartBank: '토스뱅크',   accountId: 'acc008', source: 'account' },
 
-  // ── CMA 입출 ────────────────────────────────
-  { id: 't220', date: d(3),   amount: 15100,   category: '이자',    counterpart: 'iM CMA 이자',        accountId: 'acc005', source: 'account' },
-  { id: 't221', date: d(33),  amount: 14800,   category: '이자',    counterpart: 'iM CMA 이자',        accountId: 'acc005', source: 'account' },
-  { id: 't222', date: d(5),   amount: 150000,  category: '이체',    counterpart: '주계좌 입금',        accountId: 'acc005', source: 'account' },
-  { id: 't223', date: d(33),  amount: 150000,  category: '이체',    counterpart: '주계좌 입금',        accountId: 'acc005', source: 'account' },
-  { id: 't224', date: d(64),  amount: 150000,  category: '이체',    counterpart: '주계좌 입금',        accountId: 'acc005', source: 'account' },
-  // ── iM 체크카드 사용내역 (acc006) ──────────────
-  { id: 'dc001', date: d(0),  amount: -8500,   category: '카페',  counterpart: '스타벅스 강남점',    accountId: 'acc006', source: 'card' },
-  { id: 'dc002', date: d(1),  amount: -4200,   category: '편의점', counterpart: '이마트24',           accountId: 'acc006', source: 'card' },
-  { id: 'dc003', date: d(1),  amount: -6000,   category: '식비',  counterpart: '김밥천국',            accountId: 'acc006', source: 'card' },
-  { id: 'dc004', date: d(1),  amount: -4800,   category: '교통',  counterpart: '카카오택시',          accountId: 'acc006', source: 'card' },
-  { id: 'dc005', date: d(2),  amount: -4500,   category: '카페',  counterpart: '이디야커피 역삼점',   accountId: 'acc006', source: 'card' },
-  { id: 'dc006', date: d(2),  amount: -45000,  category: '쇼핑',  counterpart: '쿠팡',                accountId: 'acc006', source: 'card' },
-  { id: 'dc007', date: d(3),  amount: -2500,   category: '카페',  counterpart: '메가MGC커피',         accountId: 'acc006', source: 'card' },
-  { id: 'dc008', date: d(3),  amount: -9500,   category: '식비',  counterpart: '롯데리아',             accountId: 'acc006', source: 'card' },
-  { id: 'dc009', date: d(4),  amount: -7000,   category: '카페',  counterpart: '스타벅스 선릉점',     accountId: 'acc006', source: 'card' },
-  { id: 'dc010', date: d(4),  amount: -38000,  category: '쇼핑',  counterpart: '올리브영 강남점',     accountId: 'acc006', source: 'card' },
-  { id: 'dc011', date: d(5),  amount: -11500,  category: '식비',  counterpart: '맥도날드 역삼점',     accountId: 'acc006', source: 'card' },
-  { id: 'dc012', date: d(6),  amount: -8500,   category: '카페',  counterpart: '투썸플레이스',        accountId: 'acc006', source: 'card' },
-  { id: 'dc013', date: d(6),  amount: -5600,   category: '편의점', counterpart: 'GS25 역삼점',        accountId: 'acc006', source: 'card' },
-  { id: 'dc014', date: d(7),  amount: -5500,   category: '카페',  counterpart: '할리스커피',          accountId: 'acc006', source: 'card' },
-  { id: 'dc015', date: d(7),  amount: -15000,  category: '문화',  counterpart: 'CGV 강남',            accountId: 'acc006', source: 'card' },
-  { id: 'dc016', date: d(8),  amount: -28000,  category: '식비',  counterpart: '이자카야 료칸',       accountId: 'acc006', source: 'card' },
-  { id: 'dc017', date: d(9),  amount: -9000,   category: '카페',  counterpart: '스타벅스 강남점',     accountId: 'acc006', source: 'card' },
-  { id: 'dc018', date: d(9),  amount: -78000,  category: '쇼핑',  counterpart: '쿠팡',                accountId: 'acc006', source: 'card' },
-  { id: 'dc019', date: d(10), amount: -14000,  category: '식비',  counterpart: '한식뷔페 대성',       accountId: 'acc006', source: 'card' },
-  { id: 'dc020', date: d(11), amount: -4800,   category: '카페',  counterpart: '이디야커피',          accountId: 'acc006', source: 'card' },
-  { id: 'dc021', date: d(12), amount: -32000,  category: '식비',  counterpart: '배달의민족',          accountId: 'acc006', source: 'card' },
-  { id: 'dc022', date: d(13), amount: -6500,   category: '교통',  counterpart: '카카오택시',          accountId: 'acc006', source: 'card' },
-  { id: 'dc023', date: d(14), amount: -12000,  category: '문화',  counterpart: 'CGV 코엑스',          accountId: 'acc006', source: 'card' },
-  // ── 전월 사용내역 ───────────────────────────────
-  { id: 'dc031', date: d(33), amount: -4800,   category: '카페',  counterpart: '스타벅스 강남점',     accountId: 'acc006', source: 'card' },
-  { id: 'dc032', date: d(35), amount: -28000,  category: '식비',  counterpart: '배달의민족',          accountId: 'acc006', source: 'card' },
-  { id: 'dc033', date: d(37), amount: -9500,   category: '편의점', counterpart: 'CU 편의점',          accountId: 'acc006', source: 'card' },
-  { id: 'dc034', date: d(39), amount: -5500,   category: '카페',  counterpart: '투썸플레이스',        accountId: 'acc006', source: 'card' },
-  { id: 'dc035', date: d(40), amount: -55000,  category: '식비',  counterpart: '아웃백 스테이크하우스', accountId: 'acc006', source: 'card' },
-  { id: 'dc036', date: d(42), amount: -6200,   category: '교통',  counterpart: '카카오택시',          accountId: 'acc006', source: 'card' },
-  { id: 'dc037', date: d(44), amount: -4500,   category: '카페',  counterpart: '이디야커피',          accountId: 'acc006', source: 'card' },
-  { id: 'dc038', date: d(46), amount: -15000,  category: '문화',  counterpart: 'CGV 강남점',          accountId: 'acc006', source: 'card' },
-  { id: 'dc039', date: d(47), amount: -42000,  category: '쇼핑',  counterpart: '다이소 강남점',       accountId: 'acc006', source: 'card' },
-  { id: 'dc040', date: d(48), amount: -8500,   category: '카페',  counterpart: '스타벅스 삼성점',     accountId: 'acc006', source: 'card' },
+  // ══════════════════════════════════════════
+  // 급여계좌(acc008) — 1월
+  // ══════════════════════════════════════════
+  { id: 'ts020', ...d(68, 9, 5), amount:  4200000, category: '급여',    counterpart: '(주)미래솔루션',        counterpartBank: '우리은행',   accountId: 'acc008', source: 'account' },
+  { id: 'ts021', ...d(68, 9,30), amount: -2500000, category: '이체',    counterpart: '주계좌',               counterpartBank: 'iM뱅크',     accountId: 'acc008', source: 'account' },
+  { id: 'ts024', ...d(68, 9,45), amount:   500000, category: '입금',    counterpart: '(주)미래솔루션 성과급', counterpartBank: '우리은행',   accountId: 'acc008', source: 'account' },
+  { id: 'ts022', ...d(70, 6, 5), amount: -1200000, category: '자동이체', counterpart: '전세보증금 대출 이자', counterpartBank: 'iM뱅크',     accountId: 'acc008', source: 'account' },
+  { id: 'ts023', ...d(72, 6, 3), amount:  -412000, category: '자동이체', counterpart: 'KB국민 신용카드 결제', counterpartBank: 'KB국민은행', accountId: 'acc008', source: 'account' },
+  { id: 'ts025', ...d(73, 6, 7), amount:  -300000, category: '자동이체', counterpart: 'iM 정기적금',          counterpartBank: 'iM뱅크',     accountId: 'acc008', source: 'account' },
+  { id: 'ts026', ...d(75, 6, 2), amount:   -65000, category: '자동이체', counterpart: 'SK텔레콤',             counterpartBank: 'SK텔레콤',   accountId: 'acc008', source: 'account' },
+  { id: 'ts027', ...d(76, 6, 4), amount:  -148900, category: '자동이체', counterpart: '국민건강보험',         counterpartBank: '국민건강보험공단', accountId: 'acc008', source: 'account' },
+  { id: 'ts028', ...d(78, 6, 6), amount:   -45000, category: '자동이체', counterpart: '삼성생명 실손보험',    counterpartBank: '삼성생명',   accountId: 'acc008', source: 'account' },
+  { id: 'ts029', ...d(80, 6, 8), amount:  -180000, category: '자동이체', counterpart: '아파트 관리비',        counterpartBank: '신한은행',   accountId: 'acc008', source: 'account' },
+  { id: 'ts02a', ...d(82,19,30), amount:  -300000, category: '송금',    counterpart: '김순자',               counterpartBank: '농협은행',   accountId: 'acc008', source: 'account' },
+  { id: 'ts02b', ...d(85,14, 0), amount:  -100000, category: '송금',    counterpart: '김기준',               counterpartBank: '하나은행',   accountId: 'acc008', source: 'account' },
+  { id: 'ts02c', ...d(87,17,30), amount:   -50000, category: '송금',    counterpart: '이민지',               counterpartBank: '카카오뱅크', accountId: 'acc008', source: 'account' },
 
-  // ── 체크카드 (acc006) ──────────────────────────────────
-  { id: 'c001', date: d(1),  amount: -8500,   category: '카페',  counterpart: '스타벅스 강남점',    accountId: 'acc006', source: 'card' },
-  { id: 'c002', date: d(2),  amount: -32000,  category: '식비',  counterpart: '한식당 점심',        accountId: 'acc006', source: 'card' },
-  { id: 'c003', date: d(3),  amount: -1450,   category: '교통',  counterpart: '서울 지하철',        accountId: 'acc006', source: 'card' },
-  { id: 'c004', date: d(4),  amount: -14900,  category: '쇼핑',  counterpart: '올리브영 강남점',    accountId: 'acc006', source: 'card' },
-  { id: 'c005', date: d(5),  amount: -24500,  category: '식비',  counterpart: '이마트24',           accountId: 'acc006', source: 'card' },
-  { id: 'c006', date: d(6),  amount: -6800,   category: '카페',  counterpart: '투썸플레이스',       accountId: 'acc006', source: 'card' },
-  { id: 'c007', date: d(8),  amount: -48000,  category: '식비',  counterpart: '배달의민족',         accountId: 'acc006', source: 'card' },
-  { id: 'c008', date: d(9),  amount: -1450,   category: '교통',  counterpart: '서울 지하철',        accountId: 'acc006', source: 'card' },
-  { id: 'c009', date: d(11), amount: -67000,  category: '쇼핑',  counterpart: '무신사 스토어',      accountId: 'acc006', source: 'card' },
-  { id: 'c010', date: d(12), amount: -12000,  category: '식비',  counterpart: '편의점 GS25',        accountId: 'acc006', source: 'card' },
-  { id: 'c011', date: d(14), amount: -9500,   category: '카페',  counterpart: '블루보틀 삼성점',    accountId: 'acc006', source: 'card' },
-  { id: 'c012', date: d(15), amount: -38000,  category: '식비',  counterpart: '일식 저녁',          accountId: 'acc006', source: 'card' },
-  { id: 'c013', date: d(18), amount: -89000,  category: '쇼핑',  counterpart: '쿠팡',               accountId: 'acc006', source: 'card' },
-  { id: 'c014', date: d(20), amount: -4800,   category: '교통',  counterpart: '택시 카카오T',       accountId: 'acc006', source: 'card' },
-  { id: 'c015', date: d(22), amount: -17000,  category: '식비',  counterpart: '분식집 저녁',        accountId: 'acc006', source: 'card' },
+  // ══════════════════════════════════════════
+  // 급여계좌(acc008) — 12월
+  // ══════════════════════════════════════════
+  { id: 'ts030', ...d(99, 9, 5), amount:  4200000, category: '급여',    counterpart: '(주)미래솔루션',        counterpartBank: '우리은행',   accountId: 'acc008', source: 'account' },
+  { id: 'ts031', ...d(99, 9,30), amount: -2500000, category: '이체',    counterpart: '주계좌',               counterpartBank: 'iM뱅크',     accountId: 'acc008', source: 'account' },
+  { id: 'ts032', ...d(101, 6, 5), amount: -1200000, category: '자동이체', counterpart: '전세보증금 대출 이자', counterpartBank: 'iM뱅크',     accountId: 'acc008', source: 'account' },
+  { id: 'ts033', ...d(103, 6, 3), amount:  -380000, category: '자동이체', counterpart: 'KB국민 신용카드 결제', counterpartBank: 'KB국민은행', accountId: 'acc008', source: 'account' },
+  { id: 'ts034', ...d(104, 6, 7), amount:  -300000, category: '자동이체', counterpart: 'iM 정기적금',          counterpartBank: 'iM뱅크',     accountId: 'acc008', source: 'account' },
+  { id: 'ts035', ...d(106, 6, 2), amount:   -65000, category: '자동이체', counterpart: 'SK텔레콤',             counterpartBank: 'SK텔레콤',   accountId: 'acc008', source: 'account' },
+  { id: 'ts036', ...d(107, 6, 4), amount:  -148900, category: '자동이체', counterpart: '국민건강보험',         counterpartBank: '국민건강보험공단', accountId: 'acc008', source: 'account' },
+  { id: 'ts037', ...d(109, 6, 6), amount:   -45000, category: '자동이체', counterpart: '삼성생명 실손보험',    counterpartBank: '삼성생명',   accountId: 'acc008', source: 'account' },
+  { id: 'ts038', ...d(111, 6, 8), amount:  -180000, category: '자동이체', counterpart: '아파트 관리비',        counterpartBank: '신한은행',   accountId: 'acc008', source: 'account' },
+  { id: 'ts039', ...d(113,19,30), amount:  -300000, category: '송금',    counterpart: '김순자',               counterpartBank: '농협은행',   accountId: 'acc008', source: 'account' },
+  { id: 'ts03a', ...d(117,14, 0), amount:  -100000, category: '송금',    counterpart: '김기준',               counterpartBank: '하나은행',   accountId: 'acc008', source: 'account' },
+  { id: 'ts03b', ...d(119,16,20), amount:   200000, category: '입금',    counterpart: '박지수 (경조사비)',    counterpartBank: '신한은행',   accountId: 'acc008', source: 'account' },
+  { id: 'ts03c', ...d(121,11, 0), amount:   -50000, category: '송금',    counterpart: '박지수',               counterpartBank: '신한은행',   accountId: 'acc008', source: 'account' },
+  { id: 'ts03d', ...d(123,20,30), amount:   -50000, category: '송금',    counterpart: '오승훈',               counterpartBank: '토스뱅크',   accountId: 'acc008', source: 'account' },
+
+  // ══════════════════════════════════════════
+  // 추가 송금 이력 (빠른 송금 패널 데모용)
+  // ══════════════════════════════════════════
+  // 아빠(김기준)
+  { id: 't174', ...d(49,11,30), amount: -100000, category: '송금', counterpart: '김기준', counterpartBank: '하나은행',  accountId: 'acc001', source: 'account' },
+  { id: 't175', ...d(116,11,0), amount: -100000, category: '송금', counterpart: '김기준', counterpartBank: '하나은행',  accountId: 'acc001', source: 'account' },
+  // 박지수
+  { id: 't176', ...d(54,18,30), amount:  -50000, category: '송금', counterpart: '박지수', counterpartBank: '신한은행',  accountId: 'acc001', source: 'account' },
+  { id: 't177', ...d(85,12,10), amount:  -50000, category: '송금', counterpart: '박지수', counterpartBank: '신한은행',  accountId: 'acc001', source: 'account' },
+  // 이민지
+  { id: 't178', ...d(46,21, 0), amount:  -50000, category: '송금', counterpart: '이민지', counterpartBank: '카카오뱅크', accountId: 'acc001', source: 'account' },
+  { id: 't179', ...d(104,17,20), amount: -50000, category: '송금', counterpart: '이민지', counterpartBank: '카카오뱅크', accountId: 'acc001', source: 'account' },
+  { id: 't180', ...d(144,13,10), amount: -50000, category: '송금', counterpart: '이민지', counterpartBank: '카카오뱅크', accountId: 'acc001', source: 'account' },
+  // 정세영
+  { id: 't181', ...d(24,22,10), amount:  -20000, category: '송금', counterpart: '정세영', counterpartBank: '카카오뱅크', accountId: 'acc001', source: 'account' },
+  { id: 't182', ...d(59,20,30), amount:  -20000, category: '송금', counterpart: '정세영', counterpartBank: '카카오뱅크', accountId: 'acc001', source: 'account' },
+  // 오승훈
+  { id: 't183', ...d(92,19, 0), amount:  -50000, category: '송금', counterpart: '오승훈', counterpartBank: '토스뱅크',  accountId: 'acc001', source: 'account' },
+  // 김수진
+  { id: 't184', ...d(64,14,30), amount:  -30000, category: '송금', counterpart: '김수진', counterpartBank: '하나은행',  accountId: 'acc001', source: 'account' },
+
+  // ══════════════════════════════════════════
+  // 정기적금 납입·이자 (acc002)
+  // ══════════════════════════════════════════
+  { id: 't200', ...d(3,  1, 0), amount:    1050, category: '이자',    counterpart: 'iM 정기적금 이자',   counterpartBank: 'iM뱅크', accountId: 'acc002', source: 'account' },
+  { id: 't201', ...d(33, 1, 0), amount:    1050, category: '이자',    counterpart: 'iM 정기적금 이자',   counterpartBank: 'iM뱅크', accountId: 'acc002', source: 'account' },
+  { id: 't202', ...d(64, 1, 0), amount:    1050, category: '이자',    counterpart: 'iM 정기적금 이자',   counterpartBank: 'iM뱅크', accountId: 'acc002', source: 'account' },
+  { id: 't203', ...d(9,  0,10), amount:  300000, category: '납입',    counterpart: '주계좌 자동이체',    counterpartBank: 'iM뱅크', accountId: 'acc002', source: 'account' },
+  { id: 't204', ...d(37, 0,10), amount:  300000, category: '납입',    counterpart: '주계좌 자동이체',    counterpartBank: 'iM뱅크', accountId: 'acc002', source: 'account' },
+  { id: 't205', ...d(68, 0,10), amount:  300000, category: '납입',    counterpart: '주계좌 자동이체',    counterpartBank: 'iM뱅크', accountId: 'acc002', source: 'account' },
+  { id: 't206', ...d(99, 0,10), amount:  300000, category: '납입',    counterpart: '주계좌 자동이체',    counterpartBank: 'iM뱅크', accountId: 'acc002', source: 'account' },
+  { id: 't207', ...d(129, 0,10), amount: 300000, category: '납입',    counterpart: '주계좌 자동이체',    counterpartBank: 'iM뱅크', accountId: 'acc002', source: 'account' },
+  { id: 't208', ...d(160, 0,10), amount: 300000, category: '납입',    counterpart: '주계좌 자동이체',    counterpartBank: 'iM뱅크', accountId: 'acc002', source: 'account' },
+  { id: 't209', ...d(189, 0,10), amount: 300000, category: '납입',    counterpart: '주계좌 자동이체',    counterpartBank: 'iM뱅크', accountId: 'acc002', source: 'account' },
+  { id: 't215', ...d(220, 0,10), amount: 300000, category: '납입',    counterpart: '주계좌 자동이체',    counterpartBank: 'iM뱅크', accountId: 'acc002', source: 'account' },
+  { id: 't216', ...d(251, 0,10), amount: 300000, category: '납입',    counterpart: '주계좌 자동이체',    counterpartBank: 'iM뱅크', accountId: 'acc002', source: 'account' },
+  { id: 't217', ...d(281, 0,10), amount: 300000, category: '납입',    counterpart: '주계좌 자동이체',    counterpartBank: 'iM뱅크', accountId: 'acc002', source: 'account' },
+  { id: 't218', ...d(312, 0,10), amount: 300000, category: '납입',    counterpart: '주계좌 자동이체',    counterpartBank: 'iM뱅크', accountId: 'acc002', source: 'account' },
+  { id: 't219', ...d(342, 0,10), amount: 300000, category: '납입',    counterpart: '주계좌 자동이체',    counterpartBank: 'iM뱅크', accountId: 'acc002', source: 'account' },
+  { id: 't230', ...d(342, 0, 5), amount: 300000, category: '개설입금', counterpart: '적금 개설 첫 납입', counterpartBank: 'iM뱅크', accountId: 'acc002', source: 'account' },
+
+  // ── 정기예금 개설 (acc003) ──
+  { id: 't240', ...d(196, 9, 0), amount: 10000000, category: '예금개설', counterpart: 'iM 정기예금 개설 입금', counterpartBank: 'iM뱅크', accountId: 'acc003', source: 'account' },
+
+  // ── 비상금통장 이자 (acc004) ──
+  { id: 't210', ...d(3,  1, 0), amount:  5000, category: '이자', counterpart: 'iM뱅크 이자', counterpartBank: 'iM뱅크', accountId: 'acc004', source: 'account' },
+  { id: 't211', ...d(33, 1, 0), amount:  5000, category: '이자', counterpart: 'iM뱅크 이자', counterpartBank: 'iM뱅크', accountId: 'acc004', source: 'account' },
+  { id: 't212', ...d(64, 1, 0), amount:  5000, category: '이자', counterpart: 'iM뱅크 이자', counterpartBank: 'iM뱅크', accountId: 'acc004', source: 'account' },
+  { id: 't213', ...d(99, 1, 0), amount:  5000, category: '이자', counterpart: 'iM뱅크 이자', counterpartBank: 'iM뱅크', accountId: 'acc004', source: 'account' },
+  { id: 't214', ...d(2, 10, 0), amount: -500000, category: '이체', counterpart: '주계좌 인출', counterpartBank: 'iM뱅크', accountId: 'acc004', source: 'account' },
+
+  // ── CMA 입출 (acc005) ──
+  { id: 't220', ...d(3,  1, 0), amount:  15100, category: '이자', counterpart: 'iM CMA 이자', counterpartBank: 'iM뱅크증권', accountId: 'acc005', source: 'account' },
+  { id: 't221', ...d(33, 1, 0), amount:  14800, category: '이자', counterpart: 'iM CMA 이자', counterpartBank: 'iM뱅크증권', accountId: 'acc005', source: 'account' },
+  { id: 't222', ...d(9, 10, 0), amount: 150000, category: '이체', counterpart: '주계좌 입금',  counterpartBank: 'iM뱅크',   accountId: 'acc005', source: 'account' },
+  { id: 't223', ...d(37,10, 0), amount: 150000, category: '이체', counterpart: '주계좌 입금',  counterpartBank: 'iM뱅크',   accountId: 'acc005', source: 'account' },
+  { id: 't224', ...d(68,10, 0), amount: 150000, category: '이체', counterpart: '주계좌 입금',  counterpartBank: 'iM뱅크',   accountId: 'acc005', source: 'account' },
 ]
 
 // ──────────────────────────────────────────────
@@ -517,7 +547,7 @@ export let cardTransactions = [
   { id: 'ct032', ...cd(21,19,0),  cardId: 'card001', merchant: '다이소 강남점',       inferredCategory: '쇼핑',  categoryNote: null,                         amount: -12000 },
   { id: 'ct033', ...cd(22,12,30), cardId: 'card001', merchant: '피자헛',              inferredCategory: '식비',  categoryNote: null,                         amount: -28000 },
 
-  // 3월 — 신한카드 (card002 · 마이데이터)
+  // 3월 — 구독 (신한카드 마이데이터)
   { id: 'ct034', ...cd(1,10,30),  cardId: 'card001', merchant: '애플 앱스토어',       inferredCategory: '구독',  categoryNote: '앱·구독 혼재',               amount: -9900  },
   { id: 'ct035', ...cd(2,14,0),   cardId: 'card001', merchant: '넷플릭스',            inferredCategory: '구독',  categoryNote: null,                         amount: -13900 },
   { id: 'ct036', ...cd(5,10,0),   cardId: 'card001', merchant: '유튜브 프리미엄',     inferredCategory: '구독',  categoryNote: null,                         amount: -14900 },
@@ -556,7 +586,7 @@ export let cardTransactions = [
   { id: 'ct072', ...cd(45,19,0),  cardId: 'card001', merchant: '고기집 삼겹살',       inferredCategory: '식비',  categoryNote: null,                         amount: -42000 },
   { id: 'ct073', ...cd(46,8,0),   cardId: 'card001', merchant: '메가MGC커피',         inferredCategory: '카페',  categoryNote: null,                         amount: -2500  },
 
-  // 2월 — 신한카드
+  // 2월 — 구독
   { id: 'ct080', ...cd(25,10,0),  cardId: 'card001', merchant: '넷플릭스',            inferredCategory: '구독',  categoryNote: null,                         amount: -13900 },
   { id: 'ct081', ...cd(26,10,0),  cardId: 'card001', merchant: '유튜브 프리미엄',     inferredCategory: '구독',  categoryNote: null,                         amount: -14900 },
   { id: 'ct082', ...cd(28,18,30), cardId: 'card001', merchant: '쿠팡이츠',            inferredCategory: '식비',  categoryNote: '음식 배달 (메뉴 불명)',       amount: -24000 },
@@ -590,7 +620,7 @@ export let cardTransactions = [
   { id: 'ct108', ...cd(70,8,0),   cardId: 'card001', merchant: '메가MGC커피',         inferredCategory: '카페',  categoryNote: null,                         amount: -2500  },
   { id: 'ct109', ...cd(71,14,30), cardId: 'card001', merchant: '아이허브',            inferredCategory: '쇼핑',  categoryNote: '건강식품·생활용품 혼재',     amount: -65000 },
 
-  // 1월 — 신한카드
+  // 1월 — 구독
   { id: 'ct115', ...cd(53,10,0),  cardId: 'card001', merchant: '넷플릭스',            inferredCategory: '구독',  categoryNote: null,                         amount: -13900 },
   { id: 'ct116', ...cd(54,10,0),  cardId: 'card001', merchant: '유튜브 프리미엄',     inferredCategory: '구독',  categoryNote: null,                         amount: -14900 },
   { id: 'ct117', ...cd(57,18,0),  cardId: 'card001', merchant: '쿠팡이츠',            inferredCategory: '식비',  categoryNote: '음식 배달 (메뉴 불명)',       amount: -28000 },
@@ -614,7 +644,7 @@ export let cardTransactions = [
   { id: 'ct139', ...cd(91,9,0),   cardId: 'card001', merchant: '스타벅스 역삼점',     inferredCategory: '카페',  categoryNote: null,                         amount: -7500  },
   { id: 'ct140', ...cd(92,14,0),  cardId: 'card001', merchant: '쿠팡',                inferredCategory: '쇼핑',  categoryNote: '품목 불명 (온라인 종합몰)',   amount: -58000 },
 
-  // 12월 — 신한카드
+  // 12월 — 구독
   { id: 'ct145', ...cd(83,10,0),  cardId: 'card001', merchant: '넷플릭스',            inferredCategory: '구독',  categoryNote: null,                         amount: -13900 },
   { id: 'ct146', ...cd(84,10,0),  cardId: 'card001', merchant: '유튜브 프리미엄',     inferredCategory: '구독',  categoryNote: null,                         amount: -14900 },
   { id: 'ct147', ...cd(86,18,0),  cardId: 'card001', merchant: '아마존 해외직구',     inferredCategory: '쇼핑',  categoryNote: '품목 불명 (해외 직구)',       amount: -135000},
@@ -623,19 +653,19 @@ export let cardTransactions = [
   { id: 'ct150', ...cd(94,19,0),  cardId: 'card001', merchant: '쿠팡 연말대전',       inferredCategory: '쇼핑',  categoryNote: '품목 불명 (온라인 종합몰)',   amount: -198000},
 
   // ── 신용카드(card002 · iM 신용카드) 승인내역 ──────
-  { id: 'cc001', date: d(1),  cardId: 'card002', merchant: '쿠팡',           inferredCategory: '쇼핑',  amount: -38900,  categoryNote: '생활용품' },
-  { id: 'cc002', date: d(2),  cardId: 'card002', merchant: '스타벅스 역삼점', inferredCategory: '카페',  amount: -7500,   categoryNote: '아메리카노' },
-  { id: 'cc003', date: d(3),  cardId: 'card002', merchant: '마켓컬리',        inferredCategory: '식비',  amount: -52800,  categoryNote: '신선식품' },
-  { id: 'cc004', date: d(5),  cardId: 'card002', merchant: 'GS25 역삼역점',   inferredCategory: '편의점', amount: -8400,  categoryNote: '간식·음료' },
-  { id: 'cc005', date: d(6),  cardId: 'card002', merchant: '올리브영 강남점', inferredCategory: '뷰티',  amount: -34200,  categoryNote: '스킨케어' },
-  { id: 'cc006', date: d(8),  cardId: 'card002', merchant: '교보문고 강남점', inferredCategory: '도서',  amount: -18600,  categoryNote: '신간 도서' },
-  { id: 'cc007', date: d(9),  cardId: 'card002', merchant: '배달의민족',      inferredCategory: '식비',  amount: -24500,  categoryNote: '치킨' },
-  { id: 'cc008', date: d(10), cardId: 'card002', merchant: '무신사',          inferredCategory: '쇼핑',  amount: -89000,  categoryNote: '의류' },
-  { id: 'cc009', date: d(12), cardId: 'card002', merchant: '이마트 역삼점',   inferredCategory: '식비',  amount: -67300,  categoryNote: '장보기' },
-  { id: 'cc010', date: d(14), cardId: 'card002', merchant: '스타벅스 강남점', inferredCategory: '카페',  amount: -12500,  categoryNote: '케이크 포함' },
-  { id: 'cc011', date: d(30), cardId: 'card002', merchant: '쿠팡',           inferredCategory: '쇼핑',  amount: -45600,  categoryNote: '전자용품' },
-  { id: 'cc012', date: d(32), cardId: 'card002', merchant: '배달의민족',      inferredCategory: '식비',  amount: -19800,  categoryNote: '피자' },
-  { id: 'cc013', date: d(35), cardId: 'card002', merchant: '올리브영 온라인',  inferredCategory: '뷰티',  amount: -28700,  categoryNote: '헤어케어' },
+  { id: 'cc001', ...cd(1,11,20),  cardId: 'card002', merchant: '쿠팡',           inferredCategory: '쇼핑',  amount: -38900,  categoryNote: '생활용품' },
+  { id: 'cc002', ...cd(2,9,30),   cardId: 'card002', merchant: '스타벅스 역삼점', inferredCategory: '카페',  amount: -7500,   categoryNote: '아메리카노' },
+  { id: 'cc003', ...cd(3,13,10),  cardId: 'card002', merchant: '마켓컬리',        inferredCategory: '식비',  amount: -52800,  categoryNote: '신선식품' },
+  { id: 'cc004', ...cd(5,16,40),  cardId: 'card002', merchant: 'GS25 역삼역점',   inferredCategory: '편의점', amount: -8400,  categoryNote: '간식·음료' },
+  { id: 'cc005', ...cd(6,18,20),  cardId: 'card002', merchant: '올리브영 강남점', inferredCategory: '뷰티',  amount: -34200,  categoryNote: '스킨케어' },
+  { id: 'cc006', ...cd(8,14,50),  cardId: 'card002', merchant: '교보문고 강남점', inferredCategory: '도서',  amount: -18600,  categoryNote: '신간 도서' },
+  { id: 'cc007', ...cd(9,19,30),  cardId: 'card002', merchant: '배달의민족',      inferredCategory: '식비',  amount: -24500,  categoryNote: '치킨' },
+  { id: 'cc008', ...cd(10,15,10), cardId: 'card002', merchant: '무신사',          inferredCategory: '쇼핑',  amount: -89000,  categoryNote: '의류' },
+  { id: 'cc009', ...cd(12,11,30), cardId: 'card002', merchant: '이마트 역삼점',   inferredCategory: '식비',  amount: -67300,  categoryNote: '장보기' },
+  { id: 'cc010', ...cd(14,17,0),  cardId: 'card002', merchant: '스타벅스 강남점', inferredCategory: '카페',  amount: -12500,  categoryNote: '케이크 포함' },
+  { id: 'cc011', ...cd(30,10,20), cardId: 'card002', merchant: '쿠팡',           inferredCategory: '쇼핑',  amount: -45600,  categoryNote: '전자용품' },
+  { id: 'cc012', ...cd(32,20,10), cardId: 'card002', merchant: '배달의민족',      inferredCategory: '식비',  amount: -19800,  categoryNote: '피자' },
+  { id: 'cc013', ...cd(35,14,30), cardId: 'card002', merchant: '올리브영 온라인',  inferredCategory: '뷰티',  amount: -28700,  categoryNote: '헤어케어' },
 ]
 
 // ──────────────────────────────────────────────
@@ -711,47 +741,8 @@ export const SAVINGS_TARGETS = {
 // ──────────────────────────────────────────────
 // 금융상품 비교 데이터
 // ──────────────────────────────────────────────
-export const savingsProducts = [
-  {
-    id: 'imbank-001',
-    bank: 'iM뱅크',
-    name: '정기적금',
-    rate: 4.2,
-    term: 6,
-    min: 10000,
-    max: 500000,
-    cta_url: 'imbank://savings/apply',
-    features: ['높은 금리', '6개월 단기', '모바일 가입'],
-    recommended: true,
-  },
-  {
-    id: 'kakao-001',
-    bank: '카카오뱅크',
-    name: '자유적금',
-    rate: 3.8,
-    term: 6,
-    min: 1000,
-    max: 300000,
-    cta_url: null,
-    features: ['자유 납입', '소액 가입 가능'],
-    recommended: false,
-  },
-  {
-    id: 'toss-001',
-    bank: '토스뱅크',
-    name: '목돈굴리기',
-    rate: 3.5,
-    term: 6,
-    min: 10000,
-    max: 1000000,
-    cta_url: null,
-    features: ['대용량 한도', '자동 이체'],
-    recommended: false,
-  },
-]
-
 // ──────────────────────────────────────────────
-// 신규 계좌 생성 (상품 가입)
+// 프로모 상품 가입 시 실계좌 생성
 // ──────────────────────────────────────────────
 export function createAccount(productId, enrollData = {}) {
   const now = new Date()
@@ -805,3 +796,42 @@ export function createAccount(productId, enrollData = {}) {
 
   return null
 }
+
+export const savingsProducts = [
+  {
+    id: 'imbank-001',
+    bank: 'iM뱅크',
+    name: '정기적금',
+    rate: 4.2,
+    term: 6,
+    min: 10000,
+    max: 500000,
+    cta_url: 'imbank://savings/apply',
+    features: ['높은 금리', '6개월 단기', '모바일 가입'],
+    recommended: true,
+  },
+  {
+    id: 'kakao-001',
+    bank: '카카오뱅크',
+    name: '자유적금',
+    rate: 3.8,
+    term: 6,
+    min: 1000,
+    max: 300000,
+    cta_url: null,
+    features: ['자유 납입', '소액 가입 가능'],
+    recommended: false,
+  },
+  {
+    id: 'toss-001',
+    bank: '토스뱅크',
+    name: '목돈굴리기',
+    rate: 3.5,
+    term: 6,
+    min: 10000,
+    max: 1000000,
+    cta_url: null,
+    features: ['대용량 한도', '자동 이체'],
+    recommended: false,
+  },
+]

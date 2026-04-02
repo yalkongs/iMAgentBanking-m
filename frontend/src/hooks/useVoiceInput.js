@@ -30,6 +30,13 @@ export function useVoiceInput(onTranscript) {
   // ── 1. Web Speech API — 실시간 스트리밍 (iOS Safari / Chrome) ──
   const startStreaming = useCallback(() => {
     setError(null)
+
+    // 이미 활성 인식이 있으면 먼저 중단 (start() 중복 호출 DOMException 방지)
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop() } catch (_) {}
+      recognitionRef.current = null
+    }
+
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     const recognition = new SR()
     recognition.lang = 'ko-KR'
@@ -37,6 +44,8 @@ export function useVoiceInput(onTranscript) {
     recognition.interimResults = true // 말하는 동안 중간 결과 실시간 전달
 
     recognition.onresult = (event) => {
+      // stale 인식 이벤트 무시 — stopStreaming 후 비동기로 날아오는 onresult 차단
+      if (recognitionRef.current !== recognition) return
       let interim = ''
       let final = ''
       for (const result of event.results) {
@@ -47,22 +56,42 @@ export function useVoiceInput(onTranscript) {
       onTranscript(final || interim)
     }
 
-    recognition.onend = () => setIsRecording(false)
+    recognition.onend = () => {
+      // 이미 다른 인식으로 교체됐으면 상태 변경 생략
+      if (recognitionRef.current === recognition) {
+        recognitionRef.current = null
+      }
+      setIsRecording(false)
+    }
 
     recognition.onerror = (event) => {
-      if (event.error !== 'no-speech') {
+      if (recognitionRef.current === recognition) {
+        recognitionRef.current = null
+      }
+      if (event.error !== 'no-speech' && event.error !== 'aborted') {
         setError('음성 인식 오류: ' + event.error)
       }
       setIsRecording(false)
     }
 
-    recognition.start()
-    recognitionRef.current = recognition
-    setIsRecording(true)
+    try {
+      recognition.start()
+      recognitionRef.current = recognition
+      setIsRecording(true)
+    } catch (err) {
+      // start() 실패 시 (이미 다른 인식 활성 등) — 앱 크래시 방지
+      setError('음성 인식을 시작할 수 없습니다.')
+      setIsRecording(false)
+    }
   }, [onTranscript])
 
   const stopStreaming = useCallback(() => {
-    recognitionRef.current?.stop()
+    // ref를 먼저 null로 — 이후 날아오는 onresult가 onTranscript 호출하지 못하도록
+    const rec = recognitionRef.current
+    recognitionRef.current = null
+    if (rec) {
+      try { rec.stop() } catch (_) {}
+    }
     setIsRecording(false)
   }, [])
 

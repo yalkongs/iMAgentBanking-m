@@ -280,9 +280,10 @@ const SYSTEM_PROMPT = `당신은 iM뱅크의 AI 금융 어시스턴트입니다.
 → 사용자 선택 확인 후 save_alias 저장 → STEP 2로 진행
 
 **status:"no_history"** (거래 이력 없음)
-→ "아직 \${닉네임} 계좌가 등록되어 있지 않습니다. 이름 또는 계좌번호를 알려주시면 등록해 드리겠습니다." 안내
-→ 사용자가 이름을 제공하면 → resolve_contact(이름)으로 재조회 후 "이 분이 \${닉네임}이 맞습니까?" 확인
-→ 확인 완료 후 save_alias 저장 → STEP 2로 진행
+→ UI에 직접 입력 카드가 자동 표시됩니다. 별도 안내 불필요.
+→ 사용자가 UI 카드에서 이름·은행·계좌번호를 입력해 제출하면 메시지로 전달됩니다.
+→ save_alias({ nickname, account_no, real_name, bank }) 호출해 등록 → STEP 2로 진행
+→ 사용자가 직접 텍스트로 이름을 제공한 경우: resolve_contact(이름)으로 재조회 후 확인 → save_alias 저장 → STEP 2로 진행
 
 ### STEP 2. 금액 확인
 - 금액이 명시된 경우 → STEP 3으로 바로 진행
@@ -779,11 +780,11 @@ app.post('/api/chat', async (req, res) => {
 
           const ctx = getSessionCtx(session)
 
-          // ── resolve_contact candidates → 선택 카드 ──
+          // ── resolve_contact: candidates / no_history → 선택·직접입력 카드 ──
           if (tu.name === 'resolve_contact') {
             const result = handleToolCall('resolve_contact', tu.input, ctx)
             toolResults.push({ type: 'tool_result', tool_use_id: tu.id, content: JSON.stringify(result) })
-            if (result.status === 'candidates') {
+            if (result.status === 'candidates' || result.status === 'no_history') {
               sendSSE({ type: 'ui_card', cardType: 'resolve_contact_candidates', data: result })
             }
             continue
