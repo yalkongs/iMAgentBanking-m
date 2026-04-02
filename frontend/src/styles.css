@@ -4909,6 +4909,16 @@ input:focus-visible, textarea:focus-visible {
   color: var(--text-muted);
   font-size: 16px;
 }
+.account-retry-btn {
+  padding: 10px 24px;
+  background: var(--accent);
+  color: #0D0F1A;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
 
 /* ──────────────────────────────────────────────
    상품 추천 섹션 (콜드 스타트)

@@ -281,6 +281,7 @@ export default function App() {
   const [accountList, setAccountList] = useState([])
   const [contacts, setContacts] = useState([])
   const [isAccountsLoading, setIsAccountsLoading] = useState(true)
+  const [accountsError, setAccountsError] = useState(false)
   const [roomTransactions, setRoomTransactions] = useState({})
   const [roomMessages, setRoomMessages] = useState({})   // { [accountId]: Message[] }
   const [roomTxMeta, setRoomTxMeta] = useState({})       // { [accountId]: { page, hasMore, isLoadingMore } }
@@ -914,12 +915,17 @@ export default function App() {
   }, [sessionId])
 
   // ── 계좌 목록 로드 ──
-  const fetchAccountList = useCallback(() => {
+  const fetchAccountList = useCallback((retry = 0) => {
     setIsAccountsLoading(true)
+    setAccountsError(false)
     fetch(`${API_BASE}/api/accounts?sessionId=${sessionId}`)
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        return r.json()
+      })
       .then((d) => {
-        if (!Array.isArray(d.accounts)) return
+        if (!Array.isArray(d.accounts)) throw new Error('invalid response')
+        setAccountsError(false)
         setAccountList((prev) => {
           const ordered = applyStoredOrder(d.accounts)
           // partner_promo 항목은 백엔드가 모르는 프론트 전용 합성 계좌
@@ -943,7 +949,15 @@ export default function App() {
           return result
         })
       })
-      .catch(() => {})
+      .catch(() => {
+        if (retry < 4) {
+          // 자동 재시도: 3s → 5s → 8s → 12s (서버 cold start 대기)
+          const delays = [3000, 5000, 8000, 12000]
+          setTimeout(() => fetchAccountList(retry + 1), delays[retry])
+        } else {
+          setAccountsError(true)
+        }
+      })
       .finally(() => setIsAccountsLoading(false))
   }, [sessionId])
 
@@ -1484,6 +1498,8 @@ export default function App() {
             unreadCounts={unreadCounts}
             typingAccountIds={typingAccountIds}
             isLoading={isAccountsLoading}
+            accountsError={accountsError}
+            onRetry={() => fetchAccountList(0)}
             ttsEnabled={ttsEnabled}
             onEnterRoom={enterRoom}
             onTtsToggle={() => setTtsEnabled((t) => !t)}

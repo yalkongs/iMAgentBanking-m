@@ -220,6 +220,8 @@ export default function AccountListScreen({
   unreadCounts,
   typingAccountIds,
   isLoading,
+  accountsError,
+  onRetry,
   ttsEnabled,
   onEnterRoom,
   onTtsToggle,
@@ -340,10 +342,22 @@ export default function AccountListScreen({
       <div className={`account-list-items${sortMode ? ' account-sort-mode' : ''}`}>
         {isLoading
           ? Array.from({ length: 5 }, (_, i) => <SkeletonItem key={i} />)
+          : accountsError
+          ? (
+            <div className="account-list-empty">
+              <p style={{ marginBottom: '12px' }}>서버에 연결할 수 없어요.</p>
+              <button
+                className="account-retry-btn"
+                onClick={onRetry}
+              >
+                다시 시도
+              </button>
+            </div>
+          )
           : accounts.length === 0
           ? (
             <div className="account-list-empty">
-              <p>연결된 계좌가 없어요.</p>
+              <p>서버에 연결 중입니다...</p>
             </div>
           )
           : (() => {
