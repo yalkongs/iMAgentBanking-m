@@ -386,7 +386,10 @@ const ACCOUNT_TYPE_CONTEXTS = {
 // GUI 상태를 System Prompt에 주입해 AI가 "지금 화면이 어딘지" 항상 인식하게 함
 // ──────────────────────────────────────────────
 function buildSystemPrompt(guiContext, session) {
-  if (!guiContext) return SYSTEM_PROMPT
+  const today = new Date().toISOString().slice(0, 10)
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+  const dateHeader = `\n[TODAY]\ntoday: ${today}\nyesterday: ${yesterday}\n[/TODAY]\n"오늘", "어제", "이번 달" 등 상대 날짜는 위 today/yesterday 기준으로 계산하세요.`
+  if (!guiContext) return SYSTEM_PROMPT + dateHeader
   const lines = ['', '[CURRENT_VIEW]']
   const {
     view, accountId, accountName, accountType, balance, totalBalance,
@@ -451,7 +454,7 @@ function buildSystemPrompt(guiContext, session) {
     lines.push('[/ACCOUNT_PERSONALITY]')
   }
 
-  return SYSTEM_PROMPT + lines.join('\n')
+  return SYSTEM_PROMPT + dateHeader + lines.join('\n')
 }
 
 // ──────────────────────────────────────────────

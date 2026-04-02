@@ -53,6 +53,11 @@ export const toolDefinitions = [
           type: 'string',
           description: '거래 상대방 실명 (부분 일치). 예: 김영희, 스타벅스',
         },
+        direction: {
+          type: 'string',
+          enum: ['income', 'expense'],
+          description: '입출금 방향 필터. income=입금(양수), expense=출금(음수). 생략하면 전체.',
+        },
         limit:   { type: 'number',  description: '반환할 최대 건수. 기본값 20.' },
         sort_by: {
           type: 'string',
@@ -345,16 +350,18 @@ function handleGetBalance({ account_id }, ctx) {
 
 function handleGetTransactions({
   account_id = 'acc001', start_date, end_date,
-  category, counterpart, limit = 20, sort_by = 'date_desc',
+  category, counterpart, direction, limit = 20, sort_by = 'date_desc',
 }, ctx) {
   const { accounts, transactions } = ctx
   const account = accounts.find((a) => a.id === account_id)
 
   let txs = transactions.filter((t) => t.accountId === account_id)
-  if (start_date)  txs = txs.filter((t) => t.date >= start_date)
-  if (end_date)    txs = txs.filter((t) => t.date <= end_date)
-  if (category)    txs = txs.filter((t) => t.category === category)
-  if (counterpart) txs = txs.filter((t) => t.counterpart.includes(counterpart))
+  if (start_date)           txs = txs.filter((t) => t.date >= start_date)
+  if (end_date)             txs = txs.filter((t) => t.date <= end_date)
+  if (category)             txs = txs.filter((t) => t.category === category)
+  if (counterpart)          txs = txs.filter((t) => t.counterpart.includes(counterpart))
+  if (direction === 'income')  txs = txs.filter((t) => t.amount > 0)
+  if (direction === 'expense') txs = txs.filter((t) => t.amount < 0)
 
   const sortFns = {
     date_desc:   (a, b) => b.date.localeCompare(a.date),
