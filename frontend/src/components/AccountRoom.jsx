@@ -421,7 +421,7 @@ export default function AccountRoom({
   // #9, #1, #5: 이체 확인 카드가 활성화되어 있는지 여부
   const hasPendingTransfer = (messages || []).some((m) => m.type === 'transfer_pending')
 
-  const { isRecording, toggleRecording } = useVoiceInput(
+  const { isRecording, toggleRecording, stopRecording } = useVoiceInput(
     useCallback((text) => { setInput(text) }, [])
   )
   const chatContainerRef = useRef(null)
@@ -475,6 +475,7 @@ export default function AccountRoom({
   const handleSend = () => {
     const msg = input.trim()
     if (!msg || isLoading) return
+    if (isRecording) stopRecording()
     setInput('')
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
     onSendMessage(msg)
