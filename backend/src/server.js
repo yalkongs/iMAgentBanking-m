@@ -386,9 +386,37 @@ const ACCOUNT_TYPE_CONTEXTS = {
 // GUI 상태를 System Prompt에 주입해 AI가 "지금 화면이 어딘지" 항상 인식하게 함
 // ──────────────────────────────────────────────
 function buildSystemPrompt(guiContext, session) {
-  const today = new Date().toISOString().slice(0, 10)
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
-  const dateHeader = `\n[TODAY]\ntoday: ${today}\nyesterday: ${yesterday}\n[/TODAY]\n"오늘", "어제", "이번 달" 등 상대 날짜는 위 today/yesterday 기준으로 계산하세요.`
+  const now = new Date()
+  const dayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']
+  const toStr = (d) => d.toISOString().slice(0, 10)
+  const daysAgo = (n) => toStr(new Date(now.getTime() - n * 86400000))
+
+  // 최근 14일 요일별 날짜 맵 (오늘 포함)
+  const recentDays = {}
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(now.getTime() - i * 86400000)
+    const name = dayNames[d.getDay()]
+    if (!recentDays[name]) recentDays[name] = toStr(d) // 가장 최근 날짜만 저장
+  }
+
+  // 이번 주 월요일, 지난 주 월~일
+  const todayDow = now.getDay() // 0=일 1=월 ... 6=토
+  const daysFromMon = (todayDow === 0 ? 6 : todayDow - 1)
+  const thisMonday = daysAgo(daysFromMon)
+  const lastMonday = daysAgo(daysFromMon + 7)
+  const lastSunday = daysAgo(daysFromMon + 1)
+
+  // 이번 달 / 지난 달
+  const thisMonthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  const lastMonthStart = toStr(lastMonth)
+  const lastMonthEnd = toStr(new Date(now.getFullYear(), now.getMonth(), 0))
+
+  const dayLines = Object.entries(recentDays)
+    .map(([name, date]) => `${name}: ${date}`)
+    .join('\n')
+
+  const dateHeader = `\n[TODAY]\ntoday: ${toStr(now)} (${dayNames[now.getDay()]})\nyesterday: ${daysAgo(1)}\nthis_week_monday: ${thisMonday}\nlast_week: ${lastMonday} ~ ${lastSunday}\nthis_month_start: ${thisMonthStart}\nlast_month: ${lastMonthStart} ~ ${lastMonthEnd}\n최근 14일 요일별 날짜:\n${dayLines}\n[/TODAY]\n"오늘", "어제", "지난 월요일", "이번 주", "지난 주", "이번 달" 등 상대 날짜는 위 날짜를 그대로 사용하세요. 직접 계산하지 마세요.`
   if (!guiContext) return SYSTEM_PROMPT + dateHeader
   const lines = ['', '[CURRENT_VIEW]']
   const {
