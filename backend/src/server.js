@@ -45,12 +45,12 @@ function broadcastWsEvent(event) {
 
 // ── 백그라운드 입출금 시뮬레이터 ──
 const BG_TRANSACTIONS = [
-  { accountId: 'acc001', counterpart: '국민건강보험공단', amount: -139230, category: '자동이체', memo: '건강보험료 자동이체' },
-  { accountId: 'acc001', counterpart: '한국전력', amount: -52400, category: '자동이체', memo: '전기요금' },
-  { accountId: 'acc001', counterpart: '(주)카카오뱅크', amount: 3000000, category: '이체', memo: '전세자금 입금' },
-  { accountId: 'acc001', counterpart: '쿠팡', amount: -87900, category: '이체', memo: '쿠팡 결제' },
-  { accountId: 'acc001', counterpart: '박재원', amount: 150000, category: '송금', memo: '' },
-  { accountId: 'acc001', counterpart: 'LG유플러스', amount: -55000, category: '자동이체', memo: '통신요금' },
+  { accountId: 'acc001', counterpart: '국민건강보험공단', amount: -139230, category: '자동이체', memo: '건강보험료 자동이체', counterpartBank: '국민건강보험공단' },
+  { accountId: 'acc001', counterpart: '한국전력', amount: -52400, category: '자동이체', memo: '전기요금', counterpartBank: '한국전력' },
+  { accountId: 'acc001', counterpart: '(주)카카오뱅크', amount: 3000000, category: '이체', memo: '전세자금 입금', counterpartBank: '카카오뱅크' },
+  { accountId: 'acc001', counterpart: '쿠팡', amount: -87900, category: '이체', memo: '쿠팡 결제', counterpartBank: '국민은행' },
+  { accountId: 'acc001', counterpart: '박재원', amount: 150000, category: '송금', memo: '', counterpartBank: '신한은행' },
+  { accountId: 'acc001', counterpart: 'LG유플러스', amount: -55000, category: '자동이체', memo: '통신요금', counterpartBank: 'LG유플러스' },
   { accountId: 'acc006', counterpart: '스타벅스', amount: -6500, category: '카페', memo: '아메리카노', source: 'card' },
   { accountId: 'acc006', counterpart: 'GS25', amount: -4200, category: '편의점', memo: '', source: 'card' },
   { accountId: 'acc006', counterpart: '올리브영', amount: -35800, category: '쇼핑', memo: '', source: 'card' },
@@ -307,6 +307,15 @@ const SYSTEM_PROMPT = `당신은 iM뱅크의 AI 금융 어시스턴트입니다.
 - 은행 계좌 거래내역(get_transactions): 급여·이체·자동이체·송금·이자 등 직접 거래
 - 카드 거래내역(get_card_transactions): 가맹점명만 기록, 품목 상세 불명. 마이데이터 연동 포함.
 - 지출 분석 시 카드 데이터 기반이면 "추정 카테고리 기반 집계로 실제와 다를 수 있습니다"를 반드시 안내하세요.
+
+## 거래 조회 시 필터 사용 원칙 (중요)
+
+채팅 텍스트 응답과 거래내역 카드가 항상 동일한 데이터를 기반으로 해야 합니다. 아래 원칙을 반드시 지키세요:
+
+1. **은행명 필터**: "신한은행으로 보낸", "카카오뱅크에서 받은" 등 → `counterpart_bank` 파라미터 사용. 절대로 카드 없이 텍스트에서만 은행으로 필터링하지 마세요.
+2. **방향 필터**: "입금", "받은" → `direction: "income"` / "출금", "보낸", "송금" → `direction: "expense"`
+3. **단일 호출 원칙**: 하나의 질문에 대해 get_transactions를 한 번 호출하고, 그 결과로 카드도 표시하고 텍스트 답변도 작성하세요. 카드용/계산용으로 두 번 호출하면 불일치가 발생합니다.
+4. **합산 계산**: 카드에 표시된 거래 목록의 합산액이 텍스트 답변과 반드시 일치해야 합니다. get_transactions 결과의 `transactions` 배열 기준으로만 합산하세요.
 
 ## 상품 안내 처리 절차
 
