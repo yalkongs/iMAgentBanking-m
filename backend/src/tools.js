@@ -53,6 +53,10 @@ export const toolDefinitions = [
           type: 'string',
           description: '거래 상대방 실명 (부분 일치). 예: 김영희, 스타벅스',
         },
+        counterpart_bank: {
+          type: 'string',
+          description: '거래 상대방 은행명 (부분 일치). 예: 신한은행, 카카오뱅크. "신한은행으로 입금/출금" 등 은행명으로 필터링 시 사용.',
+        },
         direction: {
           type: 'string',
           enum: ['income', 'expense'],
@@ -358,7 +362,7 @@ function handleGetBalance({ account_id }, ctx) {
 
 function handleGetTransactions({
   account_id = 'acc001', start_date, end_date,
-  category, counterpart, direction, limit = 20, sort_by = 'date_desc',
+  category, counterpart, counterpart_bank, direction, limit = 20, sort_by = 'date_desc',
 }, ctx) {
   const { accounts, transactions } = ctx
   const account = accounts.find((a) => a.id === account_id)
@@ -367,7 +371,8 @@ function handleGetTransactions({
   if (start_date)           txs = txs.filter((t) => t.date >= start_date)
   if (end_date)             txs = txs.filter((t) => t.date <= end_date)
   if (category)             txs = txs.filter((t) => t.category === category)
-  if (counterpart)          txs = txs.filter((t) => t.counterpart.includes(counterpart))
+  if (counterpart)          txs = txs.filter((t) => t.counterpart && t.counterpart.includes(counterpart))
+  if (counterpart_bank)     txs = txs.filter((t) => t.counterpartBank && t.counterpartBank.includes(counterpart_bank))
   if (direction === 'income')  txs = txs.filter((t) => t.amount > 0)
   if (direction === 'expense') txs = txs.filter((t) => t.amount < 0)
 

@@ -65,7 +65,7 @@ export default function TransactionList({ data, onQuickAction }) {
             <div className="tx-date-header">{grp.label}</div>
             {grp.items.map((tx) => {
               const displayCategory = tx.category || tx.inferredCategory || ''
-              const displayCounterpart = tx.counterpart || tx.merchant || ''
+              const displayCounterpart = tx.counterpart || tx.merchant || '알 수 없음'
               const color = CATEGORY_COLOR[displayCategory] || 'rgba(0,201,167,0.5)'
               const clickMsg = tx.amount < 0
                 ? `${displayCounterpart} 지출 내역 자세히 알려줘`
