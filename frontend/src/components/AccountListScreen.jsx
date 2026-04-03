@@ -231,6 +231,7 @@ export default function AccountListScreen({
   onReorder,
   onLogoTap,
 }) {
+  const [menuOpen, setMenuOpen] = useState(false)
   const [sortMode, setSortMode] = useState(false)
 
   const longPressTimerRef = useRef(null)
@@ -296,7 +297,10 @@ export default function AccountListScreen({
   const productHints = computeProductHints(accounts)
 
   return (
-    <div className="account-list-screen">
+    <div
+      className="account-list-screen"
+      onClick={() => menuOpen && setMenuOpen(false)}
+    >
       <div className="account-list-header">
         <button
           className="account-list-title-btn"
@@ -305,6 +309,27 @@ export default function AccountListScreen({
         >
           iM AI Banking
         </button>
+        <div className="account-list-menu-wrap">
+          <button
+            className="account-list-menu-btn"
+            onClick={(e) => { e.stopPropagation(); setMenuOpen((o) => !o) }}
+            aria-label="메뉴"
+          >
+            ⋯
+          </button>
+          <div
+            className={`account-list-dropdown${menuOpen ? ' account-list-dropdown--visible' : ''}`}
+            aria-hidden={!menuOpen}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button className="dropdown-item" onClick={() => { onTtsToggle?.(); setMenuOpen(false) }}>
+              {ttsEnabled ? '음성 끄기' : '음성 켜기'}
+            </button>
+            <button className="dropdown-item" onClick={() => { onReset?.(); setMenuOpen(false) }}>
+              초기화
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className={`account-sort-mode-bar${sortMode ? ' account-sort-mode-bar--visible' : ''}`} aria-hidden={!sortMode}>
