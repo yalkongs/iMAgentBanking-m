@@ -26,10 +26,21 @@ export function useVoiceInput(onTranscript) {
   const recognitionRef = useRef(null)
   const mediaRecorderRef = useRef(null)
   const chunksRef = useRef([])
+  // Chrome은 이전 SpeechRecognition session이 완전히 끝나기 전에
+  // 새 start()를 호출하면 audio pipeline 충돌이 발생한다.
+  // onend 시각을 기록해 두고 300ms 이내 재시작이면 잠깐 대기한다.
+  const lastEndTimeRef = useRef(0)
+  const startTimerRef = useRef(null)
 
   // ── 1. Web Speech API — 실시간 스트리밍 (iOS Safari / Chrome) ──
   const startStreaming = useCallback(() => {
     setError(null)
+
+    // 진행 중인 대기 타이머가 있으면 취소
+    if (startTimerRef.current) {
+      clearTimeout(startTimerRef.current)
+      startTimerRef.current = null
+    }
 
     // 이미 활성 인식이 있으면 먼저 중단 (start() 중복 호출 DOMException 방지)
     if (recognitionRef.current) {
@@ -61,12 +72,14 @@ export function useVoiceInput(onTranscript) {
       // setIsRecording을 호출하지 않는다. 호출하면 새 인식 중에 false로 리셋되어
       // 사용자가 mic을 반복 탭 → rapid stop/start 사이클 → 브라우저 audio 실패.
       if (recognitionRef.current !== recognition) return
+      lastEndTimeRef.current = Date.now()
       recognitionRef.current = null
       setIsRecording(false)
     }
 
     recognition.onerror = (event) => {
       if (recognitionRef.current !== recognition) return
+      lastEndTimeRef.current = Date.now()
       recognitionRef.current = null
       if (event.error !== 'no-speech' && event.error !== 'aborted') {
         setError('음성 인식 오류: ' + event.error)
@@ -74,18 +87,35 @@ export function useVoiceInput(onTranscript) {
       setIsRecording(false)
     }
 
-    try {
-      recognition.start()
-      recognitionRef.current = recognition
-      setIsRecording(true)
-    } catch (err) {
-      // start() 실패 시 (이미 다른 인식 활성 등) — 앱 크래시 방지
-      setError('음성 인식을 시작할 수 없습니다.')
-      setIsRecording(false)
+    const doStart = () => {
+      startTimerRef.current = null
+      try {
+        recognition.start()
+        recognitionRef.current = recognition
+        setIsRecording(true)
+      } catch (err) {
+        // start() 실패 시 (이미 다른 인식 활성 등) — 앱 크래시 방지
+        setError('음성 인식을 시작할 수 없습니다.')
+        setIsRecording(false)
+      }
+    }
+
+    // 직전 session 종료 후 300ms 이내이면 audio pipeline이 아직 해제 중 — 대기
+    const elapsed = Date.now() - lastEndTimeRef.current
+    const waitMs = elapsed < 300 ? 300 - elapsed : 0
+    if (waitMs > 0) {
+      startTimerRef.current = setTimeout(doStart, waitMs)
+    } else {
+      doStart()
     }
   }, [onTranscript])
 
   const stopStreaming = useCallback(() => {
+    // 대기 중인 start 타이머 취소
+    if (startTimerRef.current) {
+      clearTimeout(startTimerRef.current)
+      startTimerRef.current = null
+    }
     // ref를 먼저 null로 — 이후 날아오는 onresult가 onTranscript 호출하지 못하도록
     const rec = recognitionRef.current
     recognitionRef.current = null
