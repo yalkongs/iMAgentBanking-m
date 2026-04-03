@@ -731,8 +731,12 @@ app.post('/api/chat', async (req, res) => {
     let archiveAssistantText = ''
     const archiveToolCalls = []
 
+    // 툴 호출 XML 누출 제거 헬퍼 — 완성된 <tool_name>...</tool_name> 패턴만 제거
+    const stripToolXml = (s) => s.replace(/<[a-z_]+>[^]*?<\/[a-z_]+>/g, '')
+
     while (continueLoop) {
       let fullText = ''
+      let sentCleanLen = 0   // 클라이언트에 이미 전송한 clean text 길이
       let toolUses = []
       let currentToolUse = null
 
@@ -764,7 +768,13 @@ app.post('/api/chat', async (req, res) => {
         } else if (event.type === 'content_block_delta') {
           if (event.delta.type === 'text_delta') {
             fullText += event.delta.text
-            sendSSE({ type: 'text', delta: event.delta.text })
+            // 툴 XML 누출 필터링: 완성된 패턴 제거 후 미전송 부분만 전송
+            const clean = stripToolXml(fullText).trimStart()
+            const delta = clean.slice(sentCleanLen)
+            if (delta) {
+              sendSSE({ type: 'text', delta })
+              sentCleanLen = clean.length
+            }
           } else if (event.delta.type === 'input_json_delta' && currentToolUse) {
             currentToolUse.inputJson += event.delta.partial_json
           }
