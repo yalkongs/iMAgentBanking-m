@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -23,106 +23,85 @@ const hasSpeechAPI = typeof window !== 'undefined' &&
 export function useVoiceInput(onTranscript) {
   const [isRecording, setIsRecording] = useState(false)
   const [error, setError] = useState(null)
+
+  // SpeechRecognition 객체를 한 번만 생성하고 재사용한다.
+  // Chrome/Arc은 매 녹음마다 new를 하면 이전 audio session과 충돌해 탭이 크래시된다.
   const recognitionRef = useRef(null)
+  const activeRef = useRef(false) // 의도적으로 녹음 중인지 추적
+
+  // onTranscript는 ref로 유지 — recognition 핸들러가 항상 최신 콜백을 호출하도록
+  const onTranscriptRef = useRef(onTranscript)
+  useEffect(() => { onTranscriptRef.current = onTranscript }, [onTranscript])
+
+  // Whisper 폴백용
   const mediaRecorderRef = useRef(null)
   const chunksRef = useRef([])
-  // Chrome은 이전 SpeechRecognition session이 완전히 끝나기 전에
-  // 새 start()를 호출하면 audio pipeline 충돌이 발생한다.
-  // onend 시각을 기록해 두고 300ms 이내 재시작이면 잠깐 대기한다.
-  const lastEndTimeRef = useRef(0)
-  const startTimerRef = useRef(null)
 
-  // ── 1. Web Speech API — 실시간 스트리밍 (iOS Safari / Chrome) ──
-  const startStreaming = useCallback(() => {
-    setError(null)
-
-    // 진행 중인 대기 타이머가 있으면 취소
-    if (startTimerRef.current) {
-      clearTimeout(startTimerRef.current)
-      startTimerRef.current = null
-    }
-
-    // 이미 활성 인식이 있으면 먼저 중단 (start() 중복 호출 DOMException 방지)
-    if (recognitionRef.current) {
-      try { recognitionRef.current.stop() } catch (_) {}
-      recognitionRef.current = null
-    }
+  // ── SpeechRecognition 초기화 (최초 1회) ──
+  const getRecognition = useCallback(() => {
+    if (recognitionRef.current) return recognitionRef.current
 
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     const recognition = new SR()
     recognition.lang = 'ko-KR'
-    recognition.continuous = false    // 자연스러운 발화 종료 감지
-    recognition.interimResults = true // 말하는 동안 중간 결과 실시간 전달
+    recognition.continuous = false
+    recognition.interimResults = true
 
     recognition.onresult = (event) => {
-      // stale 인식 이벤트 무시 — stopStreaming 후 비동기로 날아오는 onresult 차단
-      if (recognitionRef.current !== recognition) return
+      if (!activeRef.current) return
       let interim = ''
       let final = ''
       for (const result of event.results) {
         if (result.isFinal) final += result[0].transcript
         else interim += result[0].transcript
       }
-      // 중간 결과도 입력창에 즉시 반영 (스트리밍 효과)
-      onTranscript(final || interim)
+      onTranscriptRef.current(final || interim)
     }
 
     recognition.onend = () => {
-      // 현재 활성 인식 인스턴스가 아닐 경우(=startStreaming이 교체한 stale 인식)
-      // setIsRecording을 호출하지 않는다. 호출하면 새 인식 중에 false로 리셋되어
-      // 사용자가 mic을 반복 탭 → rapid stop/start 사이클 → 브라우저 audio 실패.
-      if (recognitionRef.current !== recognition) return
-      lastEndTimeRef.current = Date.now()
-      recognitionRef.current = null
-      setIsRecording(false)
+      // 의도적으로 녹음 중이었다면 자연 종료 — 상태 업데이트
+      if (activeRef.current) {
+        activeRef.current = false
+        setIsRecording(false)
+      }
+      // stopStreaming이 호출된 경우 activeRef는 이미 false이므로 아무것도 하지 않음
     }
 
     recognition.onerror = (event) => {
-      if (recognitionRef.current !== recognition) return
-      lastEndTimeRef.current = Date.now()
-      recognitionRef.current = null
+      if (!activeRef.current) return
+      activeRef.current = false
       if (event.error !== 'no-speech' && event.error !== 'aborted') {
         setError('음성 인식 오류: ' + event.error)
       }
       setIsRecording(false)
     }
 
-    const doStart = () => {
-      startTimerRef.current = null
-      try {
-        recognition.start()
-        recognitionRef.current = recognition
-        setIsRecording(true)
-      } catch (err) {
-        // start() 실패 시 (이미 다른 인식 활성 등) — 앱 크래시 방지
-        setError('음성 인식을 시작할 수 없습니다.')
-        setIsRecording(false)
-      }
-    }
+    recognitionRef.current = recognition
+    return recognition
+  }, [])
 
-    // 직전 session 종료 후 300ms 이내이면 audio pipeline이 아직 해제 중 — 대기
-    const elapsed = Date.now() - lastEndTimeRef.current
-    const waitMs = elapsed < 300 ? 300 - elapsed : 0
-    if (waitMs > 0) {
-      startTimerRef.current = setTimeout(doStart, waitMs)
-    } else {
-      doStart()
+  // ── 1. Web Speech API — 실시간 스트리밍 ──
+  const startStreaming = useCallback(() => {
+    setError(null)
+    const recognition = getRecognition()
+    activeRef.current = true
+    try {
+      recognition.start()
+      setIsRecording(true)
+    } catch (err) {
+      // InvalidStateError: 이미 실행 중이거나 직전 세션이 미완료 상태
+      activeRef.current = false
+      setError('음성 인식을 시작할 수 없습니다.')
+      setIsRecording(false)
     }
-  }, [onTranscript])
+  }, [getRecognition])
 
   const stopStreaming = useCallback(() => {
-    // 대기 중인 start 타이머 취소
-    if (startTimerRef.current) {
-      clearTimeout(startTimerRef.current)
-      startTimerRef.current = null
-    }
-    // ref를 먼저 null로 — 이후 날아오는 onresult가 onTranscript 호출하지 못하도록
-    const rec = recognitionRef.current
-    recognitionRef.current = null
-    if (rec) {
-      try { rec.stop() } catch (_) {}
-    }
+    activeRef.current = false
     setIsRecording(false)
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop() } catch (_) {}
+    }
   }, [])
 
   // ── 2. Whisper 폴백 — 녹음 후 전송 (Web Speech API 미지원 브라우저) ──
@@ -150,7 +129,7 @@ export function useVoiceInput(onTranscript) {
         try {
           const res = await fetch(`${API_BASE}/api/whisper`, { method: 'POST', body: formData })
           const data = await res.json()
-          if (data.text) onTranscript(data.text)
+          if (data.text) onTranscriptRef.current(data.text)
           else setError('음성 인식 결과가 없습니다.')
         } catch (err) {
           setError('음성 인식 실패: ' + err.message)
@@ -162,7 +141,7 @@ export function useVoiceInput(onTranscript) {
     } catch (err) {
       setError('마이크 접근 실패: ' + err.message)
     }
-  }, [onTranscript])
+  }, [])
 
   const stopWhisper = useCallback(() => {
     mediaRecorderRef.current?.stop()
