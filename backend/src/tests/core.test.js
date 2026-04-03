@@ -2,7 +2,7 @@ import { describe, it, test, expect, beforeEach } from 'vitest'
 import request from 'supertest'
 import { getInitialAccounts, getInitialTransactions, createAccount } from '../mockData.js'
 import { handleToolCall } from '../tools.js'
-import { app, getCrossAccountSummary } from '../server.js'
+import { app, getCrossAccountSummary, buildSystemPrompt } from '../server.js'
 
 // 테스트용 세션 ctx 팩토리
 function makeCtx() {
@@ -329,7 +329,28 @@ describe('getCrossAccountSummary', () => {
   })
 })
 
-// ── Test 12: POST /api/demo-start ─────────────────────────────────────────────
+// ── Test 12: buildSystemPrompt — service view 분기 ──────────────────────────────
+describe('buildSystemPrompt — service view', () => {
+  test('service view 시 [CURRENT_VIEW]에 serviceId/serviceName 포함', () => {
+    const result = buildSystemPrompt({ view: 'service', serviceId: 'credit-score', serviceName: '신용점수 콘솔' }, null)
+    expect(result).toContain('view: service')
+    expect(result).toContain('serviceId: credit-score')
+    expect(result).toContain('serviceName: 신용점수 콘솔')
+  })
+
+  test('service view 시 ACCOUNT_TYPE_CONTEXTS 내용 미포함 (계좌 제약 주입 안 됨)', () => {
+    const result = buildSystemPrompt({ view: 'service', serviceId: 'credit-score', serviceName: '신용점수 콘솔' }, null)
+    expect(result).not.toContain('[ACCOUNT_CONSTRAINTS]')
+    expect(result).not.toContain('[OTHER_ACCOUNTS]')
+  })
+
+  test('service view 시 계좌 툴 사용 금지 안내 포함', () => {
+    const result = buildSystemPrompt({ view: 'service', serviceId: 'loan-consult', serviceName: '대출 상담' }, null)
+    expect(result).toContain('계좌 전용 툴은 사용하지 마세요')
+  })
+})
+
+// ── Test 13: POST /api/demo-start ─────────────────────────────────────────────
 describe('POST /api/demo-start', () => {
   test('sessionId 전달 시 200 응답과 ok:true 반환', async () => {
     const res = await request(app)

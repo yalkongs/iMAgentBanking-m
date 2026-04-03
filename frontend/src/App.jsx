@@ -6,6 +6,10 @@ import VoiceOverlay from './components/VoiceOverlay.jsx'
 import AccountListScreen from './components/AccountListScreen.jsx'
 import AccountRoom from './components/AccountRoom.jsx'
 import EnrollmentModal from './components/EnrollmentModal.jsx'
+import BottomTabBar from './components/BottomTabBar.jsx'
+import ServiceScreen from './components/ServiceScreen.jsx'
+import ServiceRoom from './components/ServiceRoom.jsx'
+import MyScreen from './components/MyScreen.jsx'
 import { useWebSocket } from './hooks/useWebSocket.js'
 import { useVoiceInput } from './hooks/useVoiceInput.js'
 import { loadSessionId, loadRoomMessages, saveRoomMessages, clearAllData } from './store/persistence.js'
@@ -281,6 +285,10 @@ export default function App() {
   // ── 메신저 UI 상태 ──
   const [screen, setScreen] = useState('home')           // 'home' | 'room'
   const [activeAccountId, setActiveAccountId] = useState(null)
+  const [activeTab, setActiveTab] = useState('accounts') // 'accounts' | 'services' | 'my'
+  const [currentService, setCurrentService] = useState(null)  // null | serviceId
+  const [serviceMessages, setServiceMessages] = useState({})  // { [serviceId]: Message[] }
+  const [serviceLoading, setServiceLoading] = useState(false)
   const [accountList, setAccountList] = useState([])
   const [contacts, setContacts] = useState([])
   const [isAccountsLoading, setIsAccountsLoading] = useState(true)
@@ -1102,6 +1110,79 @@ export default function App() {
     setTimeout(() => setActiveAccountId(null), 350)
   }
 
+  // ── 서비스 대화방 진입/탈출 ──
+  function enterServiceRoom(serviceId) {
+    currentGuiContextRef.current = {
+      view: 'service',
+      serviceId,
+      serviceName: { 'monthly-report': '월간 금융 리포트', 'credit-score': '신용점수 콘솔', 'loan-consult': '대출 상담' }[serviceId] || serviceId,
+    }
+    setCurrentService(serviceId)
+    setScreen('room')
+  }
+
+  function exitServiceRoom() {
+    currentGuiContextRef.current = null
+    setCurrentService(null)
+    setScreen('home')
+    // activeTab은 'services' 유지 — 리셋 안 함
+    setTimeout(() => {}, 350) // 애니메이션 여유
+  }
+
+  async function sendServiceMessage(serviceId, text) {
+    if (!text.trim() || serviceLoading) return
+    const userMsg = { id: 'u_' + Date.now(), role: 'user', type: 'text', text }
+    setServiceMessages((prev) => ({ ...prev, [serviceId]: [...(prev[serviceId] || []), userMsg] }))
+    setServiceLoading(true)
+
+    try {
+      const response = await fetch(`${API_BASE}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: text,
+          sessionId,
+          guiScope: 'service',
+          guiContext: currentGuiContextRef.current,
+        }),
+      })
+
+      if (!response.ok) throw new Error('API error')
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let assistantText = ''
+      const assistantId = 'a_' + Date.now()
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        const chunk = decoder.decode(value, { stream: true })
+        for (const line of chunk.split('\n')) {
+          if (!line.startsWith('data: ')) continue
+          try {
+            const evt = JSON.parse(line.slice(6))
+            if (evt.type === 'text') {
+              assistantText += evt.delta || ''
+              setServiceMessages((prev) => {
+                const existing = prev[serviceId] || []
+                const last = existing[existing.length - 1]
+                if (last?.id === assistantId) {
+                  return { ...prev, [serviceId]: [...existing.slice(0, -1), { ...last, text: assistantText }] }
+                }
+                return { ...prev, [serviceId]: [...existing, { id: assistantId, role: 'assistant', type: 'text', text: assistantText }] }
+              })
+            }
+          } catch {}
+        }
+      }
+    } catch (err) {
+      console.error('[ServiceRoom] chat error:', err)
+    } finally {
+      setServiceLoading(false)
+    }
+  }
+
   // 거래내역 다음 페이지 로드
   function handleLoadMoreTxs() {
     if (!activeAccountId) return
@@ -1511,45 +1592,85 @@ export default function App() {
     <div className="app">
       <AnimatedBackground />
 
+      {/* isInsideRoom: 계좌방 또는 서비스방 내부, 또는 온보딩 오버레이 표시 중 */}
+      {(() => {
+        const isInsideRoom = screen === 'room' || showOnboarding
+        return null
+      })()}
+
       <div className={`screen-stack${screen === 'room' ? ' screen-stack--room' : ''}`}>
-        <div className="screen-panel screen-panel--home">
-          <AccountListScreen
-            accounts={accountList}
-            unreadCounts={unreadCounts}
-            typingAccountIds={typingAccountIds}
-            isLoading={isAccountsLoading}
-            accountsError={accountsError}
-            onRetry={() => fetchAccountList(0)}
-            ttsEnabled={ttsEnabled}
-            onEnterRoom={enterRoom}
-            onTtsToggle={() => setTtsEnabled((t) => !t)}
-            onReset={handleResetAll}
-            onShowOnboarding={showOnboardingAgain}
-            onProductSuggest={handleProductSuggest}
-            onReorder={handleAccountReorder}
-            onLogoTap={handleLogoTap}
+        <div className="screen-panel screen-panel--home" style={{ display: 'flex', flexDirection: 'column' }}>
+          {/* 탭별 콘텐츠 */}
+          {activeTab === 'accounts' && (
+            <AccountListScreen
+              accounts={accountList}
+              unreadCounts={unreadCounts}
+              typingAccountIds={typingAccountIds}
+              isLoading={isAccountsLoading}
+              accountsError={accountsError}
+              onRetry={() => fetchAccountList(0)}
+              ttsEnabled={ttsEnabled}
+              onEnterRoom={enterRoom}
+              onTtsToggle={() => setTtsEnabled((t) => !t)}
+              onReset={handleResetAll}
+              onShowOnboarding={showOnboardingAgain}
+              onProductSuggest={handleProductSuggest}
+              onReorder={handleAccountReorder}
+              onLogoTap={handleLogoTap}
+            />
+          )}
+          {activeTab === 'services' && (
+            <ServiceScreen
+              onEnterServiceRoom={enterServiceRoom}
+              onToast={(msg) => setAlert(msg)}
+            />
+          )}
+          {activeTab === 'my' && (
+            <MyScreen
+              sessionId={sessionId}
+              ttsEnabled={ttsEnabled}
+              onTtsToggle={() => setTtsEnabled((t) => !t)}
+              onReset={handleResetAll}
+              buildTime={import.meta.env.VITE_BUILD_TIME}
+            />
+          )}
+          <BottomTabBar
+            activeTab={activeTab}
+            onTabChange={(tab) => { setActiveTab(tab); if (currentService) exitServiceRoom() }}
+            isInsideRoom={screen === 'room' || showOnboarding}
           />
         </div>
         <div className="screen-panel screen-panel--room">
-          <AccountRoom
-            account={accountList.find((a) => a.id === activeAccountId)}
-            contacts={contacts}
-            transactions={roomTransactions[activeAccountId] || []}
-            messages={roomMessages[activeAccountId] || []}
-            isLoading={isLoading}
-            isLoadingTxs={roomTransactions[activeAccountId] === undefined}
-            sessionId={sessionId}
-            voiceMode={voiceMode}
-            onBack={exitRoom}
-            onSendMessage={(text) => sendMessage(text)}
-            onTransferDone={handleTransferDone}
-            onMarkRead={() => setUnreadCounts((prev) => ({ ...prev, [activeAccountId]: 0 }))}
-            txMeta={roomTxMeta[activeAccountId]}
-            onLoadMoreTxs={handleLoadMoreTxs}
-            onStartEnrollment={startEnrollment}
-            promoIds={new Set(accountList.filter((a) => a.isPromo || (a.type === 'partner_promo' && !a.applicationStatus)).map((a) => a.id))}
-            onTransferReady={handleTransferReady}
-          />
+          {currentService ? (
+            <ServiceRoom
+              serviceId={currentService}
+              sessionId={sessionId}
+              messages={serviceMessages[currentService] || []}
+              isLoading={serviceLoading}
+              onBack={exitServiceRoom}
+              onSendMessage={(text) => sendServiceMessage(currentService, text)}
+            />
+          ) : (
+            <AccountRoom
+              account={accountList.find((a) => a.id === activeAccountId)}
+              contacts={contacts}
+              transactions={roomTransactions[activeAccountId] || []}
+              messages={roomMessages[activeAccountId] || []}
+              isLoading={isLoading}
+              isLoadingTxs={roomTransactions[activeAccountId] === undefined}
+              sessionId={sessionId}
+              voiceMode={voiceMode}
+              onBack={exitRoom}
+              onSendMessage={(text) => sendMessage(text)}
+              onTransferDone={handleTransferDone}
+              onMarkRead={() => setUnreadCounts((prev) => ({ ...prev, [activeAccountId]: 0 }))}
+              txMeta={roomTxMeta[activeAccountId]}
+              onLoadMoreTxs={handleLoadMoreTxs}
+              onStartEnrollment={startEnrollment}
+              promoIds={new Set(accountList.filter((a) => a.isPromo || (a.type === 'partner_promo' && !a.applicationStatus)).map((a) => a.id))}
+              onTransferReady={handleTransferReady}
+            />
+          )}
         </div>
       </div>
 
@@ -1635,6 +1756,9 @@ export default function App() {
             >
               데이터 초기화
             </button>
+            <div style={{ fontSize: '11px', color: '#4B5275', marginTop: '8px', textAlign: 'center' }}>
+              {import.meta.env.VITE_BUILD_TIME ?? 'dev'}
+            </div>
           </div>
         </div>
       )}
