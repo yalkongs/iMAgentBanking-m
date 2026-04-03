@@ -17,7 +17,14 @@ function mimeToExt(mimeType) {
   return 'webm'
 }
 
-const hasSpeechAPI = typeof window !== 'undefined' &&
+// iOS PWA standalone 모드에서는 webkitSpeechRecognition audio session 관리가
+// 일반 Safari와 달라 2번째 호출부터 crash — Whisper 폴백 강제
+const isStandalonePWA = typeof window !== 'undefined' && (
+  window.navigator.standalone === true ||
+  window.matchMedia('(display-mode: standalone)').matches
+)
+
+const hasSpeechAPI = !isStandalonePWA && typeof window !== 'undefined' &&
   !!(window.SpeechRecognition || window.webkitSpeechRecognition)
 
 export function useVoiceInput(onTranscript) {
@@ -57,17 +64,17 @@ export function useVoiceInput(onTranscript) {
     }
 
     recognition.onend = () => {
-      // 이미 다른 인식으로 교체됐으면 상태 변경 생략
-      if (recognitionRef.current === recognition) {
-        recognitionRef.current = null
-      }
+      // 현재 활성 인식 인스턴스가 아닐 경우(=startStreaming이 교체한 stale 인식)
+      // setIsRecording을 호출하지 않는다. 호출하면 새 인식 중에 false로 리셋되어
+      // 사용자가 mic을 반복 탭 → rapid stop/start 사이클 → 브라우저 audio 실패.
+      if (recognitionRef.current !== recognition) return
+      recognitionRef.current = null
       setIsRecording(false)
     }
 
     recognition.onerror = (event) => {
-      if (recognitionRef.current === recognition) {
-        recognitionRef.current = null
-      }
+      if (recognitionRef.current !== recognition) return
+      recognitionRef.current = null
       if (event.error !== 'no-speech' && event.error !== 'aborted') {
         setError('음성 인식 오류: ' + event.error)
       }

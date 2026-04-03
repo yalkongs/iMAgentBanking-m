@@ -335,11 +335,54 @@ function CMALifeCard({ account }) {
   )
 }
 
+// ── 비상금통장: 잔액 + 금리 + 자유입출금 ──
+function SavingsAccountLifeCard({ account }) {
+  const color = '#F59E0B'
+  const { balance = 0, interestRate = 0, openDate } = account
+  const fmt = (s) => s ? s.replace(/-/g, '.') : ''
+  const dailyInterest = balance > 0 ? Math.floor(balance * (interestRate / 100) / 365) : 0
+
+  return (
+    <div className="slc-card slc-card--cma" style={{ '--slcc': color }}>
+      <div className="slc-top">
+        <div className="slc-tag">비상금 · 연 {interestRate}%</div>
+        <div className="slc-maturity-label">개설일 {fmt(openDate)}</div>
+      </div>
+      <div className="slc-cma-body">
+        <div className="slc-cma-today">
+          <div className="slc-cma-today-label">현재 잔액</div>
+          <div className="slc-cma-today-val" style={{ color }}>
+            {balance.toLocaleString('ko-KR')}원
+          </div>
+          <div className="slc-cma-today-sub">언제든 출금 가능한 비상금 전용</div>
+        </div>
+        <div className="slc-cma-stats">
+          <div className="slc-row">
+            <span className="slc-row-label">금리</span>
+            <span className="slc-row-val" style={{ color }}>연 {interestRate}%</span>
+          </div>
+          <div className="slc-row">
+            <span className="slc-row-label">일 수익률</span>
+            <span className="slc-row-val">{(interestRate / 365).toFixed(4)}%</span>
+          </div>
+          {balance > 0 && (
+            <div className="slc-row">
+              <span className="slc-row-label">오늘 이자 예상</span>
+              <span className="slc-row-val" style={{ color }}>+{dailyInterest.toLocaleString('ko-KR')}원</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── 라우터: 계좌 타입별 분기 ──
 function AccountLifeCard({ account }) {
   if (account.type === 'installment_savings') return <InstallmentLifeCard account={account} />
   if (account.type === 'term_deposit') return <TermDepositLifeCard account={account} />
   if (account.type === 'cma') return <CMALifeCard account={account} />
+  if (account.type === 'savings') return <SavingsAccountLifeCard account={account} />
   return null
 }
 
@@ -459,6 +502,11 @@ export default function AccountRoom({
       vv.removeEventListener('scroll', update)
     }
   }, [])
+
+  // 이체 확인 대기 중에는 녹음 자동 중단 (useVoiceConfirm과 SpeechRecognition 충돌 방지)
+  useEffect(() => {
+    if (hasPendingTransfer && isRecording) stopRecording()
+  }, [hasPendingTransfer]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 무한 스크롤 — IntersectionObserver (거래내역 탭)
   useEffect(() => {
@@ -695,7 +743,7 @@ export default function AccountRoom({
             </div>
           </div>
         )}
-        {(account?.type === 'installment_savings' || account?.type === 'term_deposit' || account?.type === 'cma') && account.accruedInterest !== undefined && (
+        {(account?.type === 'installment_savings' || account?.type === 'term_deposit' || account?.type === 'cma' || account?.type === 'savings') && account.accruedInterest !== undefined && (
           <SavingsLifeCard account={account} />
         )}
         {(messages || []).map((msg) => {
@@ -798,7 +846,7 @@ export default function AccountRoom({
               지금 바로 혜택 확인하기
             </button>
           </div>
-        ) : (account?.type === 'installment_savings' || account?.type === 'term_deposit' || account?.type === 'cma') && account.accruedInterest !== undefined ? (
+        ) : (account?.type === 'installment_savings' || account?.type === 'term_deposit' || account?.type === 'cma' || account?.type === 'savings') && account.accruedInterest !== undefined ? (
           <>
             <SavingsLifeCard account={account} />
             {isLoadingTxs ? (

@@ -249,7 +249,10 @@ export default function App() {
       const finalAmount = acc.balance + expectedInterest
       return { ...acc, progressRatio, daysRemaining, expectedInterest, finalAmount, accruedInterest: 0 }
     }
-    return null  // savings 등 life card 없는 타입
+    if (acc.type === 'savings') {
+      return { ...acc, accruedInterest: 0 }
+    }
+    return null
   }
 
   // ── 계좌 순서 localStorage 유틸 ──
@@ -489,6 +492,22 @@ export default function App() {
     }
   }, [])
 
+  // 카드를 텍스트 응답 앞에 삽입 (리스트 → 텍스트 순서 유지)
+  const insertBeforeInActiveStore = useCallback((beforeId, msg) => {
+    const aid = activeAccountIdRef.current
+    const s = screenRef.current
+    const insert = (arr) => {
+      const idx = arr.findIndex((m) => m.id === beforeId)
+      if (idx === -1) return [...arr, msg]
+      return [...arr.slice(0, idx), msg, ...arr.slice(idx)]
+    }
+    if (s === 'room' && aid) {
+      setRoomMessages((prev) => ({ ...prev, [aid]: insert(prev[aid] || []) }))
+    } else {
+      setMessages((prev) => insert(prev))
+    }
+  }, [])
+
   // WebSocket — 이벤트 처리
   useWebSocket(sessionId, useCallback((event) => {
     if (event.type === 'PENDING_TRANSFER') {
@@ -684,7 +703,8 @@ export default function App() {
               finalText += data.delta
               updateInActiveStore(assistantId, (m) => ({ ...m, text: m.text + data.delta }))
             } else if (data.type === 'ui_card') {
-              appendToActiveStore({ id: 'card_' + Date.now() + Math.random(), type: 'ui_card', cardType: data.cardType, data: data.data, guiScope: currentGuiScopeRef.current })
+              // 카드를 텍스트 응답 앞에 삽입: 리스트 먼저, 요약 텍스트는 아래에
+              insertBeforeInActiveStore(assistantId, { id: 'card_' + Date.now() + Math.random(), type: 'ui_card', cardType: data.cardType, data: data.data, guiScope: currentGuiScopeRef.current })
               setLastCardType(data.cardType)
               // voiceMode Path 2: ui_card 수신 시 요약 TTS
               if (voiceModeRef.current) {
@@ -726,7 +746,7 @@ export default function App() {
       setIsLoading(false)
       currentGuiScopeRef.current = null
     }
-  }, [isLoading, sessionId, ttsEnabled, appendToActiveStore, updateInActiveStore])
+  }, [isLoading, sessionId, ttsEnabled, appendToActiveStore, updateInActiveStore, insertBeforeInActiveStore])
 
   // Model C: 카드별 quickAction — overrideContext가 있으면 guiContext ref도 갱신
   const handleQuickAction = useCallback((text, overrideContext) => {

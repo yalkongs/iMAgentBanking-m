@@ -1,6 +1,12 @@
 import { useEffect, useRef, useCallback } from 'react'
 
-const hasSpeechAPI = typeof window !== 'undefined' &&
+// PWA standalone 모드에서는 SpeechRecognition 비활성화 (audio session crash 방지)
+const isStandalonePWA = typeof window !== 'undefined' && (
+  window.navigator.standalone === true ||
+  window.matchMedia('(display-mode: standalone)').matches
+)
+
+const hasSpeechAPI = !isStandalonePWA && typeof window !== 'undefined' &&
   !!(window.SpeechRecognition || window.webkitSpeechRecognition)
 
 /**
@@ -52,7 +58,15 @@ export function useVoiceConfirm({ isActive, onConfirm, onCancel, onTimeout, time
       recognitionRef.current = null
     }
 
-    recognition.start()
+    try {
+      recognition.start()
+    } catch (err) {
+      // 다른 SpeechRecognition 인스턴스가 이미 활성 상태일 때 DOMException 발생
+      // try/catch 없으면 useEffect 내 uncaught error → 앱 크래쉬
+      console.warn('[useVoiceConfirm] recognition.start() failed:', err)
+      recognitionRef.current = null
+      return
+    }
 
     timerRef.current = setTimeout(() => {
       stop()
