@@ -11,6 +11,7 @@ const TYPE_CONFIG = {
 }
 
 function maskAccountNo(no) {
+  if (!no) return ''
   const last4 = no.replace(/[^0-9]/g, '').slice(-4)
   return `···· ${last4}`
 }

@@ -353,10 +353,11 @@ function handleGetBalance({ account_id }, ctx) {
     if (!acc) return { error: `계좌 ${account_id}를 찾을 수 없습니다.` }
     return { accounts: [serializeAccount(acc)] }
   }
+  const realAccounts = accounts.filter((a) => !a.isPromo)
   return {
-    accounts: accounts.map(serializeAccount),
-    totalBalance: accounts.reduce((s, a) => s + a.balance, 0),
-    totalBalanceFormatted: accounts.reduce((s, a) => s + a.balance, 0).toLocaleString('ko-KR') + '원',
+    accounts: realAccounts.map(serializeAccount),
+    totalBalance: realAccounts.reduce((s, a) => s + a.balance, 0),
+    totalBalanceFormatted: realAccounts.reduce((s, a) => s + a.balance, 0).toLocaleString('ko-KR') + '원',
   }
 }
 

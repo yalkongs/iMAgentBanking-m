@@ -1444,6 +1444,9 @@ app.post('/api/quick-transfer', (req, res) => {
   }
 
   const safeAmount = Number(amount) || 0
+  if (!safeAmount || safeAmount <= 0) {
+    return res.status(400).json({ error: 'amount가 필요합니다.' })
+  }
 
   const pendingData = {
     toolUseId: 'quick_' + Date.now(),
@@ -1525,7 +1528,7 @@ app.post('/api/demo-start', (req, res) => {
 // ──────────────────────────────────────────────
 // 서버 시작
 // ──────────────────────────────────────────────
-export { app }
+export { app, getCrossAccountSummary }
 
 if (process.env.NODE_ENV !== 'test') {
   const PORT = process.env.PORT || 3001

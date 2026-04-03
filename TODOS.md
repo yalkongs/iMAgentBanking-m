@@ -133,6 +133,40 @@
 
 ---
 
+## TODO-10: room-greeting에 [OTHER_ACCOUNTS] 크로스 계좌 컨텍스트 주입
+
+**What:** `/api/room-greeting` 엔드포인트가 `buildSystemPrompt(guiContext, session)`을 system 파라미터로 사용하도록 수정. 현재는 `${context}\n\n${prompt}` 문자열로만 Claude를 호출한다.
+**Why:** 데모의 핵심 'whoa' 포인트 — "급여계좌 입장 시 체크카드 62% 사용 언급" — 이 [OTHER_ACCOUNTS] 블록 없이는 동작하지 않는다. 채팅 중 크로스 계좌 인식은 되지만, 첫 인사말에서는 동작 안 함.
+**Pros:** 데모 Step 2 ('한 계좌가 다른 계좌를 인식하는 순간') 완성. buildSystemPrompt 재사용으로 코드 일관성 확보.
+**Cons:** room-greeting 응답이 약간 길어질 수 있음 (system prompt 추가). 기존 Claude 호출 구조 변경 필요.
+**Context:**
+- 수정 위치: `backend/src/server.js:1390` — `anthropic.messages.stream()` 호출 시 `system` 파라미터 추가
+- `buildSystemPrompt({ accountId: acc.id, accountType: acc.type, ... }, session)` 결과를 system으로 전달
+- 기존 `context + prompt` 문자열은 user 메시지로 유지
+- plan-eng-review 2026-04-03 결정 (Issue 1-A).
+**Effort:** S (human: ~30min / CC: ~5min)
+**Priority:** P0 (데모 전 필수 — 핵심 기능 미동작)
+**Depends on:** 없음
+
+---
+
+## TODO-11: DEMO_SEQUENCE 설계 문서 기준 수정
+
+**What:** `DEMO_SEQUENCE` 배열을 설계 문서의 데모 시나리오대로 수정. acc008(급여계좌)으로 시작, 하드코딩 코멘트를 'whoa' 품질로 개선, 3번째 이벤트(acc001 카드값 자동납부) 추가.
+**Why:** 현재 구현은 acc001에 '(주)ABC테크' 급여로 시작하며 설계 의도와 다름. 코멘트 품질이 평범해서 'whoa' 반응 유발 불가. 데모 시나리오 3단계 중 1단계만 올바름.
+**Pros:** 설계 문서의 데모 임팩트 완성. 임원 앞 "연락처가 문자를 보냈다"는 순간 구현.
+**Cons:** 데모 리허설 후 세부 타이밍 조정 필요할 수 있음.
+**Context:**
+- 수정 위치: `backend/src/server.js:1490` DEMO_SEQUENCE 배열
+- acc008 급여 입금 → card001 스타벅스 → acc001 카드값 자동납부 3단계
+- 코멘트 예시: "이번 달 급여가 들어왔어요. 지난달보다 147,000원 적네요. 세전 공제 항목이 바뀐 것 같아요. 체크카드 이번 달 이미 62% 사용했어요."
+- plan-eng-review 2026-04-03 결정 (Issue 1-B).
+**Effort:** S (human: ~20min / CC: ~5min)
+**Priority:** P0 (데모 임팩트 직결)
+**Depends on:** 없음
+
+---
+
 ## TODO-4: Railway 워밍업 cron 재확인 (Feature A 완료 후)
 
 **What:** Feature A+B 배포 후 Railway 워밍업 cron이 새 엔드포인트와 함께 정상 동작하는지 확인. 기존 TODO-2의 후속.

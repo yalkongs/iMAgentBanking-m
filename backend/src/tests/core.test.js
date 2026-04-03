@@ -2,7 +2,7 @@ import { describe, it, test, expect, beforeEach } from 'vitest'
 import request from 'supertest'
 import { getInitialAccounts, getInitialTransactions, createAccount } from '../mockData.js'
 import { handleToolCall } from '../tools.js'
-import { app } from '../server.js'
+import { app, getCrossAccountSummary } from '../server.js'
 
 // 테스트용 세션 ctx 팩토리
 function makeCtx() {
@@ -281,5 +281,69 @@ describe('GET /api/contacts', () => {
     expect(res.body[0]).toHaveProperty('realName')
     expect(res.body[0]).toHaveProperty('bank')
     expect(res.body[0]).toHaveProperty('accountNo')
+  })
+})
+
+// ── Test 11: getCrossAccountSummary (Living Accounts) ─────────────────────────
+describe('getCrossAccountSummary', () => {
+  function makeSession() {
+    return {
+      accounts: getInitialAccounts(),
+      transactions: getInitialTransactions(),
+      aliasStore: new Map(),
+    }
+  }
+
+  it('currentAccountId 제외한 나머지 계좌 요약을 반환한다', () => {
+    const session = makeSession()
+    const result = getCrossAccountSummary(session, 'acc001')
+    expect(result).toContain('[OTHER_ACCOUNTS]')
+    expect(result).toContain('급여계좌')
+    expect(result).not.toContain('acc001')
+  })
+
+  it('acc008 제외 시 주계좌가 포함된다', () => {
+    const session = makeSession()
+    const result = getCrossAccountSummary(session, 'acc008')
+    expect(result).toContain('주계좌')
+    expect(result).not.toContain('acc008')
+  })
+
+  it('currentAccountId가 TARGET_IDS 외부 계좌이면 acc001/acc008/card001 모두 포함된다', () => {
+    const session = makeSession()
+    const result = getCrossAccountSummary(session, 'acc999')
+    expect(result).toContain('주계좌')
+    expect(result).toContain('급여계좌')
+  })
+
+  it('TARGET_IDS 계좌가 session에 없으면 빈 문자열 반환', () => {
+    const session = { accounts: [], transactions: [], aliasStore: new Map() }
+    const result = getCrossAccountSummary(session, 'acc001')
+    expect(result).toBe('')
+  })
+
+  it('반환값에 [/OTHER_ACCOUNTS] 닫는 태그가 포함된다', () => {
+    const session = makeSession()
+    const result = getCrossAccountSummary(session, 'acc001')
+    expect(result).toContain('[/OTHER_ACCOUNTS]')
+  })
+})
+
+// ── Test 12: POST /api/demo-start ─────────────────────────────────────────────
+describe('POST /api/demo-start', () => {
+  test('sessionId 전달 시 200 응답과 ok:true 반환', async () => {
+    const res = await request(app)
+      .post('/api/demo-start')
+      .send({ sessionId: 'test-demo' })
+    expect(res.status).toBe(200)
+    expect(res.body.ok).toBe(true)
+  })
+
+  test('sessionId 없이도 200 응답 반환 (broadcastWsEvent 경로)', async () => {
+    const res = await request(app)
+      .post('/api/demo-start')
+      .send({})
+    expect(res.status).toBe(200)
+    expect(res.body.ok).toBe(true)
   })
 })

@@ -17,9 +17,9 @@ class ErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: '24px', color: '#f87171', background: '#0D0F1A', minHeight: '100vh', fontFamily: 'sans-serif' }}>
-          <div style={{ marginBottom: '8px', fontSize: '16px', fontWeight: 600 }}>오류가 발생했습니다</div>
-          <div style={{ fontSize: '13px', opacity: 0.65, marginBottom: '16px', wordBreak: 'break-all' }}>
+        <div style={{ padding: '32px 24px', color: '#f87171', background: '#1a1c2e', minHeight: '100vh', fontFamily: 'sans-serif' }}>
+          <div style={{ marginBottom: '8px', fontSize: '18px', fontWeight: 700 }}>오류가 발생했습니다</div>
+          <div style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '20px', wordBreak: 'break-all', lineHeight: '1.5' }}>
             {this.state.error?.message || '알 수 없는 오류'}
           </div>
           <button
