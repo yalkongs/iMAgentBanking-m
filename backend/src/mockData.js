@@ -514,6 +514,9 @@ export let cardTransactions = [
   // 3월 — iM 체크카드 (card001)
   // ════════════════════════════════════════════
   { id: 'ct001', ...cd(0,8,32),   cardId: 'card001', merchant: '스타벅스 강남점',    inferredCategory: '카페',  categoryNote: null,                         amount: -8500  },
+  { id: 'ct001_sb2', ...cd(1,17,45), cardId: 'card001', merchant: '스타벅스 강남점',  inferredCategory: '카페',  categoryNote: null,                       amount: -6500  },
+  { id: 'ct001_sb3', ...cd(2, 9,10), cardId: 'card001', merchant: '스타벅스 선릉역',  inferredCategory: '카페',  categoryNote: null,                       amount: -6500  },
+  { id: 'ct001_sb4', ...cd(2,14,30), cardId: 'card001', merchant: '스타벅스 강남점',  inferredCategory: '카페',  categoryNote: null,                       amount: -5500  },
   { id: 'ct002', ...cd(0,12,15),  cardId: 'card001', merchant: '이마트24',            inferredCategory: '편의점', categoryNote: null,                        amount: -4200  },
   { id: 'ct003', ...cd(1,13,20),  cardId: 'card001', merchant: '김밥천국',            inferredCategory: '식비',  categoryNote: null,                         amount: -6000  },
   { id: 'ct004', ...cd(1,19,45),  cardId: 'card001', merchant: '카카오택시',          inferredCategory: '교통',  categoryNote: null,                         amount: -4800  },
