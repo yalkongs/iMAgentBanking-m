@@ -17,14 +17,7 @@ function mimeToExt(mimeType) {
   return 'webm'
 }
 
-// iOS PWA standalone 모드에서는 webkitSpeechRecognition audio session 관리가
-// 일반 Safari와 달라 2번째 호출부터 crash — Whisper 폴백 강제
-const isStandalonePWA = typeof window !== 'undefined' && (
-  window.navigator.standalone === true ||
-  window.matchMedia('(display-mode: standalone)').matches
-)
-
-const hasSpeechAPI = !isStandalonePWA && typeof window !== 'undefined' &&
+const hasSpeechAPI = typeof window !== 'undefined' &&
   !!(window.SpeechRecognition || window.webkitSpeechRecognition)
 
 export function useVoiceInput(onTranscript) {

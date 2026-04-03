@@ -1,12 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 
-// PWA standalone 모드에서는 SpeechRecognition 비활성화 (audio session crash 방지)
-const isStandalonePWA = typeof window !== 'undefined' && (
-  window.navigator.standalone === true ||
-  window.matchMedia('(display-mode: standalone)').matches
-)
-
-const hasSpeechAPI = !isStandalonePWA && typeof window !== 'undefined' &&
+const hasSpeechAPI = typeof window !== 'undefined' &&
   !!(window.SpeechRecognition || window.webkitSpeechRecognition)
 
 /**
