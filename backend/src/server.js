@@ -57,8 +57,9 @@ const BG_TRANSACTIONS = [
 ]
 
 let bgTxIndex = 0
+let bgPaused = false
 setInterval(async () => {
-  if (wsClients.size === 0) return
+  if (wsClients.size === 0 || bgPaused) return
   const tx = BG_TRANSACTIONS[bgTxIndex % BG_TRANSACTIONS.length]
   bgTxIndex++
   const alertId = Date.now().toString()
@@ -1391,9 +1392,22 @@ app.post('/api/room-greeting', async (req, res) => {
   res.setHeader('Connection', 'keep-alive')
 
   try {
+    const systemPrompt = buildSystemPrompt(
+      {
+        view: 'account_detail',
+        accountId: acc.id,
+        accountType: acc.type,
+        accountName: acc.name,
+        balance: acc.balance,
+        ...(acc.interestRate && { interestRate: acc.interestRate }),
+        ...(acc.maturityDate && { maturityDate: acc.maturityDate }),
+      },
+      session
+    )
     const stream = anthropic.messages.stream({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 250,
+      system: systemPrompt,
       messages: [{ role: 'user', content: `${context}\n\n${prompt}` }],
     })
 
@@ -1503,19 +1517,41 @@ app.post('/api/quick-transfer', (req, res) => {
 // POST /api/demo-start — 임원 데모 시퀀스 트리거 (하드코딩된 이벤트, Claude 호출 없음)
 // ──────────────────────────────────────────────
 const DEMO_SEQUENCE = [
-  { delay: 500,  type: 'TRANSACTION_ALERT',         accountId: 'acc001', payload: { accountId: 'acc001', alertId: 'demo_001', counterpart: '(주)ABC테크', amount: 3000000, amountFormatted: '+3,000,000원', category: '급여', memo: '3월 급여', isIncome: true } },
-  { delay: 1200, type: 'TYPING_START',               accountId: 'acc001' },
-  { delay: 3200, type: 'TYPING_END',                 accountId: 'acc001' },
-  { delay: 3300, type: 'TRANSACTION_ALERT_COMMENT',  accountId: 'acc001', payload: { alertId: 'demo_001', comment: '3월 급여 3,000,000원이 입금되었습니다. 이번 달 지출 계획을 세워보시겠습니까?' } },
-  { delay: 5500, type: 'TYPING_START',               accountId: 'card001' },
-  { delay: 6500, type: 'TRANSACTION_ALERT',          accountId: 'card001', payload: { accountId: 'card001', alertId: 'demo_002', counterpart: '스타벅스 강남점', amount: -8500, amountFormatted: '-8,500원', category: '카페', memo: '', isIncome: false, source: 'card' } },
-  { delay: 8000, type: 'TYPING_END',                 accountId: 'card001' },
-  { delay: 8100, type: 'TRANSACTION_ALERT_COMMENT',  accountId: 'card001', payload: { alertId: 'demo_002', comment: '이번 달 카페 지출이 누적되고 있습니다. 절약 팁이 필요하시면 말씀해 주세요.' } },
+  // Step 1: acc008 급여 입금
+  { delay: 500,  type: 'TRANSACTION_ALERT',
+    accountId: 'acc008',
+    payload: { accountId: 'acc008', alertId: 'demo_001', counterpart: '(주)ABC테크', amount: 3250000, amountFormatted: '+3,250,000원', category: '급여', memo: '4월 급여', isIncome: true } },
+  { delay: 1200, type: 'TYPING_START',              accountId: 'acc008' },
+  { delay: 3200, type: 'TYPING_END',                accountId: 'acc008' },
+  { delay: 3300, type: 'TRANSACTION_ALERT_COMMENT',
+    accountId: 'acc008',
+    payload: { alertId: 'demo_001', comment: '이번 달 급여가 들어왔어요. 지난달보다 147,000원 적네요. 세전 공제 항목이 바뀐 것 같아요. 체크카드 이번 달 이미 62% 사용했어요.' } },
+
+  // Step 2: card001 스타벅스 (5초 후)
+  { delay: 5500, type: 'TRANSACTION_ALERT',
+    accountId: 'card001',
+    payload: { accountId: 'card001', alertId: 'demo_002', counterpart: '스타벅스 강남점', amount: -5500, amountFormatted: '-5,500원', category: '카페', memo: '', isIncome: false, source: 'card' } },
+  { delay: 6200, type: 'TYPING_START',              accountId: 'card001' },
+  { delay: 8200, type: 'TYPING_END',                accountId: 'card001' },
+  { delay: 8300, type: 'TRANSACTION_ALERT_COMMENT',
+    accountId: 'card001',
+    payload: { alertId: 'demo_002', comment: '이번 달 스타벅스 5번째예요. 지난달 전체(4번)보다 많아요.' } },
+
+  // Step 3: acc001 카드값 자동납부 (10초 후)
+  { delay: 11000, type: 'TRANSACTION_ALERT',
+    accountId: 'acc001',
+    payload: { accountId: 'acc001', alertId: 'demo_003', counterpart: '신한카드 자동납부', amount: -324000, amountFormatted: '-324,000원', category: '카드대금', memo: '', isIncome: false } },
+  { delay: 11700, type: 'TYPING_START',              accountId: 'acc001' },
+  { delay: 13700, type: 'TYPING_END',                accountId: 'acc001' },
+  { delay: 13800, type: 'TRANSACTION_ALERT_COMMENT',
+    accountId: 'acc001',
+    payload: { alertId: 'demo_003', comment: '체크카드 이번달 결제 대금 324,000원이 자동납부 됐어요.' } },
 ]
 
 app.post('/api/demo-start', (req, res) => {
   const { sessionId } = req.body
   const now = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+  bgPaused = true
   res.json({ ok: true })
 
   for (const step of DEMO_SEQUENCE) {
@@ -1533,6 +1569,9 @@ app.post('/api/demo-start', (req, res) => {
       }
     }, step.delay)
   }
+
+  const lastDelay = Math.max(...DEMO_SEQUENCE.map((s) => s.delay))
+  setTimeout(() => { bgPaused = false }, lastDelay + 3000)
 })
 
 // ──────────────────────────────────────────────
