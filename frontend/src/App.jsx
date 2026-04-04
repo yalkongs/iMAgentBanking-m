@@ -12,6 +12,21 @@ import { loadSessionId, loadRoomMessages, saveRoomMessages, clearAllData } from 
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
+// ── 서비스 중단 설정 ──────────────────────────────────────────
+const SHUTDOWN_AT = (() => {
+  const d = new Date()
+  d.setHours(20, 0, 0, 0)
+  return d
+})()
+function isShutdownTime() { return new Date() >= SHUTDOWN_AT }
+function getCountdown() {
+  const diff = Math.max(0, SHUTDOWN_AT - new Date())
+  const h = Math.floor(diff / 3600000)
+  const m = Math.floor((diff % 3600000) / 60000)
+  const s = Math.floor((diff % 60000) / 1000)
+  return { h, m, s, done: diff === 0 }
+}
+
 function getSessionId() {
   const id = 'sess_' + Math.random().toString(36).slice(2, 10)
   return id
@@ -180,6 +195,19 @@ export default function App() {
   // 헬스 인덱스
   const [healthScore, setHealthScore] = useState(null)
   const [healthOpen, setHealthOpen] = useState(false)
+
+  // ── 서비스 중단 카운트다운 ──────────────────���─────────────────
+  const [isShutdown, setIsShutdown] = useState(isShutdownTime)
+  const [countdown, setCountdown] = useState(getCountdown)
+  useEffect(() => {
+    if (isShutdown) return
+    const t = setInterval(() => {
+      const c = getCountdown()
+      setCountdown(c)
+      if (c.done) { setIsShutdown(true); clearInterval(t) }
+    }, 1000)
+    return () => clearInterval(t)
+  }, [isShutdown])
 
   // ── 온보딩 오버레이 (매 새로고침 + 로고 탭 시 표시) ──
   const [showOnboarding, setShowOnboarding] = useState(true)
@@ -431,14 +459,16 @@ export default function App() {
 
   // 프로액티브 알림 로드
   useEffect(() => {
+    if (isShutdown) return
     fetch(`${API_BASE}/api/proactive`)
       .then((r) => r.json())
       .then((d) => { if (d.alert) setAlert(d.alert) })
       .catch(() => {})
-  }, [])
+  }, [isShutdown])
 
   // 프로액티브 AI 인사이트 로드
   useEffect(() => {
+    if (isShutdown) return
     setInsightsLoading(true)
     setInsightsError(false)
     fetch(`${API_BASE}/api/insights`)
@@ -446,23 +476,25 @@ export default function App() {
       .then((d) => { if (Array.isArray(d.insights)) setProactiveInsights(d.insights) })
       .catch(() => setInsightsError(true))
       .finally(() => setInsightsLoading(false))
-  }, [])
+  }, [isShutdown])
 
   // 헬스 스코어 로드
   useEffect(() => {
+    if (isShutdown) return
     fetch(`${API_BASE}/api/health-score`)
       .then((r) => r.json())
       .then((d) => { if (d.score !== undefined) setHealthScore(d.score) })
       .catch(() => {})
-  }, [])
+  }, [isShutdown])
 
   // contacts 로드
   useEffect(() => {
+    if (isShutdown) return
     fetch(`${API_BASE}/api/contacts`)
       .then((r) => r.json())
       .then((data) => setContacts(Array.isArray(data) ? data : []))
       .catch(() => {})
-  }, [])
+  }, [isShutdown])
 
   // ── 메신저 메시지 라우터 (refs 기반 — SSE 클로저 안전) ──
   // useWebSocket dependency array보다 먼저 선언해야 TDZ 방지
@@ -653,7 +685,7 @@ export default function App() {
   // 메시지 전송 (guiContext: undefined = ref 값 사용, null = 명시적 없음, object = override)
   const sendMessage = useCallback(async (text, guiScope = null, guiContext = undefined) => {
     const msg = text.trim()
-    if (!msg || isLoading) return
+    if (!msg || isLoading || isShutdown) return
 
     currentGuiScopeRef.current = guiScope
 
@@ -1511,7 +1543,17 @@ export default function App() {
     <div className="app">
       <AnimatedBackground />
 
-      <div className={`screen-stack${screen === 'room' ? ' screen-stack--room' : ''}`}>
+      {isShutdown && (
+        <div className="shutdown-overlay" role="alert">
+          <div className="shutdown-overlay__box">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+            <p className="shutdown-overlay__title">서비스가 중단되었습니다</p>
+            <p className="shutdown-overlay__body">테스트 사용 폭주로 AI API 비용이 과다 청구되어<br/>오늘 20:00부로 서비스를 종료합니다.<br/>이용해주셔서 감사합니다.</p>
+          </div>
+        </div>
+      )}
+
+      <div className={`screen-stack${screen === 'room' ? ' screen-stack--room' : ''}${isShutdown ? ' screen-stack--frozen' : ''}`}>
         <div className="screen-panel screen-panel--home">
           <AccountListScreen
             accounts={accountList}
@@ -1608,6 +1650,15 @@ export default function App() {
             <img src="/imbank-mark.png" alt="iM뱅크" className="onboarding-logo" />
             <h1 id="onboarding-headline" className="onboarding-headline">계좌가 먼저 말을 걸어요</h1>
             <p className="onboarding-sub">iM뱅크 AI 금융 어시스턴트</p>
+            {!isShutdown && (
+              <div className="shutdown-notice">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span>테스트 사용 폭주로 AI API 비용 과다 청구 — 오늘 20:00 서비스 중단</span>
+                <div className="shutdown-countdown">
+                  {String(countdown.h).padStart(2,'0')}:{String(countdown.m).padStart(2,'0')}:{String(countdown.s).padStart(2,'0')} 남음
+                </div>
+              </div>
+            )}
             <ul className="onboarding-features">
               <li>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
